@@ -28,6 +28,9 @@ COPY backend/ ./
 # internal/api/embed.go:  //go:embed ui/build
 COPY --from=ui-builder /app/frontend/build ./internal/api/ui/build
 
+# go mod download alone doesn't always write go.sum; tidy ensures it is complete.
+RUN go mod tidy
+
 # Build a statically linked binary with debug info stripped
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o openmasjid ./cmd/openmasjid
 
