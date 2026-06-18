@@ -35,8 +35,7 @@
 
   onMount(async () => {
     try {
-      const data = await api.get<HealthResponse>('/api/health');
-      health = data;
+      health = await api.health();
     } catch {
       healthError = true;
     } finally {

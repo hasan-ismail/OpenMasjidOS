@@ -8,6 +8,14 @@ const locales: Record<string, DeepPartial<Locale>> = { en };
 
 export const locale = writable<string>('en');
 
+// RTL languages — extend this list as new locales are added.
+const RTL_LOCALES = new Set(['ar', 'ur', 'fa', 'he']);
+
+// dir: 'rtl' when the active locale is right-to-left, 'ltr' otherwise.
+export const dir = derived(locale, ($locale) =>
+  RTL_LOCALES.has($locale) ? ('rtl' as const) : ('ltr' as const)
+);
+
 export const t = derived(locale, ($locale) => {
   const strings = locales[$locale] ?? locales['en'];
   // Simple dot-path accessor: t('dashboard.title')

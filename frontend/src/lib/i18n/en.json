@@ -3,19 +3,38 @@
     "name": "OpenMasjidOS",
     "tagline": "Your masjid, your software"
   },
+  "brand": {
+    "name": "OpenMasjidOS"
+  },
   "nav": {
     "dashboard": "Dashboard",
     "appStore": "App Store",
-    "settings": "Settings"
+    "settings": "Settings",
+    "aria": {
+      "sidebar": "Sidebar navigation",
+      "primary": "Main navigation"
+    }
+  },
+  "theme": {
+    "switchToLight": "Switch to light mode",
+    "switchToDark": "Switch to dark mode",
+    "light": "Light",
+    "dark": "Dark"
   },
   "dashboard": {
     "title": "Dashboard",
     "welcome": "Welcome to OpenMasjidOS",
+    "yourMasjid": "your masjid",
+    "coreVersion": "Core v{version}",
     "noApps": "No apps installed yet",
+    "noAppsTitle": "No apps installed yet",
+    "noAppsBody": "Browse the App Store to find apps for your masjid — prayer times, announcements, donation pages, and more.",
     "noAppsHint": "Browse the App Store to find apps for your masjid.",
     "browseStore": "Browse App Store",
     "installedApps": "Installed Apps",
-    "systemStatus": "System Status"
+    "systemStatus": "System Status",
+    "statusOk": "Everything is running smoothly",
+    "statusError": "Could not reach the server. Check that OpenMasjidOS is running."
   },
   "appStore": {
     "title": "App Store",
