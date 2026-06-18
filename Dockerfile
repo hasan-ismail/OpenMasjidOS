@@ -3,9 +3,9 @@ FROM node:20-alpine AS ui-builder
 
 WORKDIR /app/frontend
 
-# Install dependencies first (better layer caching)
-COPY frontend/package*.json ./
-RUN npm ci
+# Install dependencies. package-lock.json is generated here; no need to commit it.
+COPY frontend/package.json ./
+RUN npm install
 
 # Copy the rest of the frontend source and build
 COPY frontend/ ./
