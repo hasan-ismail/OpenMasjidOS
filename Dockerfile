@@ -16,15 +16,17 @@ FROM golang:1.22-alpine AS go-builder
 
 WORKDIR /app
 
-# Download dependencies first (better layer caching)
-COPY backend/go.mod backend/go.sum ./
+# Download dependencies first (better layer caching).
+# go.sum is generated here rather than committed, keeping the repo clean.
+COPY backend/go.mod ./
 RUN go mod download
 
 # Copy the backend source
 COPY backend/ ./
 
-# Copy the built UI assets so they can be embedded via go:embed
-COPY --from=ui-builder /app/frontend/build ./frontend/build
+# Copy the built UI assets into the exact path expected by go:embed in
+# internal/api/embed.go:  //go:embed ui/build
+COPY --from=ui-builder /app/frontend/build ./internal/api/ui/build
 
 # Build a statically linked binary with debug info stripped
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o openmasjid ./cmd/openmasjid

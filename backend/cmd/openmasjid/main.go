@@ -16,11 +16,7 @@ import (
 
 func main() {
 	// Load configuration from environment variables with sensible defaults.
-	// PORT controls the listen address; DATA_DIR is where all persistent data lives.
-	cfg := config.Load(config.Options{
-		Port:    getEnv("PORT", "8723"),
-		DataDir: getEnv("DATA_DIR", "/data"),
-	})
+	cfg := config.Load()
 
 	// Structured JSON logging so log aggregators (e.g. Docker log drivers) can
 	// parse fields without brittle regex. Level is INFO by default.
@@ -72,14 +68,4 @@ func main() {
 	}
 
 	slog.Info("server stopped cleanly")
-}
-
-// getEnv returns the value of the named environment variable, or fallback if
-// the variable is unset or empty. Kept here rather than in config so main.go
-// remains self-contained and easy to audit.
-func getEnv(key, fallback string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return fallback
 }

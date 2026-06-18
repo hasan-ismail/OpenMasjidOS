@@ -6,7 +6,7 @@ version: "3.8"
 
 services:
   core:
-    image: openmasjid/core:latest
+    image: ghcr.io/hasan-ismail/openmasjid-core:latest
     container_name: openmasjid-core
     restart: unless-stopped
     ports:

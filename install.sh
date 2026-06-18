@@ -20,10 +20,10 @@
 # without breaking it or losing your data.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/OpenMasjidOS/OpenMasjidOS/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/hasan-ismail/OpenMasjidOS/master/install.sh | bash
 #
 # If you prefer to inspect before running (recommended!):
-#   curl -fsSL https://raw.githubusercontent.com/OpenMasjidOS/OpenMasjidOS/main/install.sh -o install.sh
+#   curl -fsSL https://raw.githubusercontent.com/hasan-ismail/OpenMasjidOS/master/install.sh -o install.sh
 #   less install.sh      # read it first
 #   bash install.sh      # then run it
 #
@@ -36,7 +36,7 @@ set -euo pipefail
 # -----------------------------------------------------------------------------
 PORT=8723
 DATA_DIR=/opt/openmasjid
-IMAGE=openmasjid/core:latest
+IMAGE=ghcr.io/hasan-ismail/openmasjid-core:latest
 COMPOSE_PROJECT=openmasjid
 
 # Colour codes — we check for terminal support before using them
@@ -110,7 +110,7 @@ check_root() {
     echo ""
     echo "  Or if you piped from curl:"
     echo ""
-    echo "    curl -fsSL https://raw.githubusercontent.com/OpenMasjidOS/OpenMasjidOS/main/install.sh | sudo bash"
+    echo "    curl -fsSL https://raw.githubusercontent.com/hasan-ismail/OpenMasjidOS/master/install.sh | sudo bash"
     echo ""
     exit 1
   fi
@@ -148,7 +148,7 @@ detect_os() {
       echo "    • arm64  (Raspberry Pi 4/5, Apple Silicon servers)"
       echo ""
       echo "  If you would like support for your architecture, please open an issue at:"
-      echo "  https://github.com/OpenMasjidOS/OpenMasjidOS/issues"
+      echo "  https://github.com/hasan-ismail/OpenMasjidOS/issues"
       echo ""
       exit 1
       ;;
@@ -204,7 +204,7 @@ detect_os() {
           echo "    • Fedora 38+"
           echo ""
           echo "  If you would like support for your distribution, please open an issue at:"
-          echo "  https://github.com/OpenMasjidOS/OpenMasjidOS/issues"
+          echo "  https://github.com/hasan-ismail/OpenMasjidOS/issues"
           echo ""
           exit 1
           ;;
@@ -494,7 +494,7 @@ print_success() {
   echo "  ╠═══════════════════════════════════════════════════════════════╣"
   echo "  ║                                                               ║"
   echo "  ║   Need help or want to report an issue?                       ║"
-  echo "  ║   https://github.com/OpenMasjidOS/OpenMasjidOS               ║"
+  echo "  ║   https://github.com/hasan-ismail/OpenMasjidOS               ║"
   echo "  ║                                                               ║"
   echo "  ╚═══════════════════════════════════════════════════════════════╝"
   echo -e "${CLR_RESET}"

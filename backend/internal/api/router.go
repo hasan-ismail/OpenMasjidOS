@@ -4,7 +4,6 @@
 package api
 
 import (
-	"embed"
 	"encoding/json"
 	"io/fs"
 	"log/slog"
@@ -14,23 +13,12 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 
-	"github.com/openmasjid/core/internal/config"
+	"github.com/OpenMasjidOS/OpenMasjidOS/internal/config"
 )
 
 // version is the API/build version reported by the health endpoint.
-// Replaced at link time with -ldflags "-X api.version=x.y.z".
+// Replaced at link time with -ldflags "-X github.com/OpenMasjidOS/OpenMasjidOS/internal/api.version=x.y.z".
 var version = "0.1.0"
-
-// uiAssets holds the compiled SvelteKit output.
-// UI assets are embedded at build time via embed.go (in the backend/ root).
-// The variable is set from that file so the router package stays import-clean.
-var uiAssets embed.FS
-
-// SetUIAssets is called from embed.go (or main) to inject the embedded
-// filesystem before the router is created.
-func SetUIAssets(f embed.FS) {
-	uiAssets = f
-}
 
 // NewRouter builds and returns the fully configured HTTP handler.
 // It owns all route registration and middleware layering.
