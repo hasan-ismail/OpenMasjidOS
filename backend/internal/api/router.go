@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -137,11 +138,17 @@ func spaHandler() http.Handler {
 	fileServer := http.FileServer(http.FS(sub))
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Try to open the requested file. If it does not exist, fall back to
-		// index.html so that deep-links like /store/prayer-times-display work.
-		f, openErr := sub.Open(r.URL.Path)
+		// io/fs paths must never start with "/". Strip it before probing so that
+		// asset requests like "/_app/immutable/entry.js" are served correctly
+		// rather than always falling back to index.html (which caused a blank page).
+		name := strings.TrimPrefix(r.URL.Path, "/")
+		if name == "" {
+			name = "."
+		}
+		f, openErr := sub.Open(name)
 		if openErr != nil {
-			// Serve the root index.html; SvelteKit handles the route.
+			// File not found — serve index.html so SvelteKit's client-side router
+			// can handle deep-links like /store or /settings after a hard refresh.
 			r.URL.Path = "/"
 		} else {
 			f.Close()

@@ -34,19 +34,21 @@ set -euo pipefail
 # -----------------------------------------------------------------------------
 # Constants — change these if you need a non-standard setup
 # -----------------------------------------------------------------------------
-PORT=8723
+PORT=80
 DATA_DIR=/opt/openmasjid
 IMAGE=ghcr.io/hasan-ismail/openmasjid-core:latest
 COMPOSE_PROJECT=openmasjid
 
 # Colour codes — we check for terminal support before using them
 if [ -t 1 ]; then
-  CLR_GREEN="\033[0;32m"
-  CLR_YELLOW="\033[1;33m"
-  CLR_RED="\033[0;31m"
-  CLR_CYAN="\033[0;36m"
-  CLR_BOLD="\033[1m"
-  CLR_RESET="\033[0m"
+  # $'...' syntax makes bash interpret \033 as the real ESC character at
+  # assignment time, so both echo and printf output correct ANSI sequences.
+  CLR_GREEN=$'\033[0;32m'
+  CLR_YELLOW=$'\033[1;33m'
+  CLR_RED=$'\033[0;31m'
+  CLR_CYAN=$'\033[0;36m'
+  CLR_BOLD=$'\033[1m'
+  CLR_RESET=$'\033[0m'
 else
   CLR_GREEN=""
   CLR_YELLOW=""
@@ -349,9 +351,9 @@ services:
 
     environment:
       # Tell the core where its data lives inside the container
-      DATA_DIR: /data
+      OPENMASJID_DATA_DIR: /data
       # The port the Go HTTP server binds to inside the container
-      PORT: "${PORT}"
+      OPENMASJID_PORT: "${PORT}"
 
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:${PORT}/api/health"]
@@ -471,36 +473,46 @@ get_server_ip() {
 # =============================================================================
 
 print_success() {
-  local server_ip
+  local server_ip dashboard_url url_len pad
   server_ip="$(get_server_ip)"
-  local dashboard_url="http://${server_ip}:${PORT}"
+  dashboard_url="http://${server_ip}"
+  [ "${PORT}" != "80" ] && dashboard_url="${dashboard_url}:${PORT}"
+  url_len="${#dashboard_url}"
+
+  # Interior of the box is 53 chars wide (between the two ║ chars).
+  # Layout: 3 leading spaces + URL + trailing padding = 53.
+  # Guard against an unusually long URL (very rare) by clamping pad to 1.
+  pad=$(( 53 - 3 - url_len ))
+  [ "$pad" -lt 1 ] && pad=1
 
   echo ""
-  echo -e "${CLR_GREEN}${CLR_BOLD}"
-  echo "  ╔═══════════════════════════════════════════════════════════════╗"
-  echo "  ║                                                               ║"
-  echo "  ║   🕌  OpenMasjidOS is ready!                                 ║"
-  echo "  ║                                                               ║"
-  printf "  ║   Open your browser and go to:                               ║\n"
-  printf "  ║                                                               ║\n"
-  printf "  ║   %-61s ║\n" "${CLR_CYAN}${dashboard_url}${CLR_GREEN}${CLR_BOLD}"
-  echo "  ║                                                               ║"
-  echo "  ╠═══════════════════════════════════════════════════════════════╣"
-  echo "  ║                                                               ║"
-  echo "  ║   First time?                                                 ║"
-  echo "  ║   The setup wizard will guide you through creating your       ║"
-  echo "  ║   admin account and entering your masjid's details.           ║"
-  echo "  ║                                                               ║"
-  echo "  ╠═══════════════════════════════════════════════════════════════╣"
-  echo "  ║                                                               ║"
-  echo "  ║   Need help or want to report an issue?                       ║"
-  echo "  ║   https://github.com/hasan-ismail/OpenMasjidOS               ║"
-  echo "  ║                                                               ║"
-  echo "  ╚═══════════════════════════════════════════════════════════════╝"
-  echo -e "${CLR_RESET}"
+  printf "${CLR_GREEN}${CLR_BOLD}"
+  printf '  ╔═══════════════════════════════════════════════════════╗\n'
+  printf '  ║                                                       ║\n'
+  printf '  ║   🕌  OpenMasjidOS is ready!                         ║\n'
+  printf '  ║                                                       ║\n'
+  printf '  ║   Open your browser and go to:                        ║\n'
+  printf '  ║                                                       ║\n'
+  # URL line: cyan for the URL, then back to green+bold for the trailing ║.
+  # ANSI codes have zero visual width so they don't disturb the box alignment.
+  printf "  ║   ${CLR_CYAN}%s${CLR_GREEN}${CLR_BOLD}%${pad}s║\n" "${dashboard_url}" ""
+  printf '  ║                                                       ║\n'
+  printf '  ╠═══════════════════════════════════════════════════════╣\n'
+  printf '  ║                                                       ║\n'
+  printf '  ║   First time?                                         ║\n'
+  printf '  ║   The setup wizard will guide you through creating    ║\n'
+  printf "  ║   your admin account and your masjid's details.       ║\n"
+  printf '  ║                                                       ║\n'
+  printf '  ╠═══════════════════════════════════════════════════════╣\n'
+  printf '  ║                                                       ║\n'
+  printf '  ║   Need help or want to report an issue?               ║\n'
+  printf '  ║   https://github.com/hasan-ismail/OpenMasjidOS       ║\n'
+  printf '  ║                                                       ║\n'
+  printf '  ╚═══════════════════════════════════════════════════════╝\n'
+  printf "${CLR_RESET}\n"
   echo ""
-  echo -e "  Your data is stored in ${CLR_BOLD}${DATA_DIR}${CLR_RESET} and will survive upgrades."
-  echo -e "  To update OpenMasjidOS in the future, simply re-run this installer."
+  printf "  Your data is stored in ${CLR_BOLD}%s${CLR_RESET} and will survive upgrades.\n" "${DATA_DIR}"
+  printf "  To update OpenMasjidOS in the future, simply re-run this installer.\n"
   echo ""
 }
 

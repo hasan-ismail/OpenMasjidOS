@@ -29,9 +29,9 @@ type Config struct {
 // defaults. It never fails — callers always get a usable Config back.
 func Load() *Config {
 	cfg := &Config{
-		Port:     envOr("OPENMASJID_PORT", "8723"),
-		DataDir:  envOr("OPENMASJID_DATA_DIR", "/data"),
-		LogLevel: envOr("OPENMASJID_LOG_LEVEL", "info"),
+		Port:     envOr("OPENMASJID_PORT", envOr("PORT", "80")),
+		DataDir:  envOr("OPENMASJID_DATA_DIR", envOr("DATA_DIR", "/data")),
+		LogLevel: envOr("OPENMASJID_LOG_LEVEL", envOr("LOG_LEVEL", "info")),
 		Dev:      os.Getenv("OPENMASJID_DEV") == "true",
 	}
 	return cfg
