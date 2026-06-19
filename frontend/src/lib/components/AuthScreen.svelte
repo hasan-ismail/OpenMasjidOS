@@ -120,9 +120,11 @@
   </div>
 </div>
 
+<!-- Esc closes the reset modal (svelte:window must be top-level). -->
+<svelte:window on:keydown={(e) => { if (e.key === 'Escape') showReset = false; }} />
+
 <!-- Forgot-password instructions (reset is done from the server terminal). -->
 {#if showReset}
-  <svelte:window on:keydown={(e) => { if (e.key === 'Escape') showReset = false; }} />
   <div class="modal-scrim" on:click={() => (showReset = false)} role="presentation">
     <div
       class="reset-modal glass-raised"

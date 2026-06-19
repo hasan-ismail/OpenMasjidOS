@@ -161,9 +161,11 @@
 
 </div>
 
+<!-- Esc closes the custom-app modal (svelte:window must be top-level). -->
+<svelte:window on:keydown={(e) => { if (e.key === 'Escape') showCustom = false; }} />
+
 <!-- Custom-app installer (advanced, opt-in). Paste a Docker Compose file. -->
 {#if showCustom}
-  <svelte:window on:keydown={(e) => { if (e.key === 'Escape') showCustom = false; }} />
   <div class="modal-scrim" on:click={() => (showCustom = false)} role="presentation">
     <div
       class="custom-modal glass-raised"
