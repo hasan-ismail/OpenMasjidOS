@@ -5,7 +5,7 @@
 ## Quick Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/OpenMasjidOS/OpenMasjidOS/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/hasan-ismail/OpenMasjidOS/master/install.sh | bash
 ```
 
 Once installed, open your browser to `http://<server-ip>:8723` and follow the setup wizard.
