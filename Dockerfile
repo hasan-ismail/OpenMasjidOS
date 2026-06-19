@@ -3,11 +3,9 @@ FROM node:20-alpine AS ui-builder
 
 WORKDIR /app/frontend
 
-# Install dependencies. package-lock.json is generated here; no need to commit it.
 COPY frontend/package.json ./
 RUN npm install
 
-# Copy the rest of the frontend source and build
 COPY frontend/ ./
 RUN npm run build
 
@@ -16,32 +14,35 @@ FROM golang:1.22-alpine AS go-builder
 
 WORKDIR /app
 
-# Download dependencies first (better layer caching).
-# go.sum is generated here rather than committed, keeping the repo clean.
+# Copy VERSION so the build can stamp it into the binary via ldflags.
+COPY VERSION ./
+
 COPY backend/go.mod ./
 RUN go mod download
 
-# Copy the backend source
 COPY backend/ ./
 
 # Copy the built UI assets into the exact path expected by go:embed in
-# internal/api/embed.go:  //go:embed ui/build
+# internal/api/embed.go:  //go:embed all:ui/build
 COPY --from=ui-builder /app/frontend/build ./internal/api/ui/build
 
-# go mod download alone doesn't always write go.sum; tidy ensures it is complete.
 RUN go mod tidy
 
-# Build a statically linked binary with debug info stripped
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o openmasjid ./cmd/openmasjid
+# Stamp the version from the VERSION file into the binary at link time.
+# The api.version variable is declared in internal/api/router.go and defaults
+# to "0.1.0"; the -X flag overrides it with whatever is in VERSION.
+RUN VERSION=$(cat /app/VERSION) && \
+    CGO_ENABLED=0 GOOS=linux go build \
+      -ldflags="-w -s -X github.com/OpenMasjidOS/OpenMasjidOS/internal/api.version=${VERSION}" \
+      -o openmasjid ./cmd/openmasjid
 
-# Stage 3: Minimal production image — no shell, no package manager, no runtime deps
+# Stage 3: Minimal production image
 FROM gcr.io/distroless/static-debian12
 
 COPY --from=go-builder /app/openmasjid /openmasjid
 
-EXPOSE 8723
+EXPOSE 80
 
-# Run as the built-in nonroot user provided by distroless
 USER nonroot:nonroot
 
 ENTRYPOINT ["/openmasjid"]

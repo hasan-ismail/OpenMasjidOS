@@ -299,7 +299,31 @@ A change is "done" only when: it builds via `make build`; it's covered by at lea
 
 ---
 
-## 13. Working agreement for Claude (the coding agent)
+## 13. Version control policy
+
+The canonical version lives in the **`VERSION`** file at the repository root. It is the single source of truth — the Makefile and Dockerfile both read it and stamp it into the Go binary via `-ldflags "-X ...api.version=<VERSION>"`. Never hardcode a version string anywhere else.
+
+### Scheme: `MAJOR.MINOR.PATCH`
+
+| Segment | When to bump | Example |
+|---------|--------------|---------|
+| **PATCH** (3rd) | Any small, backwards-compatible change — bug fixes, copy tweaks, minor UI improvements, dependency bumps. | `0.1.0` → `0.1.1` |
+| **MINOR** (2nd) | A meaningful new feature or a significant change to existing behaviour — new page, new API endpoint, new installer capability. | `0.1.x` → `0.2.0` |
+| **MAJOR** (1st) | **Reserved for the official public launch.** `1.0.0` signals production-ready, fully stable software. Do not bump to `1.x` before that milestone. | — |
+
+### Current version: `0.1.0`
+
+We are in **pre-release / active development**. All changes during this phase are `0.1.x` (patch) or `0.2.x`+ (minor feature milestones).
+
+### How to bump the version
+
+1. Edit the `VERSION` file — change the number, nothing else.
+2. Commit with message `chore: bump version to x.y.z`.
+3. Push. CI will pick up the new version automatically and stamp it into the Docker image. The dashboard will show the new version in the System Status card.
+
+---
+
+## 14. Working agreement for Claude (the coding agent)
 
 - Read this file first, every session. Treat Sections 3 (scope) and 9 (design/voice) as hard constraints.
 - Build **vertically**: ship one full working slice (e.g., "list installed apps") end-to-end — backend + API + UI + theme + i18n — before starting the next.

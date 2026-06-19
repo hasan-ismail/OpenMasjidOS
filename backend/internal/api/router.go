@@ -4,7 +4,6 @@
 package api
 
 import (
-	"encoding/json"
 	"io/fs"
 	"log/slog"
 	"net/http"
@@ -89,33 +88,7 @@ func NewRouter(cfg *config.Config) http.Handler {
 	return r
 }
 
-// ── Handlers ────────────────────────────────────────────────────────────────
-
-func handleHealth(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]string{
-		"status":  "ok",
-		"version": version,
-	})
-}
-
-func handleReady(w http.ResponseWriter, r *http.Request) {
-	// TODO(phase-2): check that the setup wizard has been completed and that
-	// the Docker socket is reachable before returning ready:true.
-	writeJSON(w, http.StatusOK, map[string]bool{"ready": true})
-}
-
 // ── Helpers ─────────────────────────────────────────────────────────────────
-
-// writeJSON encodes v as JSON and writes it with the given status code.
-// It sets Content-Type so callers do not have to.
-func writeJSON(w http.ResponseWriter, status int, v any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(v); err != nil {
-		// At this point headers are already sent; log and move on.
-		slog.Error("failed to encode JSON response", "err", err)
-	}
-}
 
 // spaHandler returns an http.Handler that serves files from the embedded UI
 // filesystem. If a requested path is not found it falls back to index.html so
