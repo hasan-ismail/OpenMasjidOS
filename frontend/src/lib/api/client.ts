@@ -10,7 +10,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }));
-    throw new ApiError(res.status, body.error ?? 'Unknown error');
+    throw new ApiError(res.status, body.error ?? 'Unknown error', body.meta?.details);
   }
 
   const json = await res.json();
@@ -19,10 +19,22 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(
+    public status: number,
+    message: string,
+    public details?: string,
+  ) {
     super(message);
     this.name = 'ApiError';
   }
+}
+
+export interface InstalledApp {
+  id: string;
+  name: string;
+  custom: boolean;
+  created_at: string;
+  running: boolean;
 }
 
 export interface HealthResponse {
@@ -69,5 +81,21 @@ export const api = {
       }),
     /** Sign out and clear the session cookie. */
     logout: () => request<{ authenticated: boolean }>('/auth/logout', { method: 'POST' }),
+  },
+
+  apps: {
+    /** List installed apps with their running state. */
+    list: () => request<{ apps: InstalledApp[] }>('/apps'),
+    /** Install a 3rd-party app from a pasted Docker Compose file. */
+    installCustom: (name: string, compose: string) =>
+      request<InstalledApp>('/apps/custom', {
+        method: 'POST',
+        body: JSON.stringify({ name, compose }),
+      }),
+    /** Stop and remove an app (optionally deleting its data). */
+    remove: (id: string, data = false) =>
+      request<{ removed: string }>(`/apps/${encodeURIComponent(id)}?data=${data}`, {
+        method: 'DELETE',
+      }),
   },
 };

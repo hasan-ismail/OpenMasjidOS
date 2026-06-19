@@ -1,13 +1,56 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
   import { t } from '$lib/i18n';
   import { prefs } from '$lib/stores/prefs';
+  import { api, ApiError } from '$lib/api/client';
   import { riseIn, pressable, enterGrid, liquidIndicator } from '$lib/animations';
 
   // Advanced: the "Custom app" affordance only appears when the admin has
   // enabled it in Settings → Advanced.
   let showCustom = $state(false);
+  let customName = $state('');
   let composeText = $state('');
+  let installBusy = $state(false);
+  let installError = $state('');
+  let installDetails = $state('');
+
+  function openCustom() {
+    customName = '';
+    composeText = '';
+    installError = '';
+    installDetails = '';
+    showCustom = true;
+  }
+
+  async function installCustom() {
+    installError = '';
+    installDetails = '';
+    if (!customName.trim()) {
+      installError = $t('store.customAppNameRequired');
+      return;
+    }
+    if (!composeText.trim()) {
+      installError = $t('store.customAppComposeRequired');
+      return;
+    }
+    installBusy = true;
+    try {
+      await api.apps.installCustom(customName.trim(), composeText);
+      showCustom = false;
+      // Installed apps live on the dashboard — take the admin there to see it.
+      goto('/');
+    } catch (e) {
+      if (e instanceof ApiError) {
+        installError = e.message;
+        installDetails = e.details ?? '';
+      } else {
+        installError = $t('store.customAppError');
+      }
+    } finally {
+      installBusy = false;
+    }
+  }
 
   type Category = 'all' | 'displays' | 'community' | 'donations' | 'quran' | 'utilities';
 
@@ -67,7 +110,7 @@
       <p class="page-subtitle">{$t('store.subtitle')}</p>
     </div>
     {#if $prefs.customApps}
-      <button class="custom-btn" use:pressable on:click={() => (showCustom = true)}>
+      <button class="custom-btn" use:pressable on:click={openCustom}>
         <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
           <path d="M8 3 L8 13 M3 8 L13 8" />
         </svg>
@@ -176,19 +219,55 @@
     >
       <h2 id="custom-title" class="custom-title">{$t('store.customAppTitle')}</h2>
       <p class="custom-desc">{$t('store.customAppDesc')}</p>
+
+      <!-- Safety disclaimer — this runs arbitrary containers on the host. -->
+      <div class="custom-warning" role="note">
+        <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+          <path d="M10 2.5 L18.5 17 L1.5 17 Z" stroke-linejoin="round" />
+          <path d="M10 8 L10 12" stroke-linecap="round" />
+          <circle cx="10" cy="14.5" r="0.6" fill="currentColor" stroke="none" />
+        </svg>
+        <span>{$t('store.customAppWarning')}</span>
+      </div>
+
+      <label class="custom-label" for="custom-name">{$t('store.customAppName')}</label>
+      <input
+        id="custom-name"
+        class="custom-input"
+        type="text"
+        bind:value={customName}
+        placeholder={$t('store.customAppNamePlaceholder')}
+        autocomplete="off"
+      />
+
+      <label class="custom-label" for="custom-compose">{$t('store.customAppCompose')}</label>
       <textarea
+        id="custom-compose"
         class="custom-textarea"
         bind:value={composeText}
         placeholder={$t('store.customAppPlaceholder')}
         spellcheck="false"
-        aria-label={$t('store.customAppTitle')}
       ></textarea>
-      <p class="custom-soon">{$t('store.customAppSoon')}</p>
+
+      {#if installError}
+        <div class="install-error" role="alert">
+          <p>{installError}</p>
+          {#if installDetails}
+            <details>
+              <summary>{$t('errors.viewDetails')}</summary>
+              <pre>{installDetails}</pre>
+            </details>
+          {/if}
+        </div>
+      {/if}
+
       <div class="custom-actions">
-        <button class="btn-ghost" use:pressable on:click={() => (showCustom = false)}>
+        <button class="btn-ghost" use:pressable on:click={() => (showCustom = false)} disabled={installBusy}>
           {$t('actions.cancel')}
         </button>
-        <button class="btn-primary" disabled use:pressable>{$t('store.install')}</button>
+        <button class="btn-primary" use:pressable on:click={installCustom} disabled={installBusy}>
+          {installBusy ? $t('store.customAppInstalling') : $t('store.install')}
+        </button>
       </div>
     </div>
   </div>
@@ -252,6 +331,64 @@
     color: var(--color-ink-muted);
     margin: 0 0 1rem;
   }
+  .custom-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.625rem;
+    padding: 0.75rem 0.875rem;
+    margin-block-end: 1.25rem;
+    border-radius: var(--radius-button);
+    border: 1px solid color-mix(in srgb, var(--color-warning) 40%, transparent);
+    background: color-mix(in srgb, var(--color-warning) 12%, transparent);
+    color: var(--color-warning);
+    font-size: 0.8125rem;
+    line-height: 1.45;
+  }
+  .custom-warning svg { flex-shrink: 0; margin-block-start: 1px; }
+  .custom-label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--color-ink-muted);
+    margin: 0 0 0.375rem;
+  }
+  .custom-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.5rem 0.75rem;
+    margin-block-end: 1rem;
+    border-radius: var(--radius-button);
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg-inset);
+    color: var(--color-ink);
+    font-size: 0.9375rem;
+    outline: none;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18);
+  }
+  .custom-input:focus { border-color: var(--color-primary); box-shadow: inset 0 1px 2px rgba(0,0,0,.18), var(--glow-primary); }
+  .install-error {
+    margin-block-start: 0.875rem;
+    padding: 0.625rem 0.75rem;
+    border-radius: var(--radius-button);
+    border: 1px solid color-mix(in srgb, var(--color-danger) 30%, transparent);
+    background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+    color: var(--color-danger);
+    font-size: 0.875rem;
+  }
+  .install-error p { margin: 0; }
+  .install-error summary { cursor: pointer; margin-block-start: 0.375rem; font-size: 0.8125rem; }
+  .install-error pre {
+    margin: 0.5rem 0 0;
+    padding: 0.5rem;
+    max-height: 10rem;
+    overflow: auto;
+    border-radius: 0.375rem;
+    background: rgba(0, 0, 0, 0.25);
+    color: var(--color-ink-muted);
+    font-size: 0.75rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
   .custom-textarea {
     width: 100%;
     box-sizing: border-box;
@@ -269,11 +406,6 @@
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18);
   }
   .custom-textarea:focus { border-color: var(--color-primary); box-shadow: inset 0 1px 2px rgba(0,0,0,.18), var(--glow-primary); }
-  .custom-soon {
-    font-size: 0.8125rem;
-    color: var(--color-gold);
-    margin: 0.75rem 0 0;
-  }
   .custom-actions {
     display: flex;
     justify-content: flex-end;

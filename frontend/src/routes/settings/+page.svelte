@@ -168,9 +168,6 @@
       </div>
     </section>
 
-    <!-- Note: masjid details live in apps, not here -->
-    <p class="platform-note">{$t('settings.note')}</p>
-
     <!-- Save bar -->
     <div class="save-bar">
       {#if saved}
@@ -387,14 +384,6 @@
     background: var(--color-on-primary);
   }
   :global([dir='rtl']) .switch:checked::after { transform: translateX(-1rem); }
-
-  .platform-note {
-    font-size: 0.8125rem;
-    color: var(--color-ink-muted);
-    text-align: center;
-    margin: 0;
-    padding-inline: 1rem;
-  }
 
   .save-bar {
     display: flex;

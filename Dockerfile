@@ -36,21 +36,25 @@ RUN VERSION=$(cat /app/VERSION) && \
       -ldflags="-w -s -X github.com/OpenMasjidOS/OpenMasjidOS/internal/api.version=${VERSION}" \
       -o openmasjid ./cmd/openmasjid
 
-# Stage 3: Minimal production image
-FROM gcr.io/distroless/static-debian12
+# Stage 3: Production image — Alpine + the Docker CLI and Compose plugin.
+#
+# We need a base WITH the docker CLI + `docker compose` (not distroless) because
+# the core installs/removes apps by shelling out to `docker compose` against the
+# mounted host socket. The Go binary is statically linked (CGO disabled) so it
+# runs fine on Alpine/musl.
+FROM alpine:3.20
+
+RUN apk add --no-cache docker-cli docker-cli-compose ca-certificates
 
 COPY --from=go-builder /app/openmasjid /openmasjid
 
 EXPOSE 80
 
-# Runs as root (the default for distroless/static). The core is the control
-# plane: it must read the root-owned Docker socket (/var/run/docker.sock) and
-# write its config/state to the root-owned /data bind mount. A non-root user
-# cannot do either, so "USER nonroot" makes the container crash on startup.
-# Least-privilege still applies to the APP containers the core launches.
+# Runs as root. The core is the control plane: it must read the root-owned
+# Docker socket (/var/run/docker.sock), write config/state to /data, and run
+# `docker compose`. Least-privilege still applies to the APP containers it launches.
 
-# The image is distroless (no shell/wget/curl); the binary self-checks via the
-# -healthcheck flag, invoked by the compose HEALTHCHECK.
+# The binary self-checks via the -healthcheck flag (works without curl/wget).
 HEALTHCHECK --interval=10s --timeout=5s --retries=6 --start-period=15s \
   CMD ["/openmasjid", "-healthcheck"]
 

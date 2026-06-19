@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { t } from '$lib/i18n';
   import { api } from '$lib/api/client';
-  import type { StatsSnapshot } from '$lib/api/client';
+  import type { StatsSnapshot, InstalledApp } from '$lib/api/client';
   import { riseIn, tiltCard, pressable, enterGrid } from '$lib/animations';
 
   // Health response shape from GET /api/health
@@ -56,6 +56,34 @@
     const id = setInterval(pollStats, 3000);
     return () => clearInterval(id);
   });
+
+  // Installed apps
+  let installedApps: InstalledApp[] = [];
+  let removingId = '';
+
+  async function loadApps() {
+    try {
+      const r = await api.apps.list();
+      installedApps = r.apps ?? [];
+    } catch {
+      installedApps = [];
+    }
+  }
+
+  onMount(loadApps);
+
+  async function removeApp(app: InstalledApp) {
+    if (!confirm($t('dashboard.removeConfirm', { name: app.name }))) return;
+    removingId = app.id;
+    try {
+      await api.apps.remove(app.id, false);
+      await loadApps();
+    } catch {
+      // leave the app in the list; a transient failure shouldn't hide it
+    } finally {
+      removingId = '';
+    }
+  }
 
   // Staggered-entrance action for the content stack (hides then reveals on view).
   function gridIn(node: HTMLElement) {
@@ -193,6 +221,34 @@
           {$t('dashboard.installedApps')}
         </h2>
 
+        {#if installedApps.length > 0}
+          <!-- Installed apps -->
+          <div class="installed-grid">
+            {#each installedApps as app (app.id)}
+              <div class="installed-card glass">
+                <div class="installed-head">
+                  <span
+                    class="status-dot"
+                    class:status-dot--error={!app.running}
+                    aria-hidden="true"
+                  ></span>
+                  <span class="installed-name">{app.name}</span>
+                </div>
+                <div class="installed-meta">
+                  {app.running ? $t('status.running') : $t('status.stopped')}
+                </div>
+                <button
+                  class="remove-btn"
+                  on:click={() => removeApp(app)}
+                  use:pressable
+                  disabled={removingId === app.id}
+                >
+                  {removingId === app.id ? $t('status.updating') : $t('actions.remove')}
+                </button>
+              </div>
+            {/each}
+          </div>
+        {:else}
         <!-- Empty state — no apps installed yet -->
         <div class="empty-card glass glow-accent">
           <div class="empty-illustration" aria-hidden="true">
@@ -226,6 +282,7 @@
             {$t('dashboard.browseStore')}
           </a>
         </div>
+        {/if}
       </section>
 
     </div>
@@ -415,6 +472,43 @@
   .browse-btn:hover {
     background: var(--color-btn-hover);
   }
+
+  /* Installed apps */
+  .installed-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+  .installed-card {
+    padding: 1.125rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .installed-head { display: flex; align-items: center; gap: 0.5rem; }
+  .installed-name {
+    font-weight: 600;
+    color: var(--color-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .installed-meta { font-size: 0.8125rem; color: var(--color-ink-muted); }
+  .remove-btn {
+    margin-block-start: 0.25rem;
+    align-self: flex-start;
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-button);
+    border: 1px solid var(--glass-border);
+    background: transparent;
+    color: var(--color-ink-muted);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .remove-btn:hover:not(:disabled) { color: var(--color-danger); border-color: var(--color-danger); }
+  .remove-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
   /* App grid + skeletons */
   .apps-grid {

@@ -14,6 +14,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 
+	"github.com/OpenMasjidOS/OpenMasjidOS/internal/apps"
 	"github.com/OpenMasjidOS/OpenMasjidOS/internal/auth"
 	"github.com/OpenMasjidOS/OpenMasjidOS/internal/config"
 	"github.com/OpenMasjidOS/OpenMasjidOS/internal/stats"
@@ -40,6 +41,9 @@ func NewRouter(cfg *config.Config) (http.Handler, error) {
 	// Background host-metrics collector for the dashboard (reports on /data so
 	// disk usage reflects the host partition where app data lives).
 	statsCollector := stats.NewCollector(cfg.DataDir)
+
+	// App lifecycle manager (custom/3rd-party installs via Docker Compose).
+	appsAPI := newAppsAPI(apps.NewManager(cfg.DataDir))
 
 	r := chi.NewRouter()
 
@@ -111,6 +115,11 @@ func NewRouter(cfg *config.Config) (http.Handler, error) {
 			pr.Get("/stats", func(w http.ResponseWriter, r *http.Request) {
 				JSONData(w, http.StatusOK, statsCollector.Snapshot())
 			})
+
+			// App management (custom/3rd-party installs).
+			pr.Get("/apps", appsAPI.handleList)
+			pr.Post("/apps/custom", appsAPI.handleInstallCustom)
+			pr.Delete("/apps/{id}", appsAPI.handleRemove)
 		})
 	})
 
