@@ -26,23 +26,64 @@
     "welcome": "Welcome to OpenMasjidOS",
     "yourMasjid": "your masjid",
     "coreVersion": "Core v{version}",
-    "noApps": "No apps installed yet",
     "noAppsTitle": "No apps installed yet",
     "noAppsBody": "Browse the App Store to find apps for your masjid — prayer times, announcements, donation pages, and more.",
-    "noAppsHint": "Browse the App Store to find apps for your masjid.",
     "browseStore": "Browse App Store",
     "installedApps": "Installed Apps",
     "systemStatus": "System Status",
     "statusOk": "Everything is running smoothly",
     "statusError": "Could not reach the server. Check that OpenMasjidOS is running."
   },
-  "appStore": {
+  "store": {
     "title": "App Store",
+    "subtitle": "Find and install apps for your masjid",
+    "search": "Search apps...",
     "loading": "Loading available apps...",
-    "empty": "No apps found",
+    "empty": "No apps available yet",
+    "emptyHint": "The app catalog is on its way. Check back soon.",
     "install": "Install",
     "installed": "Installed",
-    "update": "Update available"
+    "update": "Update available",
+    "categories": {
+      "all": "All",
+      "displays": "Displays",
+      "community": "Community",
+      "donations": "Donations",
+      "quran": "Quran",
+      "utilities": "Utilities"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Manage your masjid's profile and preferences",
+    "masjidProfile": "Masjid Profile",
+    "masjidName": "Masjid name",
+    "masjidNamePlaceholder": "e.g. Al-Noor Islamic Centre",
+    "city": "City",
+    "cityPlaceholder": "e.g. London",
+    "country": "Country",
+    "countryPlaceholder": "e.g. United Kingdom",
+    "latitude": "Latitude",
+    "longitude": "Longitude",
+    "prayerSettings": "Prayer Settings",
+    "calculationMethod": "Calculation method",
+    "asrMadhab": "Asr time calculation",
+    "timezone": "Timezone",
+    "interface": "Interface",
+    "language": "Language",
+    "save": "Save changes",
+    "saved": "Changes saved",
+    "calcMethods": {
+      "mwl": "Muslim World League",
+      "isna": "ISNA (North America)",
+      "egypt": "Egyptian General Authority",
+      "makkah": "Umm al-Qura (Makkah)",
+      "karachi": "University of Islamic Sciences, Karachi"
+    },
+    "asrMethods": {
+      "standard": "Standard (Shafi'i, Maliki, Hanbali)",
+      "hanafi": "Hanafi"
+    }
   },
   "status": {
     "running": "Running",
@@ -65,6 +106,11 @@
   "errors": {
     "generic": "Something went wrong. Please try again.",
     "network": "Cannot reach the server. Check your connection and try again.",
-    "viewDetails": "View technical details"
+    "viewDetails": "View technical details",
+    "notFound": "Page not found",
+    "notFoundHint": "The page you're looking for doesn't exist.",
+    "serverError": "Something went wrong on our end.",
+    "serverErrorHint": "Please refresh the page. If the problem continues, restart OpenMasjidOS.",
+    "goHome": "Go to Dashboard"
   }
 }

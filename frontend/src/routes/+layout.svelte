@@ -49,21 +49,30 @@
       <!-- Dome icon placeholder — replaced by the real SVG glyph from
            lib/components/icons once the custom glyph set is wired up. -->
       <span class="dome-icon" aria-hidden="true">
-        <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" width="32" height="32">
-          <!-- Minaret finial -->
-          <circle cx="20" cy="4" r="2" fill="var(--color-accent)"/>
-          <!-- Dome body -->
-          <path
-            d="M8 24 C8 14 32 14 32 24 L32 28 L8 28 Z"
-            fill="var(--color-primary)"
-          />
-          <!-- Base structure -->
-          <rect x="6" y="28" width="28" height="4" rx="1" fill="var(--color-primary-muted)"/>
-          <!-- Door arch (mihrab motif) -->
-          <path
-            d="M17 32 L17 29 Q20 26 23 29 L23 32 Z"
-            fill="var(--color-surface-raised)"
-          />
+        <!--
+          Logo: OSI-inspired circular badge with a stylised masjid silhouette.
+          Uses currentColor so the icon inherits --color-primary from CSS.
+          The crescent "bite" uses --color-surface-raised to match the sidebar bg.
+        -->
+        <svg viewBox="0 0 40 40" width="34" height="34" fill="none" xmlns="http://www.w3.org/2000/svg" color="var(--color-primary)">
+          <!-- Outer ring (OSI-style badge) -->
+          <circle cx="20" cy="20" r="17" stroke="currentColor" stroke-width="1.8"/>
+          <!-- Left minaret body -->
+          <rect x="8" y="23" width="3" height="8.5" rx="0.8" fill="currentColor"/>
+          <!-- Left minaret pointed cap -->
+          <path d="M8 23 Q9.5 19.2 11 23 Z" fill="currentColor"/>
+          <!-- Right minaret body -->
+          <rect x="29" y="23" width="3" height="8.5" rx="0.8" fill="currentColor"/>
+          <!-- Right minaret pointed cap -->
+          <path d="M29 23 Q30.5 19.2 32 23 Z" fill="currentColor"/>
+          <!-- Base platform -->
+          <rect x="7" y="30.5" width="26" height="2" rx="0.8" fill="currentColor"/>
+          <!-- Main dome (pointed arch from base to apex) -->
+          <path d="M11 30.5 Q11 18 20 15 Q29 18 29 30.5 Z" fill="currentColor"/>
+          <!-- Crescent finial: outer circle ... -->
+          <circle cx="20" cy="13" r="2.8" fill="currentColor"/>
+          <!-- ... minus inner offset circle = crescent shape -->
+          <circle cx="21.4" cy="11.8" r="2.1" fill="var(--color-surface-raised)"/>
         </svg>
       </span>
       <span class="brand-name">{$t('brand.name')}</span>
