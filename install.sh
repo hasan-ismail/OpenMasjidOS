@@ -351,11 +351,19 @@ services:
       # across core container restarts and upgrades.
       - ${DATA_DIR}:/data
 
+      # Mount the host's /proc and /sys (read-only) so the dashboard's system
+      # stats (CPU, RAM, network, uptime) reflect the MACHINE, not the container.
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+
     environment:
       # Tell the core where its data lives inside the container
       OPENMASJID_DATA_DIR: /data
       # The port the Go HTTP server binds to inside the container
       OPENMASJID_PORT: "${PORT}"
+      # Point gopsutil at the mounted host /proc and /sys for host-level stats.
+      HOST_PROC: /host/proc
+      HOST_SYS: /host/sys
 
     healthcheck:
       # The image is distroless (no shell/wget/curl); the binary self-checks.

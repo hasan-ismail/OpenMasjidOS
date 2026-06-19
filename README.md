@@ -357,23 +357,32 @@ Create a VPS with **Ubuntu 22.04 LTS**, SSH in, and run the one-liner above.
 
 ## First Run & Setup Wizard
 
-The first time you open the dashboard, you'll be guided through a short setup wizard:
+The first time you open the dashboard you'll create your **admin account** — choose a username and a password (at least 8 characters). This is the only account that can access the dashboard, and it's protected by a login from then on.
 
-**Step 1 — Create your admin account**
-Choose a username and a strong password. This is the only account that has access to the dashboard.
+That's the whole setup. You're taken straight to the dashboard, where you can browse the App Store and install your first app.
 
-**Step 2 — Enter your masjid's profile**
-- Masjid name (shown in apps and on the dashboard)
-- City and country
-- Latitude and longitude (used by apps for accurate prayer times)
-- Prayer time calculation method (Muslim World League, ISNA, Umm al-Qura, etc.)
-- Asr time calculation (Standard / Hanafi)
-- Timezone
+> **Where do prayer times and location go?** Each app that needs them collects its own masjid details (prayer calculation method, location, etc.) when you install it. The platform itself stays generic, so different apps can use different settings if you ever need that.
 
-**Step 3 — Done!**
-You're taken to the dashboard. Browse the App Store to install your first app.
+---
 
-Apps you install will automatically receive your masjid's profile as configuration — no need to re-enter your location or prayer-time settings for each app.
+## Resetting the admin password
+
+Forgot the admin password? You can reset it from the server's terminal — no data is lost. You need terminal access to the machine running OpenMasjidOS, either sitting at it directly or connected over **SSH**:
+
+```bash
+# Connect to the server first if you're remote, e.g.:
+#   ssh youruser@192.168.1.18
+
+docker exec -it openmasjid-core /openmasjid -passwd
+```
+
+You'll be prompted to type a new password (twice). Then return to the dashboard and sign in with it. The "Forgot your password?" link on the login screen shows these same instructions.
+
+For unattended/scripted use you can pass the password directly (it will be visible in your shell history, so prefer the interactive form above):
+
+```bash
+docker exec openmasjid-core /openmasjid -passwd 'your-new-password'
+```
 
 ---
 

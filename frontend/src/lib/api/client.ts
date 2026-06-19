@@ -36,9 +36,21 @@ export interface AuthState {
   username?: string;
 }
 
+export interface StatsSnapshot {
+  cpu_percent: number;
+  mem_used: number;
+  mem_total: number;
+  disk_used: number;
+  disk_total: number;
+  uptime_sec: number;
+  net_rx_bytes: number;
+  net_tx_bytes: number;
+}
+
 export const api = {
   health: () => request<HealthResponse>('/health'),
   ready: () => request<{ ready: boolean }>('/ready'),
+  stats: () => request<StatsSnapshot>('/stats'),
 
   auth: {
     /** Whether the platform needs setup and whether the caller is signed in. */

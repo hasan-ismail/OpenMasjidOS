@@ -1,16 +1,21 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
+	"golang.org/x/term"
+
 	"github.com/OpenMasjidOS/OpenMasjidOS/internal/api"
+	"github.com/OpenMasjidOS/OpenMasjidOS/internal/auth"
 	"github.com/OpenMasjidOS/OpenMasjidOS/internal/config"
 )
 
@@ -23,6 +28,13 @@ func main() {
 	// the binary checks itself by hitting its own /api/health and exiting 0/1.
 	if len(os.Args) > 1 && (os.Args[1] == "-healthcheck" || os.Args[1] == "--healthcheck") {
 		os.Exit(healthcheck(cfg.Port))
+	}
+
+	// Password reset: `openmasjid -passwd [newpassword]`. Run inside the
+	// container (docker exec -it openmasjid-core /openmasjid -passwd) to recover
+	// a forgotten admin password without losing any data.
+	if len(os.Args) > 1 && (os.Args[1] == "-passwd" || os.Args[1] == "--passwd") {
+		os.Exit(resetPassword(cfg.DataDir, os.Args[2:]))
 	}
 
 	// Structured JSON logging so log aggregators (e.g. Docker log drivers) can
@@ -79,6 +91,72 @@ func main() {
 	}
 
 	slog.Info("server stopped cleanly")
+}
+
+// resetPassword sets a new admin password from the terminal (or from an
+// argument, for scripting). Returns a process exit code. It preserves the
+// existing username and only rewrites the password hash in auth.json.
+func resetPassword(dataDir string, args []string) int {
+	store, err := auth.NewStore(dataDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Could not open the credential store: %v\n", err)
+		return 1
+	}
+
+	username := store.Username()
+	if username == "" {
+		username = "admin"
+	}
+
+	var pw string
+	if len(args) > 0 && args[0] != "" {
+		// Non-interactive: password passed as an argument.
+		pw = args[0]
+	} else {
+		first, err := readSecret(fmt.Sprintf("New password for %q: ", username))
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Could not read input: %v\n", err)
+			return 1
+		}
+		second, err := readSecret("Confirm password: ")
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Could not read input: %v\n", err)
+			return 1
+		}
+		if first != second {
+			fmt.Fprintln(os.Stderr, "Those passwords didn't match. Nothing was changed.")
+			return 1
+		}
+		pw = first
+	}
+
+	if len(pw) < 8 {
+		fmt.Fprintln(os.Stderr, "Password must be at least 8 characters. Nothing was changed.")
+		return 1
+	}
+
+	if err := store.SetCredentials(username, pw); err != nil {
+		fmt.Fprintf(os.Stderr, "Could not save the new password: %v\n", err)
+		return 1
+	}
+
+	fmt.Fprintf(os.Stderr, "Password updated for %q. You can sign in now.\n", username)
+	return 0
+}
+
+// readSecret prompts on stderr and reads a line from stdin. When stdin is a
+// terminal the input is not echoed; otherwise (piped) it falls back to a plain
+// read so the command still works non-interactively.
+func readSecret(prompt string) (string, error) {
+	fmt.Fprint(os.Stderr, prompt)
+	fd := int(os.Stdin.Fd())
+	if term.IsTerminal(fd) {
+		b, err := term.ReadPassword(fd)
+		fmt.Fprintln(os.Stderr)
+		return strings.TrimSpace(string(b)), err
+	}
+	line, err := bufio.NewReader(os.Stdin).ReadString('\n')
+	return strings.TrimSpace(line), err
 }
 
 // healthcheck performs a single GET against the local /api/health endpoint and

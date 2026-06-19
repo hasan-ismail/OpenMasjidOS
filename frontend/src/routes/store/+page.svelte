@@ -1,7 +1,13 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { t } from '$lib/i18n';
+  import { prefs } from '$lib/stores/prefs';
   import { riseIn, pressable, enterGrid, liquidIndicator } from '$lib/animations';
+
+  // Advanced: the "Custom app" affordance only appears when the admin has
+  // enabled it in Settings → Advanced.
+  let showCustom = $state(false);
+  let composeText = $state('');
 
   type Category = 'all' | 'displays' | 'community' | 'donations' | 'quran' | 'utilities';
 
@@ -56,8 +62,18 @@
 
   <!-- Header -->
   <header class="page-header" in:riseIn>
-    <h1 class="page-title">{$t('store.title')}</h1>
-    <p class="page-subtitle">{$t('store.subtitle')}</p>
+    <div class="page-heading">
+      <h1 class="page-title">{$t('store.title')}</h1>
+      <p class="page-subtitle">{$t('store.subtitle')}</p>
+    </div>
+    {#if $prefs.customApps}
+      <button class="custom-btn" use:pressable on:click={() => (showCustom = true)}>
+        <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+          <path d="M8 3 L8 13 M3 8 L13 8" />
+        </svg>
+        {$t('store.customApp')}
+      </button>
+    {/if}
   </header>
 
   <!-- Search -->
@@ -145,6 +161,37 @@
 
 </div>
 
+<!-- Custom-app installer (advanced, opt-in). Paste a Docker Compose file. -->
+{#if showCustom}
+  <svelte:window on:keydown={(e) => { if (e.key === 'Escape') showCustom = false; }} />
+  <div class="modal-scrim" on:click={() => (showCustom = false)} role="presentation">
+    <div
+      class="custom-modal glass-raised"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="custom-title"
+      on:click|stopPropagation
+    >
+      <h2 id="custom-title" class="custom-title">{$t('store.customAppTitle')}</h2>
+      <p class="custom-desc">{$t('store.customAppDesc')}</p>
+      <textarea
+        class="custom-textarea"
+        bind:value={composeText}
+        placeholder={$t('store.customAppPlaceholder')}
+        spellcheck="false"
+        aria-label={$t('store.customAppTitle')}
+      ></textarea>
+      <p class="custom-soon">{$t('store.customAppSoon')}</p>
+      <div class="custom-actions">
+        <button class="btn-ghost" use:pressable on:click={() => (showCustom = false)}>
+          {$t('actions.cancel')}
+        </button>
+        <button class="btn-primary" disabled use:pressable>{$t('store.install')}</button>
+      </div>
+    </div>
+  </div>
+{/if}
+
 <style>
   .page {
     max-width: 56rem;
@@ -152,8 +199,109 @@
   }
 
   .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
     margin-block-end: 1.75rem;
   }
+  .custom-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    flex-shrink: 0;
+    padding: 0.4375rem 0.875rem;
+    border-radius: var(--radius-button);
+    border: 1px solid var(--color-primary);
+    background: var(--color-primary-subtle);
+    color: var(--color-primary);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+  .custom-btn:hover { background: color-mix(in srgb, var(--color-primary) 18%, transparent); }
+
+  /* Custom-app modal */
+  .modal-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background: rgba(0, 0, 0, 0.5);
+  }
+  .custom-modal {
+    width: 100%;
+    max-width: 32rem;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-modal), var(--glass-shadow-raised);
+  }
+  .custom-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0 0 0.375rem;
+  }
+  .custom-desc {
+    font-size: 0.875rem;
+    color: var(--color-ink-muted);
+    margin: 0 0 1rem;
+  }
+  .custom-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 9rem;
+    resize: vertical;
+    padding: 0.75rem;
+    border-radius: var(--radius-button);
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg-inset);
+    color: var(--color-ink);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    outline: none;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18);
+  }
+  .custom-textarea:focus { border-color: var(--color-primary); box-shadow: inset 0 1px 2px rgba(0,0,0,.18), var(--glow-primary); }
+  .custom-soon {
+    font-size: 0.8125rem;
+    color: var(--color-gold);
+    margin: 0.75rem 0 0;
+  }
+  .custom-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-block-start: 1.25rem;
+  }
+  .btn-ghost {
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-button);
+    border: 1px solid var(--glass-border);
+    background: transparent;
+    color: var(--color-ink-muted);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .btn-ghost:hover { color: var(--color-ink); }
+  .btn-primary {
+    padding: 0.5rem 1.25rem;
+    border-radius: var(--radius-button);
+    background: var(--color-btn);
+    color: var(--color-on-primary);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .page-heading { min-width: 0; }
   .page-title {
     font-family: 'Playfair Display', Georgia, serif;
     font-size: 1.75rem;

@@ -9,5 +9,7 @@ require (
 	github.com/docker/distribution v2.8.3+incompatible
 	github.com/opencontainers/image-spec v1.1.0
 	golang.org/x/crypto v0.22.0
+	golang.org/x/term v0.19.0
 	github.com/gorilla/websocket v1.5.1
+	github.com/shirou/gopsutil/v3 v3.24.4
 )

@@ -12,6 +12,7 @@
   let confirm = $state('');
   let error = $state('');
   let busy = $state(false);
+  let showReset = $state(false);
 
   async function submit() {
     error = '';
@@ -110,8 +111,38 @@
         {/if}
       </button>
     </form>
+
+    {#if mode === 'login'}
+      <button type="button" class="forgot-link" on:click={() => (showReset = true)}>
+        {$t('auth.forgotPassword')}
+      </button>
+    {/if}
   </div>
 </div>
+
+<!-- Forgot-password instructions (reset is done from the server terminal). -->
+{#if showReset}
+  <svelte:window on:keydown={(e) => { if (e.key === 'Escape') showReset = false; }} />
+  <div class="modal-scrim" on:click={() => (showReset = false)} role="presentation">
+    <div
+      class="reset-modal glass-raised"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="reset-title"
+      on:click|stopPropagation
+    >
+      <h2 id="reset-title" class="reset-title">{$t('auth.resetTitle')}</h2>
+      <p class="reset-text">{$t('auth.resetIntro')}</p>
+      <pre class="reset-cmd"><code>{$t('auth.resetCmd')}</code></pre>
+      <p class="reset-text">{$t('auth.resetOutro')}</p>
+      <div class="reset-actions">
+        <button class="auth-submit reset-close" use:pressable on:click={() => (showReset = false)}>
+          {$t('auth.resetClose')}
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
 
 <style>
   .auth-screen {
@@ -220,7 +251,71 @@
   .auth-submit:hover:not(:disabled) { background: var(--color-btn-hover); }
   .auth-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
+  .forgot-link {
+    margin-block-start: 1.25rem;
+    background: none;
+    border: none;
+    color: var(--color-ink-muted);
+    font-size: 0.8125rem;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color 0.15s ease;
+  }
+  .forgot-link:hover { color: var(--color-primary); }
+
+  /* Reset instructions modal */
+  .modal-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background: rgba(0, 0, 0, 0.5);
+    text-align: start;
+  }
+  .reset-modal {
+    width: 100%;
+    max-width: 30rem;
+    padding: 1.75rem;
+    box-shadow: var(--shadow-modal), var(--glass-shadow-raised);
+  }
+  .reset-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0 0 0.75rem;
+  }
+  .reset-text {
+    font-size: 0.875rem;
+    color: var(--color-ink-muted);
+    line-height: 1.5;
+    margin: 0 0 0.875rem;
+  }
+  .reset-cmd {
+    margin: 0 0 0.875rem;
+    padding: 0.75rem 0.875rem;
+    border-radius: var(--radius-button);
+    background: var(--glass-bg-inset);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+    overflow-x: auto;
+  }
+  .reset-cmd code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.8125rem;
+    color: var(--color-primary);
+    white-space: pre;
+  }
+  .reset-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-block-start: 0.25rem;
+  }
+  .reset-close { margin-block-start: 0; }
+
   @media (prefers-reduced-motion: reduce) {
-    .field, .auth-submit { transition: none; }
+    .field, .auth-submit, .forgot-link { transition: none; }
   }
 </style>

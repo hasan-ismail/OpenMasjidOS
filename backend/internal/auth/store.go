@@ -96,6 +96,24 @@ func (s *Store) Setup(username, password string) error {
 	return nil
 }
 
+// SetCredentials overwrites the stored admin credentials. Unlike Setup it does
+// not fail when an account already exists — it is used by the `-passwd` recovery
+// command to reset a forgotten password from the terminal.
+func (s *Store) SetCredentials(username, password string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	hash, err := HashPassword(password)
+	if err != nil {
+		return err
+	}
+	c := &credentials{Username: username, Hash: hash}
+	if err := s.save(c); err != nil {
+		return err
+	}
+	s.creds = c
+	return nil
+}
+
 // save writes auth.json atomically (temp file + rename) with 0600 perms.
 func (s *Store) save(c *credentials) error {
 	data, err := json.MarshalIndent(c, "", "  ")

@@ -65,8 +65,8 @@
   --radius-button: 0.625rem;
 
   /* ── Glass material ─────────────────────────────────────────────────── */
-  --glass-blur: 16px;            /* perf ceiling — past ~20px cost climbs, no gain */
-  --glass-blur-inset: 8px;       /* lighter blur for nested wells (no double-blur mush) */
+  --glass-blur: 10px;            /* kept low — backdrop-filter is the main GPU cost */
+  --glass-blur-inset: 6px;       /* lighter blur for nested wells (no double-blur mush) */
   --glass-saturate: 140%;
   --glass-bg: rgba(10, 24, 40, 0.55);          /* keeps --color-ink AA over brightest aurora */
   --glass-bg-raised: rgba(15, 32, 64, 0.68);
@@ -158,8 +158,8 @@
   --radius-button: 0.625rem;
 
   /* ── Glass material ─────────────────────────────────────────────────── */
-  --glass-blur: 16px;
-  --glass-blur-inset: 8px;
+  --glass-blur: 10px;
+  --glass-blur-inset: 6px;
   --glass-saturate: 120%;
   --glass-bg: rgba(255, 255, 255, 0.55);
   --glass-bg-raised: rgba(255, 255, 255, 0.72);

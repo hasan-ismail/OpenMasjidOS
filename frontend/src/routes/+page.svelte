@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { t } from '$lib/i18n';
   import { api } from '$lib/api/client';
+  import type { StatsSnapshot } from '$lib/api/client';
   import { riseIn, tiltCard, pressable, enterGrid } from '$lib/animations';
 
   // Health response shape from GET /api/health
@@ -15,6 +16,12 @@
   let healthError = false;
   let loading = true;
 
+  // Live host stats (polled). netRx/netTx are derived rates (bytes/sec).
+  let stats: StatsSnapshot | null = null;
+  let netRx = 0;
+  let netTx = 0;
+  let prevNet: { rx: number; tx: number; t: number } | null = null;
+
   onMount(async () => {
     try {
       health = await api.health();
@@ -25,9 +32,55 @@
     }
   });
 
+  async function pollStats() {
+    try {
+      const s = await api.stats();
+      const now = Date.now();
+      if (prevNet) {
+        const dt = (now - prevNet.t) / 1000;
+        if (dt > 0) {
+          netRx = Math.max(0, (s.net_rx_bytes - prevNet.rx) / dt);
+          netTx = Math.max(0, (s.net_tx_bytes - prevNet.tx) / dt);
+        }
+      }
+      prevNet = { rx: s.net_rx_bytes, tx: s.net_tx_bytes, t: now };
+      stats = s;
+    } catch {
+      // Stats endpoint unavailable (e.g. an older host without the /proc
+      // mount) — leave the panel hidden rather than showing an error.
+    }
+  }
+
+  onMount(() => {
+    pollStats();
+    const id = setInterval(pollStats, 3000);
+    return () => clearInterval(id);
+  });
+
   // Staggered-entrance action for the content stack (hides then reveals on view).
   function gridIn(node: HTMLElement) {
     return { destroy: enterGrid(node, { base: 90, y: 16 }) };
+  }
+
+  function fmtBytes(n: number): string {
+    if (n <= 0) return '0 B';
+    const u = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.min(u.length - 1, Math.floor(Math.log(n) / Math.log(1024)));
+    return (n / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1) + ' ' + u[i];
+  }
+  function fmtRate(bps: number): string {
+    return fmtBytes(bps) + '/s';
+  }
+  function fmtUptime(sec: number): string {
+    const d = Math.floor(sec / 86400);
+    const h = Math.floor((sec % 86400) / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    if (d > 0) return `${d}d ${h}h`;
+    if (h > 0) return `${h}h ${m}m`;
+    return `${m}m`;
+  }
+  function pct(used: number, total: number): number {
+    return total > 0 ? Math.round((used / total) * 100) : 0;
   }
 </script>
 
@@ -46,6 +99,48 @@
         <p class="hero-sub">{$t('dashboard.coreVersion', { version: health.version })}</p>
       {/if}
     </header>
+  {/if}
+
+  <!-- ── Live host stats (CPU / RAM / Storage / Network) ── -->
+  {#if stats}
+    <section class="stats-grid" aria-label={$t('dashboard.stats.title')} in:riseIn>
+      <div class="stat-card glass">
+        <div class="stat-head">
+          <span class="stat-label">{$t('dashboard.stats.cpu')}</span>
+          <span class="stat-val">{Math.round(stats.cpu_percent)}%</span>
+        </div>
+        <div class="stat-bar"><span style="width:{Math.min(100, stats.cpu_percent)}%"></span></div>
+      </div>
+
+      <div class="stat-card glass">
+        <div class="stat-head">
+          <span class="stat-label">{$t('dashboard.stats.memory')}</span>
+          <span class="stat-val">{pct(stats.mem_used, stats.mem_total)}%</span>
+        </div>
+        <div class="stat-bar"><span style="width:{pct(stats.mem_used, stats.mem_total)}%"></span></div>
+        <div class="stat-sub">{fmtBytes(stats.mem_used)} / {fmtBytes(stats.mem_total)}</div>
+      </div>
+
+      <div class="stat-card glass">
+        <div class="stat-head">
+          <span class="stat-label">{$t('dashboard.stats.disk')}</span>
+          <span class="stat-val">{pct(stats.disk_used, stats.disk_total)}%</span>
+        </div>
+        <div class="stat-bar"><span style="width:{pct(stats.disk_used, stats.disk_total)}%"></span></div>
+        <div class="stat-sub">{fmtBytes(stats.disk_used)} / {fmtBytes(stats.disk_total)}</div>
+      </div>
+
+      <div class="stat-card glass">
+        <div class="stat-head">
+          <span class="stat-label">{$t('dashboard.stats.network')}</span>
+        </div>
+        <div class="stat-net">
+          <span class="stat-net-item">↓ {fmtRate(netRx)}</span>
+          <span class="stat-net-item">↑ {fmtRate(netTx)}</span>
+        </div>
+        <div class="stat-sub">{$t('dashboard.stats.uptime')} {fmtUptime(stats.uptime_sec)}</div>
+      </div>
+    </section>
   {/if}
 
   {#if loading}
@@ -192,6 +287,42 @@
       animation: none;
       background: var(--color-surface-overlay);
     }
+  }
+
+  /* Live stats */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+  }
+  .stat-card { padding: 1rem 1.125rem; }
+  .stat-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .stat-label { font-size: 0.8125rem; color: var(--color-ink-muted); font-weight: 500; }
+  .stat-val { font-size: 1.125rem; font-weight: 600; color: var(--color-ink); }
+  .stat-bar {
+    margin-block-start: 0.625rem;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--glass-bg-inset);
+    overflow: hidden;
+  }
+  .stat-bar span {
+    display: block;
+    height: 100%;
+    border-radius: 3px;
+    background: var(--color-primary);
+    transition: width 0.6s var(--ease-settle);
+  }
+  .stat-sub { margin-block-start: 0.5rem; font-size: 0.75rem; color: var(--color-ink-faint); }
+  .stat-net { display: flex; gap: 0.875rem; margin-block-start: 0.375rem; }
+  .stat-net-item { font-size: 0.9375rem; font-weight: 600; color: var(--color-ink); }
+  @media (prefers-reduced-motion: reduce) {
+    .stat-bar span { transition: none; }
   }
 
   .content-stack {

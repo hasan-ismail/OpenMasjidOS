@@ -26,7 +26,13 @@
     "passwordsMismatch": "Those passwords don't match.",
     "passwordTooShort": "Your password needs to be at least 8 characters.",
     "loading": "Loading…",
-    "genericError": "Something went wrong. Please try again."
+    "genericError": "Something went wrong. Please try again.",
+    "forgotPassword": "Forgot your password?",
+    "resetTitle": "Reset your password",
+    "resetIntro": "You'll need terminal access to the machine running OpenMasjidOS — either sitting at it directly or connected over SSH. Then run this command:",
+    "resetCmd": "docker exec -it openmasjid-core /openmasjid -passwd",
+    "resetOutro": "Follow the prompt to choose a new password, then come back here and sign in. Your apps and data are untouched.",
+    "resetClose": "Got it"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -54,7 +60,15 @@
     "installedApps": "Installed Apps",
     "systemStatus": "System Status",
     "statusOk": "Everything is running smoothly",
-    "statusError": "Could not reach the server. Check that OpenMasjidOS is running."
+    "statusError": "Could not reach the server. Check that OpenMasjidOS is running.",
+    "stats": {
+      "title": "System resources",
+      "cpu": "Processor",
+      "memory": "Memory",
+      "disk": "Storage",
+      "network": "Network",
+      "uptime": "Up"
+    }
   },
   "store": {
     "title": "App Store",
@@ -64,6 +78,11 @@
     "empty": "No apps available yet",
     "emptyHint": "The app catalog is on its way. Check back soon.",
     "comingSoon": "Coming soon",
+    "customApp": "Custom app",
+    "customAppTitle": "Install a custom app",
+    "customAppDesc": "Paste a Docker Compose file to run any app on your masjid's server.",
+    "customAppPlaceholder": "services:\n  app:\n    image: example/app:latest\n    ports:\n      - \"8080:80\"",
+    "customAppSoon": "Heads up — custom installs aren't wired up yet. This is where you'll paste your Compose file once they are.",
     "install": "Install",
     "installed": "Installed",
     "update": "Update available",

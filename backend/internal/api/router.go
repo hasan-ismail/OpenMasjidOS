@@ -16,6 +16,7 @@ import (
 
 	"github.com/OpenMasjidOS/OpenMasjidOS/internal/auth"
 	"github.com/OpenMasjidOS/OpenMasjidOS/internal/config"
+	"github.com/OpenMasjidOS/OpenMasjidOS/internal/stats"
 )
 
 // version is the API/build version reported by the health endpoint.
@@ -35,6 +36,10 @@ func NewRouter(cfg *config.Config) (http.Handler, error) {
 		return nil, err
 	}
 	authn := newAuthAPI(authStore, auth.NewSessions(sessionTTL), sessionTTL)
+
+	// Background host-metrics collector for the dashboard (reports on /data so
+	// disk usage reflects the host partition where app data lives).
+	statsCollector := stats.NewCollector(cfg.DataDir)
 
 	r := chi.NewRouter()
 
@@ -101,6 +106,11 @@ func NewRouter(cfg *config.Config) (http.Handler, error) {
 		api.Group(func(pr chi.Router) {
 			pr.Use(authn.requireAuth)
 			pr.Get("/session", authn.handleSession)
+
+			// Live host resource usage for the dashboard home.
+			pr.Get("/stats", func(w http.ResponseWriter, r *http.Request) {
+				JSONData(w, http.StatusOK, statsCollector.Snapshot())
+			})
 		})
 	})
 
