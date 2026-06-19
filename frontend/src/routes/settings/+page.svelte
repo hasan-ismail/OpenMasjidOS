@@ -1,223 +1,188 @@
 <script lang="ts">
-  import { fly, fade } from 'svelte/transition';
-  import { cubicOut } from 'svelte/easing';
-  import { t } from '$lib/i18n';
+  import { get } from 'svelte/store';
+  import { t, locale } from '$lib/i18n';
+  import { theme } from '$lib/theme/theme';
+  import { prefs, ACCENTS } from '$lib/stores/prefs';
+  import { riseIn, pressable, enterGrid } from '$lib/animations';
 
-  const prefersReducedMotion =
-    typeof window !== 'undefined'
-      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      : false;
-
-  const flyIn = prefersReducedMotion
-    ? { y: 0, duration: 0 }
-    : { y: 20, duration: 400, easing: cubicOut };
-
-  function sectionDelay(i: number) {
-    return prefersReducedMotion ? 0 : i * 80;
-  }
-
-  // Form state — not yet wired to backend
-  let masjidName = '';
-  let streetAddress = '';
-  let city = '';
-  let state = '';
-  let zipCode = '';
-  let country = '';
-  let calcMethod = 'mwl';
-  let asrMadhab = 'hanafi';  // Hanafi is the default
-  let timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  let language = 'en';
+  // Live-applied presentation prefs read straight from their stores ($theme,
+  // $locale, $prefs.accent). Content fields below are edited locally and
+  // committed on Save.
+  let dashboardName = get(prefs).dashboardName;
+  let showSplash = get(prefs).showSplash;
+  let customApps = get(prefs).customApps;
 
   let saved = false;
   let saving = false;
 
+  const accentList = Object.entries(ACCENTS).map(([id, a]) => ({ id, ...a }));
+
+  function chooseAccent(id: string) {
+    prefs.patch({ accent: id }); // applies live + persists
+  }
+
+  function setLanguage(e: Event) {
+    locale.set((e.target as HTMLSelectElement).value);
+  }
+
   async function handleSave() {
     saving = true;
-    // Backend not yet connected — will wire up in next milestone
-    await new Promise((r) => setTimeout(r, 600));
+    prefs.patch({ dashboardName: dashboardName.trim(), showSplash, customApps });
+    await new Promise((r) => setTimeout(r, 400));
     saving = false;
     saved = true;
     setTimeout(() => (saved = false), 3000);
   }
 
-  const calcMethods = [
-    { value: 'mwl',     label: $t('settings.calcMethods.mwl') },
-    { value: 'isna',    label: $t('settings.calcMethods.isna') },
-    { value: 'egypt',   label: $t('settings.calcMethods.egypt') },
-    { value: 'makkah',  label: $t('settings.calcMethods.makkah') },
-    { value: 'karachi', label: $t('settings.calcMethods.karachi') },
-  ];
-
-  // Hanafi is listed first and selected by default
-  const asrMethods = [
-    { value: 'hanafi',   label: $t('settings.asrMethods.hanafi') },
-    { value: 'standard', label: $t('settings.asrMethods.standard') },
-  ];
+  function gridIn(node: HTMLElement) {
+    return { destroy: enterGrid(node, { base: 90, y: 16 }) };
+  }
 </script>
 
-<div class="page" in:fly={flyIn}>
-  <header class="page-header" in:fly={{ ...flyIn, delay: 0 }}>
+<div class="page">
+  <header class="page-header" in:riseIn>
     <h1 class="page-title">{$t('settings.title')}</h1>
     <p class="page-subtitle">{$t('settings.subtitle')}</p>
   </header>
 
-  <form class="settings-form" on:submit|preventDefault={handleSave}>
+  <form class="settings-form" on:submit|preventDefault={handleSave} use:gridIn>
 
-    <!-- Masjid Profile -->
-    <section class="settings-card" in:fly={{ ...flyIn, delay: sectionDelay(0) }}>
-      <div class="card-header">
-        <div class="card-icon" aria-hidden="true">
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18">
-            <path d="M4 18 Q4 11 10 9 Q16 11 16 18"/>
-            <rect x="2" y="17" width="16" height="1.5" rx="0.75"/>
-            <circle cx="10" cy="7.5" r="1.5"/>
-          </svg>
-        </div>
-        <h2 class="card-title">{$t('settings.masjidProfile')}</h2>
-      </div>
-
-      <div class="form-grid">
-        <div class="form-group form-group--full">
-          <label for="masjid-name" class="form-label">{$t('settings.masjidName')}</label>
-          <input
-            id="masjid-name"
-            type="text"
-            bind:value={masjidName}
-            placeholder={$t('settings.masjidNamePlaceholder')}
-            class="form-input"
-          />
-        </div>
-        <div class="form-group form-group--full">
-          <label for="street-address" class="form-label">{$t('settings.streetAddress')}</label>
-          <input
-            id="street-address"
-            type="text"
-            bind:value={streetAddress}
-            placeholder={$t('settings.streetAddressPlaceholder')}
-            class="form-input"
-          />
-        </div>
-        <div class="form-group">
-          <label for="city" class="form-label">{$t('settings.city')}</label>
-          <input
-            id="city"
-            type="text"
-            bind:value={city}
-            placeholder={$t('settings.cityPlaceholder')}
-            class="form-input"
-          />
-        </div>
-        <div class="form-group">
-          <label for="state" class="form-label">{$t('settings.state')}</label>
-          <input
-            id="state"
-            type="text"
-            bind:value={state}
-            placeholder={$t('settings.statePlaceholder')}
-            class="form-input"
-          />
-        </div>
-        <div class="form-group">
-          <label for="zip-code" class="form-label">{$t('settings.zipCode')}</label>
-          <input
-            id="zip-code"
-            type="text"
-            bind:value={zipCode}
-            placeholder={$t('settings.zipCodePlaceholder')}
-            class="form-input"
-          />
-        </div>
-        <div class="form-group">
-          <label for="country" class="form-label">{$t('settings.country')}</label>
-          <input
-            id="country"
-            type="text"
-            bind:value={country}
-            placeholder={$t('settings.countryPlaceholder')}
-            class="form-input"
-          />
-        </div>
-      </div>
-    </section>
-
-    <!-- Prayer Settings -->
-    <section class="settings-card" in:fly={{ ...flyIn, delay: sectionDelay(1) }}>
+    <!-- Appearance -->
+    <section class="settings-card glass">
       <div class="card-header">
         <div class="card-icon" aria-hidden="true">
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18">
             <circle cx="10" cy="10" r="7.5"/>
-            <path d="M10 5.5 L10 10 L13.5 12"/>
+            <path d="M10 2.5 A7.5 7.5 0 0 0 10 17.5 Z" fill="currentColor" stroke="none"/>
           </svg>
         </div>
-        <h2 class="card-title">{$t('settings.prayerSettings')}</h2>
+        <h2 class="card-title">{$t('settings.appearance')}</h2>
       </div>
 
-      <div class="form-grid">
-        <div class="form-group form-group--full">
-          <label for="calc-method" class="form-label">{$t('settings.calculationMethod')}</label>
-          <select id="calc-method" bind:value={calcMethod} class="form-input">
-            {#each calcMethods as m}
-              <option value={m.value}>{m.label}</option>
+      <div class="settings-rows">
+        <!-- Theme -->
+        <div class="setting-row">
+          <span class="setting-label">{$t('settings.theme')}</span>
+          <div class="segmented" role="group" aria-label={$t('settings.theme')}>
+            <button
+              type="button"
+              class="seg"
+              class:seg--active={$theme === 'dark'}
+              aria-pressed={$theme === 'dark'}
+              use:pressable
+              on:click={() => theme.set('dark')}
+            >{$t('settings.themeDark')}</button>
+            <button
+              type="button"
+              class="seg"
+              class:seg--active={$theme === 'light'}
+              aria-pressed={$theme === 'light'}
+              use:pressable
+              on:click={() => theme.set('light')}
+            >{$t('settings.themeLight')}</button>
+          </div>
+        </div>
+
+        <!-- Accent -->
+        <div class="setting-row">
+          <span class="setting-label">{$t('settings.accent')}</span>
+          <div class="swatches" role="group" aria-label={$t('settings.accent')}>
+            {#each accentList as a}
+              <button
+                type="button"
+                class="swatch"
+                class:swatch--active={$prefs.accent === a.id}
+                style="--sw: {a.primary}"
+                aria-pressed={$prefs.accent === a.id}
+                aria-label={a.label}
+                title={a.label}
+                use:pressable
+                on:click={() => chooseAccent(a.id)}
+              ></button>
             {/each}
-          </select>
+          </div>
         </div>
-        <div class="form-group">
-          <label for="asr-madhab" class="form-label">{$t('settings.asrMadhab')}</label>
-          <select id="asr-madhab" bind:value={asrMadhab} class="form-input">
-            {#each asrMethods as m}
-              <option value={m.value}>{m.label}</option>
-            {/each}
-          </select>
+
+        <!-- Dashboard name -->
+        <div class="setting-row setting-row--stack">
+          <label class="setting-label" for="dash-name">{$t('settings.dashboardName')}</label>
+          <input id="dash-name" type="text" class="field" bind:value={dashboardName} placeholder={$t('settings.dashboardNamePlaceholder')} />
+          <span class="setting-hint">{$t('settings.dashboardNameHint')}</span>
         </div>
-        <div class="form-group">
-          <label for="timezone" class="form-label">{$t('settings.timezone')}</label>
-          <input
-            id="timezone"
-            type="text"
-            bind:value={timezone}
-            class="form-input"
-            placeholder="Europe/London"
-          />
-        </div>
+
+        <!-- Splash toggle -->
+        <label class="setting-row toggle-row">
+          <span class="setting-label">{$t('settings.showSplash')}</span>
+          <input type="checkbox" class="switch" bind:checked={showSplash} />
+        </label>
       </div>
     </section>
 
-    <!-- Interface -->
-    <section class="settings-card" in:fly={{ ...flyIn, delay: sectionDelay(2) }}>
+    <!-- Language -->
+    <section class="settings-card glass">
       <div class="card-header">
         <div class="card-icon" aria-hidden="true">
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18">
-            <rect x="2" y="3" width="16" height="11" rx="1.5"/>
-            <path d="M6 18 L14 18 M10 14 L10 18"/>
+            <circle cx="10" cy="10" r="7.5"/>
+            <path d="M2.5 10 H17.5 M10 2.5 Q14 6 14 10 Q14 14 10 17.5 Q6 14 6 10 Q6 6 10 2.5"/>
           </svg>
         </div>
-        <h2 class="card-title">{$t('settings.interface')}</h2>
+        <h2 class="card-title">{$t('settings.languageTitle')}</h2>
       </div>
 
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="language" class="form-label">{$t('settings.language')}</label>
-          <select id="language" bind:value={language} class="form-input">
-            <option value="en">English</option>
-            <option value="ar">العربية</option>
-            <option value="ur">اردو</option>
+      <div class="settings-rows">
+        <div class="setting-row setting-row--stack">
+          <label class="setting-label" for="language">{$t('settings.language')}</label>
+          <select id="language" class="field" value={$locale} on:change={setLanguage}>
+            <option value="en">{$t('settings.languages.english')}</option>
+            <option value="ar">{$t('settings.languages.arabic')}</option>
+            <option value="ur">{$t('settings.languages.urdu')}</option>
           </select>
+          <span class="setting-hint">{$t('settings.languageHint')}</span>
         </div>
       </div>
     </section>
 
+    <!-- Advanced -->
+    <section class="settings-card glass">
+      <div class="card-header">
+        <div class="card-icon" aria-hidden="true">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18">
+            <circle cx="10" cy="10" r="2.5"/>
+            <path d="M10 2 L10 4 M10 16 L10 18 M2 10 L4 10 M16 10 L18 10
+                     M4.22 4.22 L5.64 5.64 M14.36 14.36 L15.78 15.78
+                     M4.22 15.78 L5.64 14.36 M14.36 5.64 L15.78 4.22"/>
+          </svg>
+        </div>
+        <h2 class="card-title">{$t('settings.advanced')}</h2>
+      </div>
+
+      <div class="settings-rows">
+        <label class="setting-row toggle-row">
+          <span class="toggle-text">
+            <span class="setting-label">{$t('settings.customApps')}</span>
+            <span class="setting-hint">{$t('settings.customAppsHint')}</span>
+          </span>
+          <input type="checkbox" class="switch" bind:checked={customApps} />
+        </label>
+      </div>
+    </section>
+
+    <!-- Note: masjid details live in apps, not here -->
+    <p class="platform-note">{$t('settings.note')}</p>
+
     <!-- Save bar -->
-    <div class="save-bar" in:fly={{ ...flyIn, delay: sectionDelay(3) }}>
+    <div class="save-bar">
       {#if saved}
-        <span class="saved-badge" in:fade={{ duration: 200 }}>
+        <span class="saved-badge" in:riseIn={{ duration: 200 }}>
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
             <path d="M3 8 L6.5 11.5 L13 4.5"/>
           </svg>
           {$t('settings.saved')}
         </span>
       {/if}
-      <button type="submit" class="btn-primary" disabled={saving}>
-        {saving ? '...' : $t('settings.save')}
+      <button type="submit" class="btn-primary" class:btn-primary--saved={saved} use:pressable disabled={saving}>
+        {saving ? $t('settings.saving') : $t('settings.save')}
       </button>
     </div>
 
@@ -230,18 +195,15 @@
     margin: 0 auto;
   }
 
-  .page-header {
-    margin-block-end: 2rem;
-  }
-
+  .page-header { margin-block-end: 2rem; }
   .page-title {
-    font-size: 1.625rem;
-    font-weight: 700;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.75rem;
+    font-weight: 600;
     color: var(--color-ink);
     margin: 0 0 0.375rem;
     letter-spacing: -0.02em;
   }
-
   .page-subtitle {
     font-size: 0.9375rem;
     color: var(--color-ink-muted);
@@ -253,19 +215,7 @@
     flex-direction: column;
     gap: 1.25rem;
   }
-
-  .settings-card {
-    background: var(--color-surface-raised);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-card);
-    padding: 1.5rem;
-    box-shadow: var(--shadow-card);
-    transition: box-shadow 0.2s ease;
-  }
-
-  .settings-card:hover {
-    box-shadow: var(--shadow-card), 0 0 0 1px var(--color-border);
-  }
+  .settings-card { padding: 1.5rem; }
 
   .card-header {
     display: flex;
@@ -273,9 +223,8 @@
     gap: 0.625rem;
     margin-block-end: 1.25rem;
     padding-block-end: 1rem;
-    border-block-end: 1px solid var(--color-border);
+    border-block-end: 1px solid var(--glass-border);
   }
-
   .card-icon {
     display: flex;
     align-items: center;
@@ -287,7 +236,6 @@
     color: var(--color-primary);
     flex-shrink: 0;
   }
-
   .card-title {
     font-size: 1rem;
     font-weight: 600;
@@ -295,57 +243,157 @@
     margin: 0;
   }
 
-  .form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-  }
-
-  .form-group {
+  .settings-rows {
     display: flex;
     flex-direction: column;
+    gap: 1.25rem;
+  }
+  .setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .setting-row--stack {
+    flex-direction: column;
+    align-items: stretch;
     gap: 0.375rem;
   }
-
-  .form-group--full {
-    grid-column: 1 / -1;
-  }
-
-  .form-label {
-    font-size: 0.8125rem;
+  .setting-label {
+    font-size: 0.9375rem;
     font-weight: 500;
+    color: var(--color-ink);
+  }
+  .setting-hint {
+    font-size: 0.8125rem;
     color: var(--color-ink-muted);
-    letter-spacing: 0.01em;
+    line-height: 1.4;
   }
 
-  .form-input {
+  /* Segmented control (theme) */
+  .segmented {
+    display: inline-flex;
+    padding: 0.1875rem;
+    border-radius: var(--radius-button);
+    background: var(--glass-bg-inset);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18);
+    gap: 0.1875rem;
+  }
+  .seg {
+    padding: 0.3125rem 0.875rem;
+    border: none;
+    border-radius: calc(var(--radius-button) - 0.1875rem);
+    background: transparent;
+    color: var(--color-ink-muted);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.15s ease, background-color 0.15s ease;
+  }
+  .seg--active {
+    background: var(--color-primary-subtle);
+    color: var(--color-primary);
+  }
+
+  /* Accent swatches */
+  .swatches { display: inline-flex; gap: 0.5rem; }
+  .swatch {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    background: var(--sw);
+    cursor: pointer;
+    padding: 0;
+    box-shadow: 0 0 0 1px var(--color-border);
+    transition: transform 0.15s var(--ease-settle), box-shadow 0.15s ease;
+  }
+  .swatch:hover { transform: scale(1.12); }
+  .swatch--active {
+    box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--sw);
+  }
+
+  /* Recessed fields */
+  .field {
+    width: 100%;
+    box-sizing: border-box;
     padding: 0.5rem 0.75rem;
-    border-radius: 0.5rem;
-    border: 1px solid var(--color-border);
-    background: var(--color-surface);
+    border-radius: var(--radius-button);
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg-inset);
     color: var(--color-ink);
     font-size: 0.9375rem;
-    outline: none;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
     appearance: none;
     -webkit-appearance: none;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18);
   }
-
-  .form-input:focus {
+  /* Adds the brand glow on focus. We do NOT set outline:none, so the global
+     :focus-visible ring (app.css) still shows for keyboard users — mouse focus
+     simply won't trigger :focus-visible and shows the glow alone. */
+  .field:focus {
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px var(--color-primary-subtle);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18), var(--glow-primary);
   }
+  .field::placeholder { color: var(--color-ink-faint); }
 
-  .form-input::placeholder {
-    color: var(--color-ink-faint);
-  }
-
-  select.form-input {
+  select.field {
     cursor: pointer;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%2394A3B8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 0.75rem center;
     padding-inline-end: 2.25rem;
+  }
+  :global([dir='rtl']) select.field {
+    background-position: left 0.75rem center;
+    padding-inline-end: 0.75rem;
+    padding-inline-start: 2.25rem;
+  }
+
+  /* Toggle switch (native checkbox, styled) */
+  .toggle-row { cursor: pointer; align-items: flex-start; }
+  .toggle-text { display: flex; flex-direction: column; gap: 0.25rem; }
+  .switch {
+    appearance: none;
+    -webkit-appearance: none;
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 1.5rem;
+    border-radius: 1rem;
+    background: var(--glass-bg-inset);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25), 0 0 0 1px var(--glass-border);
+    cursor: pointer;
+    position: relative;
+    transition: background-color var(--dur-settle) var(--ease-settle);
+    margin: 0;
+  }
+  .switch::after {
+    content: "";
+    position: absolute;
+    inset-block-start: 0.1875rem;
+    inset-inline-start: 0.1875rem;
+    width: 1.125rem;
+    height: 1.125rem;
+    border-radius: 50%;
+    background: var(--color-ink-muted);
+    transition: transform var(--dur-settle) var(--ease-settle), background-color 0.15s ease;
+  }
+  .switch:checked {
+    background: var(--color-primary);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15), 0 0 0 1px var(--color-primary);
+  }
+  .switch:checked::after {
+    transform: translateX(1rem);
+    background: var(--color-on-primary);
+  }
+  :global([dir='rtl']) .switch:checked::after { transform: translateX(-1rem); }
+
+  .platform-note {
+    font-size: 0.8125rem;
+    color: var(--color-ink-muted);
+    text-align: center;
+    margin: 0;
+    padding-inline: 1rem;
   }
 
   .save-bar {
@@ -355,7 +403,6 @@
     gap: 1rem;
     padding-block-start: 0.5rem;
   }
-
   .saved-badge {
     display: flex;
     align-items: center;
@@ -368,36 +415,39 @@
   .btn-primary {
     padding: 0.5rem 1.25rem;
     border-radius: var(--radius-button);
-    background: var(--color-primary);
-    color: #000;
+    background: var(--color-btn);
+    color: var(--color-on-primary);
     font-size: 0.9375rem;
     font-weight: 600;
     border: none;
     cursor: pointer;
-    transition: background-color 0.15s ease, transform 0.1s ease;
+    box-shadow: var(--glow-primary);
+    transition: background-color 0.15s ease, box-shadow var(--dur-settle) var(--ease-settle);
   }
-
-  .btn-primary:hover:not(:disabled) {
-    background: var(--color-primary-hover);
-    transform: translateY(-1px);
+  .btn-primary:hover:not(:disabled) { background: var(--color-btn-hover); }
+  .btn-primary--saved {
+    box-shadow: 0 0 0 1px var(--color-success), 0 12px 32px -8px var(--color-success);
   }
+  .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 
-  .btn-primary:active:not(:disabled) {
-    transform: translateY(0);
-  }
-
-  .btn-primary:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+  @media (prefers-reduced-motion: reduce) {
+    .seg,
+    .swatch,
+    .switch,
+    .switch::after,
+    .btn-primary { transition: none !important; }
+    .swatch:hover { transform: none; }
   }
 
   @media (max-width: 580px) {
-    .form-grid {
-      grid-template-columns: 1fr;
+    .setting-row {
+      flex-direction: column;
+      align-items: stretch;
     }
-
-    .form-group--full {
-      grid-column: 1;
+    .toggle-row {
+      flex-direction: row;
+      align-items: flex-start;
+      justify-content: space-between;
     }
   }
 </style>

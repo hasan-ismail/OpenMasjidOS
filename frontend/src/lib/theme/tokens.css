@@ -1,12 +1,20 @@
 /*
  * tokens.css — OpenMasjidOS Design Tokens
  *
- * All color, shadow, radius, and decorative tokens are defined here as CSS
- * custom properties. Switching theme is done by toggling data-theme="dark|light"
- * on the <html> element. Never hardcode hex values in components — always
- * reference a token from this file.
+ * All color, shadow, radius, glass, glow, and motion tokens are defined here as
+ * CSS custom properties. Switching theme is done by toggling
+ * data-theme="dark|light" on the <html> element. Never hardcode hex values in
+ * components — always reference a token from this file.
  *
  * Color contrast meets WCAG AA in both themes.
+ *
+ * The "Sakīna Glass" material/motion/atmosphere system layers ON TOP of the
+ * base --color-* tokens (it never changes them):
+ *   - --glass-*   frosted pane material (fill, blur, highlight, border, shadow)
+ *   - --glow-*    interactive elevation glow + ambient bloom strength
+ *   - --aurora-*, --scene-*  the drifting ambient background behind the glass
+ *   - --ease-settle / --dur-* / --lift-y / --tilt-max  motion bridge so CSS
+ *     transitions share the spring feel of the JS interaction actions.
  */
 
 /* ---------------------------------------------------------------------------
@@ -56,9 +64,49 @@
   --radius-card: 1rem;
   --radius-button: 0.625rem;
 
+  /* ── Glass material ─────────────────────────────────────────────────── */
+  --glass-blur: 16px;            /* perf ceiling — past ~20px cost climbs, no gain */
+  --glass-blur-inset: 8px;       /* lighter blur for nested wells (no double-blur mush) */
+  --glass-saturate: 140%;
+  --glass-bg: rgba(10, 24, 40, 0.55);          /* keeps --color-ink AA over brightest aurora */
+  --glass-bg-raised: rgba(15, 32, 64, 0.68);
+  --glass-bg-inset: rgba(3, 13, 26, 0.45);
+  --glass-tint: rgba(34, 211, 238, 0.06);      /* cyan brand wash layered over fill */
+  --glass-highlight: rgba(186, 230, 253, 0.22);/* 1px top-edge inner light-line — the "glass" tell */
+  --glass-border: rgba(125, 200, 232, 0.14);   /* hairline frosted perimeter (drawn as box-shadow ring) */
+  --glass-glow: rgba(34, 211, 238, 0.10);      /* soft colored outer glow for raised panes */
+  --glass-shadow:
+    inset 0 1px 0 0 var(--glass-highlight),
+    0 8px 28px -8px rgba(0, 0, 0, 0.6),
+    0 0 0 1px var(--glass-border);
+  --glass-shadow-raised:
+    inset 0 1px 0 0 var(--glass-highlight),
+    0 16px 48px -12px rgba(0, 0, 0, 0.7),
+    0 0 28px -6px var(--glass-glow),
+    0 0 0 1px var(--glass-border);
+
+  /* ── Glow ───────────────────────────────────────────────────────────── */
+  --glow-primary: 0 0 0 1px var(--color-primary-subtle), 0 12px 32px -8px rgba(34, 211, 238, 0.35);
+  --glow-strength: 0.40;         /* alpha for the .glow-accent radial bloom */
+
+  /* ── Primary buttons — theme-aware bg + text so contrast passes AA in both
+     themes. The plain --color-primary is too light to host AA text in light
+     mode, so buttons use their own (darker, in light) background token. */
+  --color-btn: #22D3EE;          /* bright cyan — hosts near-black text */
+  --color-btn-hover: #67E8F9;
+  --color-on-primary: #00131c;   /* near-black text on bright cyan (~13:1) */
+
+  /* ── Ambient scene ──────────────────────────────────────────────────── */
+  --scene-base: #020912;         /* solid paint behind aurora — no page-white flash */
+  --aurora-cyan: rgba(34, 211, 238, 0.22);
+  --aurora-navy: rgba(15, 32, 64, 0.55);
+  --aurora-gold: rgba(245, 158, 11, 0.10);
+  --aurora-blur: 48px;
+  --scene-vignette: rgba(0, 0, 0, 0.55);
+  --pattern-opacity: 0.5;
+
   /*
    * Geometric background pattern — a subtle khatam (8-pointed star) tessellation.
-   * Very low opacity so it reads as texture, not decoration.
    */
   --geometric-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill='none' stroke='%2322D3EE' stroke-width='0.5' opacity='0.15'%3E%3Cpolygon points='30,4 34.5,21 51,15 39,28 56,30 39,32 51,45 34.5,39 30,56 25.5,39 9,45 21,32 4,30 21,28 9,15 25.5,21'/%3E%3Crect x='19' y='19' width='22' height='22' transform='rotate(45 30 30)'/%3E%3Cpolygon points='0,0 4.5,8 11,2 5,13 16,9 9,17 18,16 12,24 0,22'/%3E%3Cpolygon points='60,0 55.5,8 49,2 55,13 44,9 51,17 42,16 48,24 60,22'/%3E%3Cpolygon points='0,60 4.5,52 11,58 5,47 16,51 9,43 18,44 12,36 0,38'/%3E%3Cpolygon points='60,60 55.5,52 49,58 55,47 44,51 51,43 42,44 48,36 60,38'/%3E%3Cline x1='0' y1='30' x2='60' y2='30'/%3E%3Cline x1='30' y1='0' x2='30' y2='60'/%3E%3Cline x1='0' y1='0' x2='60' y2='60'/%3E%3Cline x1='60' y1='0' x2='0' y2='60'/%3E%3C/g%3E%3C/svg%3E");
 }
@@ -109,8 +157,66 @@
   --radius-card: 1rem;
   --radius-button: 0.625rem;
 
+  /* ── Glass material ─────────────────────────────────────────────────── */
+  --glass-blur: 16px;
+  --glass-blur-inset: 8px;
+  --glass-saturate: 120%;
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-bg-raised: rgba(255, 255, 255, 0.72);
+  --glass-bg-inset: rgba(240, 249, 255, 0.60);
+  --glass-tint: rgba(2, 132, 199, 0.04);
+  --glass-highlight: rgba(255, 255, 255, 0.90); /* brighter so the bevel reads on pale aurora */
+  --glass-border: rgba(2, 132, 199, 0.16);
+  --glass-glow: rgba(2, 132, 199, 0.08);
+  --glass-shadow:
+    inset 0 1px 0 0 var(--glass-highlight),
+    0 8px 28px -10px rgba(13, 38, 76, 0.18),
+    0 0 0 1px var(--glass-border);
+  --glass-shadow-raised:
+    inset 0 1px 0 0 var(--glass-highlight),
+    0 16px 48px -14px rgba(13, 38, 76, 0.22),
+    0 0 28px -8px var(--glass-glow),
+    0 0 0 1px var(--glass-border);
+
+  /* ── Glow ───────────────────────────────────────────────────────────── */
+  --glow-primary: 0 0 0 1px var(--color-primary-subtle), 0 12px 32px -8px rgba(2, 132, 199, 0.22);
+  --glow-strength: 0.22;         /* quieter in light to avoid haze */
+
+  /* Primary buttons — darker blue bg + white text so contrast passes AA in
+     light mode (white on #0369A1 ≈ 5.7:1; #0284C7 alone would fail). */
+  --color-btn: #0369A1;
+  --color-btn-hover: #075985;
+  --color-on-primary: #FFFFFF;
+
+  /* ── Ambient scene ──────────────────────────────────────────────────── */
+  --scene-base: #EAF6FF;
+  --aurora-cyan: rgba(2, 132, 199, 0.12);
+  --aurora-navy: rgba(186, 230, 253, 0.42);
+  --aurora-gold: rgba(217, 119, 6, 0.06);
+  --aurora-blur: 56px;
+  --scene-vignette: rgba(2, 40, 70, 0.06);     /* near-invisible so it can't muddy parchment */
+  --pattern-opacity: 0.4;
+
   /* Geometric pattern — same tile, light-theme stroke */
   --geometric-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill='none' stroke='%230284C7' stroke-width='0.5' opacity='0.1'%3E%3Cpolygon points='30,4 34.5,21 51,15 39,28 56,30 39,32 51,45 34.5,39 30,56 25.5,39 9,45 21,32 4,30 21,28 9,15 25.5,21'/%3E%3Crect x='19' y='19' width='22' height='22' transform='rotate(45 30 30)'/%3E%3Cpolygon points='0,0 4.5,8 11,2 5,13 16,9 9,17 18,16 12,24 0,22'/%3E%3Cpolygon points='60,0 55.5,8 49,2 55,13 44,9 51,17 42,16 48,24 60,22'/%3E%3Cpolygon points='0,60 4.5,52 11,58 5,47 16,51 9,43 18,44 12,36 0,38'/%3E%3Cpolygon points='60,60 55.5,52 49,58 55,47 44,51 51,43 42,44 48,36 60,38'/%3E%3Cline x1='0' y1='30' x2='60' y2='30'/%3E%3Cline x1='30' y1='0' x2='30' y2='60'/%3E%3Cline x1='0' y1='0' x2='60' y2='60'/%3E%3Cline x1='60' y1='0' x2='0' y2='60'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* ---------------------------------------------------------------------------
+ * Motion bridge — shared by BOTH themes.
+ * --ease-settle is a CSS linear() spring: a gentle single overshoot so
+ * transition-driven elements feel like the JS interaction springs. Browsers
+ * without linear() support fall back to the declaration being ignored
+ * (instant), which is acceptable graceful degradation.
+ * --------------------------------------------------------------------------- */
+
+:root,
+[data-theme="dark"],
+[data-theme="light"] {
+  --ease-settle: linear(0, 0.18, 0.45, 0.73, 0.92, 1.01, 1.02, 1);
+  --dur-micro: 140ms;
+  --dur-settle: 420ms;
+  --lift-y: -6px;
+  --tilt-max: 7deg;
 }
 
 /* ---------------------------------------------------------------------------
@@ -129,6 +235,7 @@
 
 /* ---------------------------------------------------------------------------
  * Reduced motion — non-negotiable accessibility requirement.
+ * MUST stay last so it wins the cascade.
  * --------------------------------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {

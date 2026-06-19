@@ -1,9 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { fade, fly } from 'svelte/transition';
-  import { cubicOut } from 'svelte/easing';
   import { t } from '$lib/i18n';
   import { api } from '$lib/api/client';
+  import { riseIn, tiltCard, pressable, enterGrid } from '$lib/animations';
 
   // Health response shape from GET /api/health
   interface HealthResponse {
@@ -16,23 +15,6 @@
   let healthError = false;
   let loading = true;
 
-  // Detect user's reduced-motion preference once — used to gate animations.
-  // We read this synchronously so the first render already knows the preference.
-  const prefersReducedMotion =
-    typeof window !== 'undefined'
-      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      : false;
-
-  // Stagger delay per card index (ms). Collapsed to 0 when motion is reduced.
-  function staggerDelay(index: number): number {
-    return prefersReducedMotion ? 0 : index * 80;
-  }
-
-  // Shared fly parameters for entrance animations.
-  const flyIn = prefersReducedMotion
-    ? { y: 0, duration: 0 }
-    : { y: 18, duration: 420, easing: cubicOut };
-
   onMount(async () => {
     try {
       health = await api.health();
@@ -42,81 +24,62 @@
       loading = false;
     }
   });
+
+  // Staggered-entrance action for the content stack (hides then reveals on view).
+  function gridIn(node: HTMLElement) {
+    return { destroy: enterGrid(node, { base: 90, y: 16 }) };
+  }
 </script>
 
-<!--
-  Main dashboard page.
-  Tokens used (defined in tokens.css as CSS custom properties and mapped via
-  tailwind.config.js):
-    bg-surface         – page / card background
-    bg-surface-raised  – elevated card surface
-    text-ink           – primary text
-    text-ink-muted     – secondary / muted text
-    border-border      – subtle divider colour
-    bg-primary         – emerald action colour
-    text-primary       – emerald text
-    bg-gold            – warm gold accent (used sparingly)
-    text-gold          – gold text
--->
+<div class="page">
 
-<main class="min-h-screen bg-surface px-4 py-8 sm:px-8">
-  <div class="mx-auto max-w-5xl space-y-8">
+  <!-- ── Welcome hero — sits on the bare scene (no glass) so the first glass
+       pane below has contrast to read against. ── -->
+  {#if loading}
+    <div class="hero-skeleton shimmer" aria-hidden="true"></div>
+  {:else}
+    <header class="hero" in:riseIn>
+      <h1 class="hero-title">
+        {$t('dashboard.welcome')}
+      </h1>
+      {#if health?.version && !healthError}
+        <p class="hero-sub">{$t('dashboard.coreVersion', { version: health.version })}</p>
+      {/if}
+    </header>
+  {/if}
 
-    <!-- ── Welcome section ── -->
-    {#if loading}
-      <div class="animate-shimmer h-10 w-64 rounded-lg bg-surface-raised" aria-hidden="true"></div>
-    {:else}
-      <div
-        in:fly={{ ...flyIn, delay: staggerDelay(0) }}
-        class="space-y-1"
-      >
-        <h1 class="text-3xl font-display font-semibold text-ink leading-tight">
-          {$t('dashboard.welcome', {
-            name: health?.masjid_name ?? $t('dashboard.yourMasjid')
-          })}
-        </h1>
-        {#if health?.version}
-          <p class="text-sm text-ink-muted">
-            {$t('dashboard.coreVersion', { version: health.version })}
-          </p>
-        {/if}
-      </div>
-    {/if}
+  {#if loading}
+    <!-- Skeleton placeholders while health loads -->
+    <div class="status-card glass-raised">
+      <div class="skel-line skel-line--lg shimmer"></div>
+    </div>
+    <div class="apps-grid">
+      {#each Array(3) as _}
+        <div class="glass app-skeleton">
+          <div class="skel-block shimmer"></div>
+          <div class="skel-line shimmer"></div>
+          <div class="skel-line skel-line--sm shimmer"></div>
+        </div>
+      {/each}
+    </div>
+  {:else}
+    <div class="content-stack" use:gridIn>
 
-    <!-- ── System Status card ── -->
-    {#if loading}
+      <!-- ── System Status card ── -->
       <div
-        class="animate-shimmer h-24 w-full rounded-2xl bg-surface-raised"
-        aria-hidden="true"
-      ></div>
-    {:else}
-      <div
-        in:fly={{ ...flyIn, delay: staggerDelay(1) }}
-        class="flex items-center gap-4 rounded-2xl border border-border bg-surface-raised px-6 py-5"
+        class="status-card glass-raised glow-accent"
+        use:tiltCard
         role="status"
         aria-live="polite"
       >
-        <!-- Status indicator dot -->
         <span
-          class="relative flex h-3 w-3 shrink-0"
+          class="status-dot"
+          class:status-dot--error={healthError}
           aria-hidden="true"
-        >
-          {#if !healthError}
-            <!-- Pulsing ring — respects reduced-motion via Tailwind's motion-safe variant -->
-            <span
-              class="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-60"
-            ></span>
-            <span class="relative inline-flex h-3 w-3 rounded-full bg-primary"></span>
-          {:else}
-            <span class="relative inline-flex h-3 w-3 rounded-full bg-red-500"></span>
-          {/if}
-        </span>
-
-        <div class="min-w-0 flex-1">
-          <p class="font-medium text-ink">
-            {$t('dashboard.systemStatus')}
-          </p>
-          <p class="text-sm text-ink-muted">
+        ></span>
+        <div class="status-text">
+          <p class="status-title">{$t('dashboard.systemStatus')}</p>
+          <p class="status-sub">
             {#if healthError}
               {$t('dashboard.statusError')}
             {:else}
@@ -124,184 +87,228 @@
             {/if}
           </p>
         </div>
-
-        <!-- Version badge -->
         {#if health?.version && !healthError}
-          <span
-            class="shrink-0 rounded-full border border-border px-3 py-0.5 text-xs font-medium text-ink-muted"
-          >
-            v{health.version}
-          </span>
+          <span class="version-badge">v{health.version}</span>
         {/if}
       </div>
-    {/if}
 
-    <!-- ── Installed Apps section ── -->
-    <section aria-labelledby="installed-apps-heading">
-      {#if loading}
-        <!-- Skeleton for section heading -->
-        <div
-          class="animate-shimmer mb-4 h-7 w-40 rounded-lg bg-surface-raised"
-          aria-hidden="true"
-        ></div>
-        <!-- Skeleton cards -->
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {#each Array(3) as _}
-            <div
-              class="animate-shimmer h-40 rounded-2xl bg-surface-raised"
-              aria-hidden="true"
-            ></div>
-          {/each}
-        </div>
-      {:else}
-        <div in:fly={{ ...flyIn, delay: staggerDelay(2) }}>
-          <h2
-            id="installed-apps-heading"
-            class="mb-4 text-xl font-display font-semibold text-ink"
-          >
-            {$t('dashboard.installedApps')}
-          </h2>
+      <!-- ── Installed Apps section ── -->
+      <section class="apps-section" aria-labelledby="installed-apps-heading">
+        <h2 id="installed-apps-heading" class="section-title">
+          {$t('dashboard.installedApps')}
+        </h2>
 
-          <!--
-            Empty state — no apps installed yet.
-            The dome SVG is a simple stylised silhouette: a hemisphere body
-            sitting on a rectangular base with two narrow minarets flanking it,
-            and a crescent finial on top. Drawn with a single closed path so it
-            scales cleanly at any size.
-          -->
-          <div
-            class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-surface-raised px-8 py-16 text-center"
-          >
-            <!-- Dome illustration -->
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 120 100"
-              class="mb-6 h-24 w-24 text-primary opacity-70"
-              aria-hidden="true"
-              fill="currentColor"
-            >
-              <!--
-                Stylised masjid dome silhouette.
-                Composed of:
-                  - Two thin minarets (left and right rectangles + small caps)
-                  - A wide base rectangle
-                  - A semicircular dome on top of the base
-                  - A crescent finial at the apex of the dome
-              -->
-
-              <!-- Left minaret shaft -->
-              <rect x="6" y="30" width="10" height="52" rx="2" />
-              <!-- Left minaret cap (small dome) -->
-              <ellipse cx="11" cy="30" rx="5" ry="6" />
-              <!-- Left minaret finial dot -->
-              <circle cx="11" cy="24" r="2" />
-
-              <!-- Right minaret shaft -->
-              <rect x="104" y="30" width="10" height="52" rx="2" />
-              <!-- Right minaret cap -->
-              <ellipse cx="109" cy="30" rx="5" ry="6" />
-              <!-- Right minaret finial dot -->
-              <circle cx="109" cy="24" r="2" />
-
-              <!-- Base platform -->
-              <rect x="20" y="68" width="80" height="14" rx="3" />
-
-              <!-- Main dome body — hemisphere sitting on the base -->
-              <path d="M22,68 Q22,28 60,28 Q98,28 98,68 Z" />
-
-              <!--
-                Crescent finial at the top of the dome.
-                Drawn as a filled circle minus a slightly offset smaller circle
-                to create the crescent shape using clip/mask isn't available in
-                simple SVG without defs, so we use two overlapping circles with
-                the background colour for the inner bite. We render the inner
-                circle in bg-surface colour via a CSS variable fallback so it
-                adapts to both themes.
-              -->
-              <circle cx="60" cy="26" r="5" />
-              <!-- Bite out of the crescent — use surface colour -->
-              <circle
-                cx="62.5"
-                cy="24.5"
-                r="4"
-                class="text-surface-raised"
-                fill="var(--color-surface-raised, #1a2820)"
-              />
+        <!-- Empty state — no apps installed yet -->
+        <div class="empty-card glass glow-accent">
+          <div class="empty-illustration" aria-hidden="true">
+            <svg viewBox="0 0 160 130" width="150" height="122" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- side minarets -->
+              <rect x="30" y="60" width="9" height="50" rx="2" fill="currentColor" opacity=".30"/>
+              <path d="M30 60 Q34.5 46 39 60 Z" fill="currentColor" opacity=".30"/>
+              <circle cx="34.5" cy="44" r="2.4" fill="var(--color-gold)" opacity=".7"/>
+              <rect x="121" y="60" width="9" height="50" rx="2" fill="currentColor" opacity=".30"/>
+              <path d="M121 60 Q125.5 46 130 60 Z" fill="currentColor" opacity=".30"/>
+              <circle cx="125.5" cy="44" r="2.4" fill="var(--color-gold)" opacity=".7"/>
+              <!-- main dome on a mihrab body -->
+              <rect x="26" y="108" width="108" height="5" rx="2" fill="currentColor" opacity=".25"/>
+              <path d="M48 108 Q48 64 80 50 Q112 64 112 108 Z" fill="currentColor" opacity=".55"/>
+              <!-- mihrab arch doorway -->
+              <path d="M70 108 L70 88 Q80 78 90 88 L90 108 Z" fill="var(--color-surface)"/>
+              <!-- crescent finial -->
+              <circle cx="80" cy="42" r="7" fill="var(--color-gold)" opacity=".85"/>
+              <circle cx="83" cy="39" r="5" fill="var(--color-surface)"/>
             </svg>
-
-            <h3 class="mb-2 text-lg font-semibold text-ink">
-              {$t('dashboard.noAppsTitle')}
-            </h3>
-            <p class="mb-6 max-w-xs text-sm text-ink-muted">
-              {$t('dashboard.noAppsBody')}
-            </p>
-
-            <a
-              href="/store"
-              class="
-                inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5
-                text-sm font-semibold text-white
-                transition-transform duration-150
-                motion-safe:hover:scale-[1.03] motion-safe:active:scale-[0.97]
-                focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary
-              "
-            >
-              <!-- Simple compass / store icon -->
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
-              </svg>
-              {$t('dashboard.browseStore')}
-            </a>
           </div>
-        </div>
-      {/if}
-    </section>
 
-  </div>
-</main>
+          <h3 class="empty-title">{$t('dashboard.noAppsTitle')}</h3>
+          <p class="empty-body">{$t('dashboard.noAppsBody')}</p>
+
+          <a href="/store" class="browse-btn" use:pressable>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" />
+              <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+            </svg>
+            {$t('dashboard.browseStore')}
+          </a>
+        </div>
+      </section>
+
+    </div>
+  {/if}
+</div>
 
 <style>
-  /*
-    Shimmer skeleton animation.
-    Uses a gradient sweep across the surface-raised colour to create the
-    classic loading shimmer effect. Falls back to a static colour when the
-    user prefers reduced motion.
-  */
-  @keyframes shimmer {
-    0% {
-      background-position: -200% 0;
-    }
-    100% {
-      background-position: 200% 0;
-    }
+  .page {
+    max-width: 64rem;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
   }
 
-  .animate-shimmer {
-    background: linear-gradient(
+  /* Hero */
+  .hero {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .hero-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: var(--color-ink);
+    margin: 0;
+  }
+  .hero-sub {
+    font-size: 0.875rem;
+    color: var(--color-primary);
+    margin: 0;
+  }
+  .hero-skeleton {
+    height: 2.75rem;
+    width: 18rem;
+    border-radius: var(--radius-button);
+  }
+
+  /* Skeleton shimmer — gradient sweep (on-brand khatam tint). */
+  .shimmer {
+    background-image: linear-gradient(
       90deg,
-      var(--color-surface-raised, #1a2820) 25%,
-      var(--color-surface-shimmer, #243328) 50%,
-      var(--color-surface-raised, #1a2820) 75%
+      var(--color-surface-raised) 0%,
+      var(--color-surface-shimmer) 50%,
+      var(--color-surface-raised) 100%
     );
     background-size: 200% 100%;
-    animation: shimmer 1.6s ease-in-out infinite;
+    animation: shimmer 1.8s ease-in-out infinite;
   }
-
+  @keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
   @media (prefers-reduced-motion: reduce) {
-    .animate-shimmer {
+    .shimmer {
       animation: none;
-      background: var(--color-surface-raised, #1a2820);
+      background: var(--color-surface-overlay);
     }
   }
+
+  .content-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  /* System Status card */
+  .status-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+  }
+  .status-text {
+    min-width: 0;
+    flex: 1;
+  }
+  .status-title {
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0;
+  }
+  .status-sub {
+    font-size: 0.875rem;
+    color: var(--color-ink-muted);
+    margin: 0.125rem 0 0;
+  }
+  .version-badge {
+    flex-shrink: 0;
+    border-radius: 2rem;
+    border: 1px solid var(--glass-border);
+    padding: 0.125rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-ink-muted);
+  }
+
+  /* Apps section */
+  .section-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0 0 1rem;
+  }
+
+  .empty-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 3.5rem 2rem;
+    border: 1px dashed var(--glass-border);
+  }
+  .empty-illustration {
+    color: var(--color-primary);
+    margin-block-end: 1rem;
+    opacity: 0.9;
+  }
+  .empty-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0 0 0.5rem;
+  }
+  .empty-body {
+    font-size: 0.875rem;
+    color: var(--color-ink-muted);
+    max-width: 22rem;
+    margin: 0 0 1.5rem;
+  }
+
+  .browse-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: var(--radius-button);
+    background: var(--color-btn);
+    color: var(--color-on-primary);
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: var(--glow-primary);
+    transition: background-color 0.15s ease;
+  }
+  .browse-btn:hover {
+    background: var(--color-btn-hover);
+  }
+
+  /* App grid + skeletons */
+  .apps-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+  .app-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.25rem;
+  }
+  .skel-block {
+    width: 48px;
+    height: 48px;
+    border-radius: 0.75rem;
+    background-color: var(--color-surface-overlay);
+  }
+  .skel-line {
+    height: 0.875rem;
+    width: 75%;
+    border-radius: 0.375rem;
+    background-color: var(--color-surface-overlay);
+  }
+  .skel-line--sm { width: 50%; }
+  .skel-line--lg { width: 60%; height: 1.25rem; }
 </style>

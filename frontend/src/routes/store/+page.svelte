@@ -1,23 +1,18 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { fly, fade } from 'svelte/transition';
-  import { cubicOut } from 'svelte/easing';
   import { t } from '$lib/i18n';
-
-  const prefersReducedMotion =
-    typeof window !== 'undefined'
-      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      : false;
-
-  const flyIn = prefersReducedMotion
-    ? { y: 0, duration: 0 }
-    : { y: 20, duration: 400, easing: cubicOut };
+  import { riseIn, pressable, enterGrid, liquidIndicator } from '$lib/animations';
 
   type Category = 'all' | 'displays' | 'community' | 'donations' | 'quran' | 'utilities';
 
-  let selectedCategory: Category = 'all';
-  let searchQuery = '';
-  let loading = true;
+  // This component is in runes mode (it uses $state for pillRow), so all
+  // reactive state must use $state — plain `let` would not be reactive here.
+  let selectedCategory = $state<Category>('all');
+  let searchQuery = $state('');
+  let loading = $state(true);
+
+  let pillRow = $state<HTMLElement | undefined>(undefined);
+  let pillIndicator: ReturnType<typeof liquidIndicator> | undefined;
 
   const categories: { id: Category; labelKey: string }[] = [
     { id: 'all',       labelKey: 'store.categories.all' },
@@ -28,23 +23,46 @@
     { id: 'utilities', labelKey: 'store.categories.utilities' },
   ];
 
+  const teasers = [
+    { icon: '🕌', label: 'Prayer Times Display', cat: 'Displays' },
+    { icon: '📢', label: 'Announcement Board', cat: 'Community' },
+    { icon: '🤲', label: 'Donation Page', cat: 'Donations' },
+  ];
+
+  function selectCategory(id: Category) {
+    selectedCategory = id;
+    // Re-place the liquid pill after the active attribute updates.
+    requestAnimationFrame(() => pillIndicator?.update());
+  }
+
+  function gridIn(node: HTMLElement) {
+    return { destroy: enterGrid(node, { base: 80, y: 16 }) };
+  }
+
   onMount(() => {
-    // Simulate catalog fetch — real implementation fetches from OpenMasjidAPPS
-    setTimeout(() => { loading = false; }, 800);
+    if (pillRow) {
+      pillIndicator = liquidIndicator(pillRow, { activeSelector: '[aria-selected="true"]' });
+    }
+    // Simulate catalog fetch — real implementation fetches from OpenMasjidAPPS.
+    const timer = setTimeout(() => { loading = false; }, 900);
+    return () => {
+      clearTimeout(timer);
+      pillIndicator?.destroy();
+    };
   });
 </script>
 
-<div class="page" in:fly={flyIn}>
+<div class="page">
 
   <!-- Header -->
-  <header class="page-header" in:fly={{ ...flyIn, delay: 0 }}>
+  <header class="page-header" in:riseIn>
     <h1 class="page-title">{$t('store.title')}</h1>
     <p class="page-subtitle">{$t('store.subtitle')}</p>
   </header>
 
-  <!-- Search bar -->
-  <div class="search-row" in:fly={{ ...flyIn, delay: 60 }}>
-    <div class="search-wrap">
+  <!-- Search -->
+  <div class="search-row" in:riseIn={{ delay: 60 }}>
+    <div class="search-wrap glass-inset">
       <svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16" aria-hidden="true">
         <circle cx="8.5" cy="8.5" r="5.5"/>
         <path d="M13 13 L17 17"/>
@@ -59,83 +77,66 @@
     </div>
   </div>
 
-  <!-- Category pills -->
-  <div class="category-row" role="tablist" in:fly={{ ...flyIn, delay: 120 }}>
-    {#each categories as cat, i}
+  <!-- Category pills with liquid indicator -->
+  <div class="category-row" role="tablist" bind:this={pillRow} in:riseIn={{ delay: 120 }}>
+    {#each categories as cat}
       <button
         role="tab"
         class="category-pill"
         class:category-pill--active={selectedCategory === cat.id}
         aria-selected={selectedCategory === cat.id}
-        on:click={() => selectedCategory = cat.id}
-        style="--delay: {prefersReducedMotion ? 0 : 120 + i * 40}ms"
+        use:pressable
+        on:click={() => selectCategory(cat.id)}
       >
         {$t(cat.labelKey)}
       </button>
     {/each}
   </div>
 
-  <!-- Loading shimmer -->
   {#if loading}
+    <!-- Glass skeleton cards -->
     <div class="app-grid" aria-busy="true" aria-label={$t('store.loading')}>
-      {#each Array(6) as _, i}
-        <div
-          class="app-card app-card--shimmer"
-          style="--delay: {prefersReducedMotion ? 0 : i * 60}ms"
-          in:fly={{ ...flyIn, delay: prefersReducedMotion ? 0 : 200 + i * 60 }}
-        >
-          <div class="shimmer-icon"></div>
-          <div class="shimmer-line shimmer-line--title"></div>
-          <div class="shimmer-line shimmer-line--sub"></div>
-          <div class="shimmer-line shimmer-line--btn"></div>
+      {#each Array(6) as _}
+        <div class="glass app-card-skeleton">
+          <div class="shimmer skel-icon"></div>
+          <div class="shimmer skel-line skel-line--title"></div>
+          <div class="shimmer skel-line skel-line--sub"></div>
+          <div class="shimmer skel-line skel-line--btn"></div>
         </div>
       {/each}
     </div>
-
-  <!-- Empty state -->
   {:else}
-    <div class="empty-state" in:fly={{ ...flyIn, delay: 200 }}>
-      <!-- Masjid dome illustration -->
-      <div class="empty-icon" aria-hidden="true">
-        <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" width="80" height="80">
-          <!-- Left minaret -->
-          <rect x="10" y="42" width="8" height="22" rx="2" fill="var(--color-primary)" opacity="0.5"/>
-          <path d="M10 42 Q14 33 18 42 Z" fill="var(--color-primary)" opacity="0.5"/>
-          <!-- Right minaret -->
-          <rect x="62" y="42" width="8" height="22" rx="2" fill="var(--color-primary)" opacity="0.5"/>
-          <path d="M62 42 Q66 33 70 42 Z" fill="var(--color-primary)" opacity="0.5"/>
-          <!-- Base -->
-          <rect x="8" y="63" width="64" height="5" rx="2" fill="var(--color-primary)" opacity="0.4"/>
-          <!-- Dome -->
-          <path d="M20 63 Q20 34 40 28 Q60 34 60 63 Z" fill="var(--color-primary)" opacity="0.7"/>
-          <!-- Door -->
-          <path d="M34 63 L34 55 Q40 49 46 55 L46 63 Z" fill="var(--color-surface)"/>
-          <!-- Crescent -->
-          <circle cx="40" cy="24" r="6" fill="var(--color-primary)"/>
-          <circle cx="42.8" cy="21.8" r="4.5" fill="var(--color-surface)"/>
+    <!-- Empty state -->
+    <div class="empty-state" in:riseIn={{ delay: 160 }}>
+      <div class="empty-icon glow-accent" aria-hidden="true">
+        <svg viewBox="0 0 160 130" width="150" height="122" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="30" y="60" width="9" height="50" rx="2" fill="currentColor" opacity=".30"/>
+          <path d="M30 60 Q34.5 46 39 60 Z" fill="currentColor" opacity=".30"/>
+          <circle cx="34.5" cy="44" r="2.4" fill="var(--color-gold)" opacity=".7"/>
+          <rect x="121" y="60" width="9" height="50" rx="2" fill="currentColor" opacity=".30"/>
+          <path d="M121 60 Q125.5 46 130 60 Z" fill="currentColor" opacity=".30"/>
+          <circle cx="125.5" cy="44" r="2.4" fill="var(--color-gold)" opacity=".7"/>
+          <rect x="26" y="108" width="108" height="5" rx="2" fill="currentColor" opacity=".25"/>
+          <path d="M48 108 Q48 64 80 50 Q112 64 112 108 Z" fill="currentColor" opacity=".55"/>
+          <path d="M70 108 L70 88 Q80 78 90 88 L90 108 Z" fill="var(--color-surface)"/>
+          <circle cx="80" cy="42" r="7" fill="var(--color-gold)" opacity=".85"/>
+          <circle cx="83" cy="39" r="5" fill="var(--color-surface)"/>
         </svg>
       </div>
 
       <h2 class="empty-title">{$t('store.empty')}</h2>
       <p class="empty-hint">{$t('store.emptyHint')}</p>
 
-      <!-- Coming-soon category teasers -->
-      <div class="coming-soon-grid">
-        {#each [
-          { icon: '🕌', label: 'Prayer Times Display', cat: 'Displays' },
-          { icon: '📢', label: 'Announcement Board', cat: 'Community' },
-          { icon: '🤲', label: 'Donation Page', cat: 'Donations' },
-        ] as teaser, i}
-          <div
-            class="teaser-card"
-            in:fly={{ ...flyIn, delay: prefersReducedMotion ? 0 : 300 + i * 80 }}
-          >
+      <!-- Coming-soon teasers -->
+      <div class="coming-soon-grid" use:gridIn>
+        {#each teasers as teaser}
+          <div class="teaser-card glass">
             <span class="teaser-icon">{teaser.icon}</span>
             <div>
               <div class="teaser-name">{teaser.label}</div>
               <div class="teaser-cat">{teaser.cat}</div>
             </div>
-            <span class="teaser-badge">Coming soon</span>
+            <span class="teaser-badge">{$t('store.comingSoon')}</span>
           </div>
         {/each}
       </div>
@@ -146,22 +147,21 @@
 
 <style>
   .page {
-    max-width: 900px;
+    max-width: 56rem;
     margin: 0 auto;
   }
 
   .page-header {
     margin-block-end: 1.75rem;
   }
-
   .page-title {
-    font-size: 1.625rem;
-    font-weight: 700;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.75rem;
+    font-weight: 600;
     color: var(--color-ink);
     margin: 0 0 0.375rem;
     letter-spacing: -0.02em;
   }
-
   .page-subtitle {
     font-size: 0.9375rem;
     color: var(--color-ink-muted);
@@ -172,131 +172,108 @@
   .search-row {
     margin-block-end: 1rem;
   }
-
   .search-wrap {
     position: relative;
     max-width: 380px;
+    display: flex;
+    align-items: center;
   }
-
   .search-icon {
     position: absolute;
     inset-inline-start: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
     color: var(--color-ink-muted);
     pointer-events: none;
   }
-
   .search-input {
     width: 100%;
     padding: 0.5rem 0.75rem;
     padding-inline-start: 2.25rem;
     border-radius: var(--radius-button);
-    border: 1px solid var(--color-border);
-    background: var(--color-surface-raised);
+    border: none;
+    background: transparent;
     color: var(--color-ink);
     font-size: 0.9375rem;
     outline: none;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
     box-sizing: border-box;
   }
-
-  .search-input:focus {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px var(--color-primary-subtle);
+  .search-input::placeholder { color: var(--color-ink-faint); }
+  .search-wrap:focus-within {
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25), var(--glow-primary);
   }
-
-  .search-input::placeholder {
-    color: var(--color-ink-faint);
+  /* Restore a clear keyboard focus ring (the input sets outline:none for the
+     wrapper glow; keyboard users still need the visible outline). */
+  .search-input:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
   }
 
   /* Category pills */
   .category-row {
+    position: relative;
     display: flex;
     gap: 0.5rem;
     flex-wrap: wrap;
     margin-block-end: 1.75rem;
   }
-
   .category-pill {
+    position: relative;
+    z-index: 1;
     padding: 0.375rem 0.875rem;
     border-radius: 2rem;
-    border: 1px solid var(--color-border);
-    background: var(--color-surface-raised);
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
     color: var(--color-ink-muted);
     font-size: 0.8125rem;
     font-weight: 500;
     cursor: pointer;
-    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+    transition: color 0.15s ease, border-color 0.15s ease;
   }
-
   .category-pill:hover {
     border-color: var(--color-primary);
     color: var(--color-primary);
-    transform: translateY(-1px);
   }
-
   .category-pill--active {
-    background: var(--color-primary-subtle);
     border-color: var(--color-primary);
     color: var(--color-primary);
     font-weight: 600;
   }
 
-  .category-pill--active:hover {
-    transform: none;
-  }
-
-  /* App grid */
+  /* App grid + skeletons */
   .app-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 1rem;
   }
-
-  /* Shimmer loading cards */
-  .app-card--shimmer {
-    background: var(--color-surface-raised);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-card);
+  .app-card-skeleton {
     padding: 1.25rem;
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
   }
-
-  .shimmer-icon {
+  .skel-icon {
     width: 48px;
     height: 48px;
     border-radius: 0.75rem;
-    background: linear-gradient(
-      90deg,
-      var(--color-surface-overlay) 0%,
-      var(--color-surface-shimmer) 50%,
-      var(--color-surface-overlay) 100%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 1.4s ease-in-out infinite;
-    animation-delay: var(--delay, 0ms);
   }
-
-  .shimmer-line {
+  .skel-line {
     border-radius: 0.375rem;
-    background: linear-gradient(
+    height: 0.75rem;
+  }
+  .skel-line--title { height: 1rem; width: 75%; }
+  .skel-line--sub   { width: 55%; }
+  .skel-line--btn   { height: 2rem; width: 100%; margin-block-start: 0.5rem; }
+
+  /* Shimmer */
+  .shimmer {
+    background-image: linear-gradient(
       90deg,
       var(--color-surface-overlay) 0%,
       var(--color-surface-shimmer) 50%,
       var(--color-surface-overlay) 100%
     );
     background-size: 200% 100%;
-    animation: shimmer 1.4s ease-in-out infinite;
-    animation-delay: var(--delay, 0ms);
+    animation: shimmer 1.8s ease-in-out infinite;
   }
-
-  .shimmer-line--title { height: 16px; width: 75%; }
-  .shimmer-line--sub   { height: 12px; width: 55%; }
-  .shimmer-line--btn   { height: 32px; width: 100%; margin-block-start: 0.5rem; }
-
   @keyframes shimmer {
     0%   { background-position: 200% 0; }
     100% { background-position: -200% 0; }
@@ -308,22 +285,20 @@
     flex-direction: column;
     align-items: center;
     text-align: center;
-    padding-block: 3rem 2rem;
+    padding-block: 2.5rem 2rem;
     gap: 0.75rem;
   }
-
   .empty-icon {
+    color: var(--color-primary);
     margin-block-end: 0.75rem;
-    opacity: 0.85;
+    opacity: 0.9;
   }
-
   .empty-title {
     font-size: 1.25rem;
     font-weight: 600;
     color: var(--color-ink);
     margin: 0;
   }
-
   .empty-hint {
     font-size: 0.9375rem;
     color: var(--color-ink-muted);
@@ -331,7 +306,7 @@
     max-width: 340px;
   }
 
-  /* Coming-soon teasers */
+  /* Teasers */
   .coming-soon-grid {
     display: flex;
     flex-direction: column;
@@ -340,35 +315,24 @@
     max-width: 420px;
     text-align: start;
   }
-
   .teaser-card {
     display: flex;
     align-items: center;
     gap: 0.875rem;
     padding: 0.875rem 1rem;
-    background: var(--color-surface-raised);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-button);
     opacity: 0.75;
   }
-
-  .teaser-icon {
-    font-size: 1.5rem;
-    flex-shrink: 0;
-  }
-
+  .teaser-icon { font-size: 1.5rem; flex-shrink: 0; }
   .teaser-name {
     font-size: 0.9375rem;
     font-weight: 500;
     color: var(--color-ink);
   }
-
   .teaser-cat {
     font-size: 0.8125rem;
     color: var(--color-ink-muted);
     margin-block-start: 0.125rem;
   }
-
   .teaser-badge {
     margin-inline-start: auto;
     font-size: 0.75rem;
@@ -382,8 +346,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .shimmer-icon,
-    .shimmer-line {
+    .shimmer {
       animation: none;
       background: var(--color-surface-overlay);
     }

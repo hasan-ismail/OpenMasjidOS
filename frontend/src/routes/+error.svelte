@@ -1,34 +1,27 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { fly } from 'svelte/transition';
-  import { cubicOut } from 'svelte/easing';
   import { t } from '$lib/i18n';
+  import { riseIn, pressable } from '$lib/animations';
 
   $: status = $page.status;
   $: isNotFound = status === 404;
-
-  const prefersReducedMotion =
-    typeof window !== 'undefined'
-      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      : false;
 </script>
 
-<div
-  class="error-page"
-  in:fly={prefersReducedMotion ? { y: 0, duration: 0 } : { y: 24, duration: 450, easing: cubicOut }}
->
-  <!-- Masjid dome illustration — rendered in a muted style to match the sad state -->
-  <div class="error-illustration" aria-hidden="true">
-    <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" width="72" height="72">
-      <rect x="14" y="46" width="7" height="18" rx="1.5" fill="currentColor" opacity="0.35"/>
-      <path d="M14 46 Q17.5 39 21 46 Z" fill="currentColor" opacity="0.35"/>
-      <rect x="59" y="46" width="7" height="18" rx="1.5" fill="currentColor" opacity="0.35"/>
-      <path d="M59 46 Q62.5 39 66 46 Z" fill="currentColor" opacity="0.35"/>
-      <rect x="12" y="63" width="56" height="4" rx="1.5" fill="currentColor" opacity="0.3"/>
-      <path d="M21 63 Q21 38 40 32 Q59 38 59 63 Z" fill="currentColor" opacity="0.5"/>
-      <path d="M33 63 L33 56 Q40 50 47 56 L47 63 Z" fill="var(--color-surface)"/>
-      <circle cx="40" cy="28" r="5.5" fill="currentColor" opacity="0.6"/>
-      <circle cx="42.5" cy="25.8" r="4" fill="var(--color-surface)"/>
+<div class="error-page" in:riseIn>
+  <!-- Dome / minaret / crescent hero, over the ambient scene with a soft halo -->
+  <div class="error-illustration glow-accent" aria-hidden="true">
+    <svg viewBox="0 0 160 130" width="160" height="130" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="30" y="60" width="9" height="50" rx="2" fill="currentColor" opacity=".30"/>
+      <path d="M30 60 Q34.5 46 39 60 Z" fill="currentColor" opacity=".30"/>
+      <circle cx="34.5" cy="44" r="2.4" fill="var(--color-gold)" opacity=".7"/>
+      <rect x="121" y="60" width="9" height="50" rx="2" fill="currentColor" opacity=".30"/>
+      <path d="M121 60 Q125.5 46 130 60 Z" fill="currentColor" opacity=".30"/>
+      <circle cx="125.5" cy="44" r="2.4" fill="var(--color-gold)" opacity=".7"/>
+      <rect x="26" y="108" width="108" height="5" rx="2" fill="currentColor" opacity=".25"/>
+      <path d="M48 108 Q48 64 80 50 Q112 64 112 108 Z" fill="currentColor" opacity=".55"/>
+      <path d="M70 108 L70 88 Q80 78 90 88 L90 108 Z" fill="var(--color-surface)"/>
+      <circle cx="80" cy="42" r="7" fill="var(--color-gold)" opacity=".85"/>
+      <circle cx="83" cy="39" r="5" fill="var(--color-surface)"/>
     </svg>
   </div>
 
@@ -42,7 +35,7 @@
     {isNotFound ? $t('errors.notFoundHint') : $t('errors.serverErrorHint')}
   </p>
 
-  <a href="/" class="home-link">
+  <a href="/" class="home-link" use:pressable>
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14" aria-hidden="true">
       <path d="M10 14 L4 8 L10 2"/>
     </svg>
@@ -65,12 +58,13 @@
 
   .error-illustration {
     margin-block-end: 0.5rem;
-    opacity: 0.9;
+    opacity: 0.95;
   }
 
   .error-code {
+    font-family: 'Playfair Display', Georgia, serif;
     font-size: 4rem;
-    font-weight: 800;
+    font-weight: 700;
     color: var(--color-primary);
     line-height: 1;
     letter-spacing: -0.04em;
@@ -103,15 +97,10 @@
     font-size: 0.9375rem;
     font-weight: 500;
     text-decoration: none;
-    transition: background-color 0.15s ease, transform 0.1s ease;
+    transition: background-color 0.15s ease;
   }
-
   .home-link:hover {
-    background: rgba(34, 211, 238, 0.18);
-    transform: translateX(-2px);
-  }
-
-  :global([data-theme="light"]) .home-link:hover {
-    background: rgba(2, 132, 199, 0.15);
+    background: var(--color-primary-subtle);
+    box-shadow: var(--glow-primary);
   }
 </style>

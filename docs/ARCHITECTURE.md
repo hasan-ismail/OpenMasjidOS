@@ -388,7 +388,24 @@ Covered in Section 7. Short answer: better XSS resistance, simpler implementatio
 The Docker Go SDK supports direct container management but not Docker Compose semantics. Rather than re-implement compose dependency ordering, health checks, and network creation, the core shells out to `docker compose` (the v2 plugin) for install/update/remove operations. Single-container operations (start, stop, restart, log streaming) use the SDK directly for better error handling and streaming support. All `docker compose` invocations are wrapped in `internal/docker/compose.go` — no `os/exec` outside that file.
 
 ### Port 8723 as default
-A non-standard port was chosen to avoid conflicts with common development tools (8080, 3000, 4000, etc.) and common masjid AV/streaming software. 8723 has no known conflicts with common software as of the time of writing. It is configurable via the installer.
+A non-standard port was chosen to avoid conflicts with common development tools (8080, 3000, 4000, etc.) and common masjid AV/streaming software. 8723 has no known conflicts with common software as of the time of writing. It is configurable via the installer. (Note: the default was later changed to port 80 for volunteer simplicity — the URL has no port suffix.)
+
+### Design system: "Sakīna Glass" (frosted glass + spring motion + ambient aurora)
+The dashboard uses a premium Umbrel-style liquid-glass system. It has three inseparable layers, all token-driven from `tokens.css` so they retune per-theme automatically:
+- **Material** (`glass.css`): three tiers — `.glass`, `.glass-raised`, `.glass-inset` — built on `backdrop-filter: blur+saturate`, a translucent fill, a cyan brand-tint wash, and a composite `box-shadow` carrying the 1px top-edge inner highlight (the "pane of glass" tell), a layered drop shadow, and a hairline frosted ring. No real `border` is used (it would add a paint box); the ring is part of the shadow.
+- **Motion** (`lib/animations/index.ts`): a small spring vocabulary — `tiltCard`, `pressable`, `liquidIndicator` (the signature sliding active-pill), `enterGrid` (scroll-staggered entrance), `riseIn`/`routeRise` (page transitions), `khatamSplash` (first-load splash).
+- **Atmosphere** (`SceneBackground.svelte`): one fixed, slowly-drifting aurora of cyan/navy/gold behind everything, veiled by the khatam star pattern and a soft vignette, so the glass always has light and colour to refract.
+
+**Decision: CSS-first, no Motion One — even though `motion` is a dependency.** The motion vocabulary is implemented with CSS transitions/keyframes + native browser APIs (`IntersectionObserver`, `ResizeObserver`, geometry), NOT the Motion One library that `package.json` lists. Reasons:
+1. **Build safety.** The frontend builds only in CI (Docker `npm install` → `vite build`); there is no local `node_modules` to verify the library's API against. A wrong named import from `motion` is a hard `rollup` build failure. CSS + native APIs cannot break the build.
+2. **Spring feel without the runtime.** The `--ease-settle` token is a CSS `linear()` easing curve that reproduces a gentle single-overshoot spring on plain transitions. Browsers without `linear()` support degrade to an instant transition (acceptable).
+3. **Lightweight value.** Zero JS animation runtime on the critical path.
+
+**Performance budget:** `backdrop-filter` is expensive and stacks badly. A nested-blur cap in `glass.css` (`.glass :where(.glass,.glass-raised){backdrop-filter:none}`) guarantees a glass pane inside a glass pane costs zero extra blur. Persistent blurred panes are limited to the sidebar + visible cards; everything else uses the `--glow-primary` box-shadow for depth, not more blur. Form inputs use an opaque recessed fill (not `.glass-inset`) so a dense form does not add a backdrop-filter per field.
+
+**Accessibility (non-negotiable):** `rm()` reads `prefers-reduced-motion` LIVE on every call (the previous cached-at-module-load constant was a latent bug that ignored runtime changes). Under reduced motion every transition collapses to instant and every interaction action attaches no listeners — the static glass material (highlight, hairline, steady status glow) stays fully intact. All directional motion uses logical CSS properties and a `dirSign()` helper so it is correct in RTL. Glass fills sit at 55–72% opacity specifically so `--color-ink` stays WCAG AA over the brightest aurora patch.
+
+This system was designed via a multi-agent design workflow (three specialists — material, motion, atmosphere — synthesised into one spec); see the design notes in the session history.
 
 ---
 

@@ -1,0 +1,159 @@
+/*
+ * glass.css — Sakīna Glass material + ambient utilities.
+ *
+ * Imported AFTER tokens.css and app.css (Tailwind) in +layout.svelte, so these
+ * classes win ties against Tailwind utilities. Every value is token-driven
+ * (see tokens.css) so the whole system retunes per-theme automatically.
+ *
+ * Material tiers:
+ *   .glass        translucent floating pane (cards, app tiles)
+ *   .glass-raised more opaque, higher elevation (sidebar, modals, key cards)
+ *   .glass-inset  recessed well (search fields, form inputs, sub-cards)
+ *
+ * The frosted edge + top-edge highlight are delivered via box-shadow tokens
+ * (no real border = no extra layout/paint box). The blur is capped and never
+ * stacks (see the nested-blur perf cap below).
+ */
+
+.glass {
+  position: relative;
+  border-radius: var(--radius-card);
+  background-image: linear-gradient(var(--glass-tint), var(--glass-tint));
+  background-color: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-raised {
+  position: relative;
+  border-radius: var(--radius-card);
+  background-image: linear-gradient(var(--glass-tint), var(--glass-tint));
+  background-color: var(--glass-bg-raised);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  box-shadow: var(--glass-shadow-raised);
+}
+
+/* Nested well. Lighter blur + recessed fill. Inset top SHADOW (not highlight)
+   so it reads carved-in rather than raised. */
+.glass-inset {
+  position: relative;
+  border-radius: var(--radius-button);
+  background-color: var(--glass-bg-inset);
+  -webkit-backdrop-filter: blur(var(--glass-blur-inset)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur-inset)) saturate(var(--glass-saturate));
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.25),
+    0 0 0 1px var(--glass-border);
+}
+
+/* PERFORMANCE CAP — load-bearing. A glass pane inside another glass pane must
+   NOT re-run a full backdrop-filter (compositor cost stacks badly). Any nested
+   .glass* drops its own blur and leans on its fill. Opt back in deliberately
+   with .glass-allow-nested-blur (rare). */
+.glass :where(.glass, .glass-raised),
+.glass-raised :where(.glass, .glass-raised) {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.glass .glass-allow-nested-blur,
+.glass-raised .glass-allow-nested-blur {
+  -webkit-backdrop-filter: blur(var(--glass-blur-inset)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur-inset)) saturate(var(--glass-saturate));
+}
+
+/* FALLBACK — browsers without backdrop-filter get fully opaque fills so panes
+   never vanish over the ambient background. Tint wash + shadows are kept. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass        { background-color: var(--color-surface-raised); }
+  .glass-raised { background-color: var(--color-surface-overlay); }
+  .glass-inset  { background-color: var(--color-surface); }
+}
+
+/* ── Accent glow — a soft colored bloom behind a primary/active element,
+   blooming THROUGH the glass. Distinct from --glow-primary (crisp interactive
+   shadow); this is the ambient halo for status dots and hero illustrations. */
+.glow-accent {
+  position: relative;
+  isolation: isolate;
+}
+.glow-accent::before {
+  content: "";
+  position: absolute;
+  inset: -28%;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  /* Fallback for engines without color-mix: a faint static primary glow. */
+  background: radial-gradient(circle, var(--color-primary-subtle), transparent 70%);
+  background: radial-gradient(circle,
+    color-mix(in srgb, var(--color-primary) calc(var(--glow-strength) * 100%), transparent),
+    transparent 70%);
+  filter: blur(20px);
+  opacity: var(--glow-strength);
+}
+.glow-accent--gold::before {
+  background: radial-gradient(circle, var(--color-gold-subtle), transparent 70%);
+  background: radial-gradient(circle,
+    color-mix(in srgb, var(--color-gold) calc(var(--glow-strength) * 100%), transparent),
+    transparent 70%);
+}
+
+/* ── Live "core is running" status dot — heartbeat glow, not a bare blink.
+   State is conveyed by COLOR + adjacent label, never by motion alone. */
+.status-dot {
+  position: relative;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  background: var(--color-success);
+  flex-shrink: 0;
+}
+.status-dot--error { background: var(--color-danger); }
+.status-dot::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    color-mix(in srgb, var(--color-success) 55%, transparent), transparent 70%);
+  animation: pulseGlow 2.4s ease-in-out infinite;
+}
+.status-dot--error::after {
+  background: radial-gradient(circle,
+    color-mix(in srgb, var(--color-danger) 55%, transparent), transparent 70%);
+}
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.45; transform: scale(0.85); }
+  50%      { opacity: 1;    transform: scale(1.15); }
+}
+
+/* ── Liquid sliding active-indicator (signature moment). One absolutely-
+   positioned pill behind nav links / category pills. JS sets transform + size;
+   CSS springs the glide via --ease-settle. Logical props keep it RTL-safe. */
+.liquid-indicator {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  border-radius: 0.5rem;
+  background: var(--color-primary-subtle);
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform, width, height;
+  transition:
+    transform var(--dur-settle) var(--ease-settle),
+    width var(--dur-settle) var(--ease-settle),
+    height var(--dur-settle) var(--ease-settle),
+    opacity 0.2s ease;
+}
+
+/* ── CSS-only interaction fallbacks (when JS actions are inert under reduced
+   motion, these still give tasteful, motion-free feedback). */
+@media (prefers-reduced-motion: reduce) {
+  .glass::before,
+  .glass-raised::before { animation: none !important; opacity: 0 !important; }
+  .status-dot::after { animation: none; opacity: 0.8; transform: scale(1); }
+  .liquid-indicator { transition: none !important; }
+}

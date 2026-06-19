@@ -6,6 +6,9 @@
   "brand": {
     "name": "OpenMasjidOS"
   },
+  "a11y": {
+    "loading": "Loading OpenMasjidOS"
+  },
   "nav": {
     "dashboard": "Dashboard",
     "appStore": "App Store",
@@ -41,6 +44,7 @@
     "loading": "Loading available apps...",
     "empty": "No apps available yet",
     "emptyHint": "The app catalog is on its way. Check back soon.",
+    "comingSoon": "Coming soon",
     "install": "Install",
     "installed": "Installed",
     "update": "Update available",
@@ -55,39 +59,31 @@
   },
   "settings": {
     "title": "Settings",
-    "subtitle": "Manage your masjid's profile and preferences",
-    "masjidProfile": "Masjid Profile",
-    "masjidName": "Masjid name",
-    "masjidNamePlaceholder": "An-Noor Institute",
-    "streetAddress": "Street address",
-    "streetAddressPlaceholder": "37-22 74th St",
-    "city": "City",
-    "cityPlaceholder": "Jackson Heights",
-    "state": "State / Province",
-    "statePlaceholder": "New York",
-    "zipCode": "ZIP / Postal code",
-    "zipCodePlaceholder": "11372",
-    "country": "Country",
-    "countryPlaceholder": "United States",
-    "prayerSettings": "Prayer Settings",
-    "calculationMethod": "Calculation method",
-    "asrMadhab": "Asr time calculation",
-    "timezone": "Timezone",
-    "interface": "Interface",
-    "language": "Language",
-    "save": "Save changes",
-    "saved": "Changes saved",
-    "calcMethods": {
-      "mwl": "Muslim World League",
-      "isna": "ISNA (North America)",
-      "egypt": "Egyptian General Authority",
-      "makkah": "Umm al-Qura (Makkah)",
-      "karachi": "University of Islamic Sciences, Karachi"
+    "subtitle": "Customize your dashboard",
+    "appearance": "Appearance",
+    "theme": "Theme",
+    "themeDark": "Dark",
+    "themeLight": "Light",
+    "accent": "Accent colour",
+    "dashboardName": "Dashboard name",
+    "dashboardNamePlaceholder": "OpenMasjidOS",
+    "dashboardNameHint": "Shown in the sidebar. Leave blank for the default.",
+    "showSplash": "Play the welcome animation on load",
+    "languageTitle": "Language",
+    "language": "Interface language",
+    "languageHint": "More translations are on the way — only English is complete for now.",
+    "languages": {
+      "english": "English",
+      "arabic": "العربية",
+      "urdu": "اردو"
     },
-    "asrMethods": {
-      "standard": "Standard (Shafi'i, Maliki, Hanbali)",
-      "hanafi": "Hanafi"
-    }
+    "advanced": "Advanced",
+    "customApps": "Allow custom apps",
+    "customAppsHint": "Adds a button to the App Store for installing any app from a Docker Compose file. Only turn this on if you know what you're doing.",
+    "note": "Masjid details like prayer times and location are set inside each app that needs them — not here.",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "saved": "Changes saved"
   },
   "status": {
     "running": "Running",

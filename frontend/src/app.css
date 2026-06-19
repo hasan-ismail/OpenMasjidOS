@@ -3,10 +3,56 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    /* Match the ambient scene so there is never a page-white flash before the
+       fixed SceneBackground paints (it sits at z-index:-1 behind everything). */
+    background-color: var(--scene-base);
+  }
+
   body {
-    background-color: var(--color-surface);
     color: var(--color-ink);
     font-family: Inter, system-ui, sans-serif;
     min-height: 100vh;
+    /* The fixed scene provides the visible background; body stays transparent
+       so the aurora shows through. */
+    background-color: transparent;
+    overflow-x: hidden;
+  }
+
+  /* Text selection picks up the brand hue. */
+  ::selection {
+    background-color: var(--color-primary-subtle);
+    color: var(--color-ink);
+  }
+
+  /* Themed, slim scrollbars (WebKit/Blink). */
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--color-primary-muted);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-primary);
+  }
+
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-primary-muted) transparent;
+  }
+
+  /* Visible, on-brand keyboard focus ring everywhere. */
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
   }
 }
