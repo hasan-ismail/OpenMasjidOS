@@ -18,7 +18,7 @@ When it finishes, open **`http://openmasjidos.local`** (or **`http://<your-serve
 ## Table of Contents
 
 - [What is OpenMasjidOS?](#what-is-openmasjidos)
-- [Features](#features)
+- [What it does](#what-it-does)
 - [Installation Guide](#installation-guide)
   - [Option A — Raspberry Pi (Ubuntu Server 22.04 LTS)](#option-a--raspberry-pi-ubuntu-server-2204-lts)
   - [Option B — Proxmox VE (LXC Container)](#option-b--proxmox-ve-lxc-container)
@@ -49,18 +49,24 @@ Everything runs on **your hardware**, under **your control**. No subscriptions. 
 
 ---
 
-## Features
+## What it does
 
-- 🔒 **Login-protected dashboard** — a single admin account, created on first run (argon2id-hashed).
-- 📊 **Live system stats** — CPU, memory, storage, temperature, uptime, and running-app count, updated live.
-- 🧩 **App Store** — one-click install of apps from the [OpenMasjidAPPS](https://github.com/hasan-ismail/OpenMasjidAPPS) catalog (coming soon).
-- 🌍 **Community app stores** *(advanced)* — add CasaOS-compatible app stores by URL and install community apps.
-- 📝 **Custom apps** *(advanced)* — install anything by pasting a Docker Compose file, with safety checks.
-- 🖥️ **Web terminals** *(advanced, off by default)* — a shell into any app, or a root shell into the core.
-- 🎨 **Beautiful, themeable UI** — dark/light, accent colours, multiple wallpapers, RTL-ready, full reduced-motion support.
-- 💾 **Backups** — download a single backup file of your settings and app data.
+The dashboard is the heart of OpenMasjidOS. After you create an admin account on first run, everything lives behind a login.
 
-Apps run as their own isolated Docker containers, so updating OpenMasjidOS never touches them.
+- **Live system status.** The home screen shows CPU, memory, storage, temperature, uptime, and how many apps are running, all updating in real time.
+- **An App Store.** Browse the OpenMasjidAPPS catalog and install an app with one click. (The catalog is on its way.)
+- **Your apps, your way.** Every installed app gets a tile you can open, restart, shut down, or remove, and a card you can drag onto the dock to pin it.
+- **A built-in file manager.** Browse, upload, download, rename, and delete the files that belong to OpenMasjidOS and its apps, without leaving the dashboard.
+- **A polished, themeable interface.** Dark or light, a handful of accent colours, several wallpapers (or point it at your own image), gentle animation, and full right-to-left support for Arabic and Urdu down the line.
+
+For the more technical volunteer, there are a few opt-in tools under Settings → Advanced, all off by default:
+
+- Add **community app stores** that follow the CasaOS format, and install apps from them.
+- Install anything by pasting a **Docker Compose** file, with the platform checking it for risky settings first.
+- Open a **terminal** into any app, or a root terminal into OpenMasjidOS itself.
+- Add an **SSH key** so you can log in to the machine from your own computer.
+
+Each app runs as its own isolated Docker container, so updating OpenMasjidOS never touches the apps you have installed or their data.
 
 ---
 
@@ -98,12 +104,12 @@ The recommended setup for most masjids. A Raspberry Pi 4 or 5 with Ubuntu Server
    - **Choose Device** → your Pi model
    - **Choose OS** → *Other general-purpose OS* → *Ubuntu* → **Ubuntu Server 22.04.x LTS (64-bit)**
    - **Choose Storage** → your SD card / USB SSD
-3. Click the **gear icon ⚙** (Ctrl+Shift+X) to open Advanced Settings **before** writing:
-   - ✅ **Set hostname** → `openmasjid`
-   - ✅ **Enable SSH** → *Use password authentication*
-   - ✅ **Set username and password** → username `openmasjid`, a strong password
-   - ✅ **Configure wireless LAN** (only if you have no ethernet) + set your **Wireless LAN country**
-   - ✅ **Set locale settings** → your timezone
+3. Click the **gear icon** (Ctrl+Shift+X) to open Advanced Settings **before** writing:
+   - **Set hostname** → `openmasjid`
+   - **Enable SSH** → *Use password authentication*
+   - **Set username and password** → username `openmasjid`, a strong password
+   - **Configure wireless LAN** (only if you have no ethernet) + set your **Wireless LAN country**
+   - **Set locale settings** → your timezone
 4. **Save**, then **Write**. Flashing takes 2–5 minutes.
 
 #### Step 2 — First boot

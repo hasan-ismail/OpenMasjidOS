@@ -6,7 +6,12 @@
 .glass {
   position: relative;
   border-radius: var(--radius-card);
-  background-image: linear-gradient(var(--glass-tint), var(--glass-tint));
+  /* Top layer: a soft light that follows the cursor (set via --mx/--my in
+     cursorFx.ts) — the "refraction reacts to the pointer". Backgrounds always
+     paint below content, so it never washes out text. Then the brand tint. */
+  background-image:
+    radial-gradient(14rem at var(--mx, -200%) var(--my, -200%), var(--glint), transparent 60%),
+    linear-gradient(var(--glass-tint), var(--glass-tint));
   background-color: var(--glass-bg);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
@@ -16,7 +21,9 @@
 .glass-raised {
   position: relative;
   border-radius: var(--radius-card);
-  background-image: linear-gradient(var(--glass-tint), var(--glass-tint));
+  background-image:
+    radial-gradient(14rem at var(--mx, -200%) var(--my, -200%), var(--glint), transparent 60%),
+    linear-gradient(var(--glass-tint), var(--glass-tint));
   background-color: var(--glass-bg-raised);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
@@ -175,4 +182,7 @@
   background-position: center;
   background-repeat: no-repeat;
 }
+/* A custom image is the whole wallpaper — drop the aurora and the geometric
+   pattern so they don't overlay it (keep the edge vignette for legibility). */
 .scene--image::before { display: none; }
+.scene--image::after { background-image: none; }

@@ -35,12 +35,6 @@ export function Settings() {
     { id: 'system', label: t('settings.themeSystem') },
   ];
 
-  const langs = [
-    { id: 'en', label: t('settings.languages.english') },
-    { id: 'ar', label: t('settings.languages.arabic') },
-    { id: 'ur', label: t('settings.languages.urdu') },
-  ];
-
   return (
     <Page>
       <header className="page-head">
@@ -131,22 +125,6 @@ export function Settings() {
         <div className="setting-row">
           <div className="setting-row__text"><div className="setting-row__title">{t('settings.showSplash')}</div></div>
           <Toggle checked={prefs.showSplash} onChange={(v) => prefsStore.patch({ showSplash: v })} label={t('settings.showSplash')} />
-        </div>
-      </section>
-
-      {/* Language */}
-      <section className="glass-raised panel">
-        <h2 className="panel-title">{t('settings.language')}</h2>
-        <div className="setting-row">
-          <div className="setting-row__text">
-            <div className="setting-row__title">{t('settings.languageLabel')}</div>
-            <div className="setting-row__hint">{t('settings.languageHint')}</div>
-          </div>
-          <select className="select glass-inset" style={{ maxWidth: '12rem' }} value={prefs.language} onChange={(e) => prefsStore.patch({ language: e.target.value })}>
-            {langs.map((l) => (
-              <option key={l.id} value={l.id}>{l.label}</option>
-            ))}
-          </select>
         </div>
       </section>
 

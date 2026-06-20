@@ -9,10 +9,13 @@ import './styles/glass.css';
 import './styles/app.css';
 import './lib/i18n';
 import { prefsStore } from './lib/prefs';
+import { installCursorFx } from './lib/cursorFx';
 import { App } from './App';
 
 // Apply saved theme/accent/wallpaper/language before first paint.
 prefsStore.hydrate();
+// Pointer-reactive light on glass surfaces.
+installCursorFx();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

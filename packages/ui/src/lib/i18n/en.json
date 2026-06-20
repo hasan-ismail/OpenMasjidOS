@@ -88,6 +88,7 @@
     "open": "Open",
     "start": "Start",
     "stop": "Turn off",
+    "shutdown": "Shut down",
     "restart": "Restart",
     "uninstall": "Uninstall",
     "pin": "Pin to dock",
