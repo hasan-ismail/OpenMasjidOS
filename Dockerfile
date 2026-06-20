@@ -13,14 +13,13 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 
-# Copy workspace manifests first so dependency install layers cache well.
-COPY package.json ./
+# Copy workspace manifests + lockfile first so dependency layers cache well.
+COPY package.json package-lock.json ./
 COPY packages/core/package.json packages/core/
 COPY packages/ui/package.json packages/ui/
 
-# No committed lockfile (the project builds through CI, not a dev's laptop),
-# so a plain install resolves the manifests for the current arch.
-RUN npm install --no-audit --no-fund
+# Reproducible, integrity-pinned install from the committed lockfile.
+RUN npm ci --no-audit --no-fund
 
 # Copy the rest of the sources and build both packages.
 COPY tsconfig.base.json VERSION ./
