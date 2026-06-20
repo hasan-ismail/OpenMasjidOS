@@ -119,6 +119,7 @@ func (m *Manager) List(ctx context.Context) ([]App, error) {
 		}
 		app, err := m.loadMeta(e.Name())
 		if err != nil {
+			slog.Warn("apps list: skipping dir (no readable app.json)", "dir", e.Name(), "err", err)
 			continue // not a managed app dir
 		}
 		app.Running = docker.ComposeRunning(ctx, m.project(app.ID))
@@ -156,7 +157,16 @@ func (m *Manager) List(ctx context.Context) ([]App, error) {
 		apps = append(apps, recovered)
 	}
 
+	// Never send null ports to the UI — an undefined .ports would crash the
+	// dashboard's card render and make the whole list look empty.
+	for i := range apps {
+		if apps[i].Ports == nil {
+			apps[i].Ports = []int{}
+		}
+	}
+
 	sort.Slice(apps, func(i, j int) bool { return apps[i].Name < apps[j].Name })
+	slog.Info("apps list: returning", "count", len(apps))
 	return apps, nil
 }
 

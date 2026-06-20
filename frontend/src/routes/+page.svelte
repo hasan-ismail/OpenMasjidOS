@@ -82,9 +82,14 @@
 
   // Open the app in a new tab on its first published port, using whatever host
   // the dashboard is being viewed from.
+  function appPorts(app: InstalledApp): number[] {
+    return Array.isArray(app.ports) ? app.ports : [];
+  }
+
   function openApp(app: InstalledApp) {
-    if (!app.ports || app.ports.length === 0) return;
-    window.open(`http://${window.location.hostname}:${app.ports[0]}`, '_blank', 'noopener');
+    const ports = appPorts(app);
+    if (ports.length === 0) return;
+    window.open(`http://${window.location.hostname}:${ports[0]}`, '_blank', 'noopener');
   }
 
   function toggleMenu(id: string) {
@@ -261,13 +266,14 @@
           <!-- Installed apps -->
           <div class="installed-grid">
             {#each installedApps as app (app.id)}
+              {@const hasPort = appPorts(app).length > 0}
               <div
                 class="installed-card glass"
-                class:clickable={app.ports.length > 0}
+                class:clickable={hasPort}
                 on:click={() => openApp(app)}
-                role={app.ports.length > 0 ? 'link' : undefined}
-                tabindex={app.ports.length > 0 ? 0 : undefined}
-                on:keydown={(e) => { if (app.ports.length > 0 && (e.key === 'Enter')) openApp(app); }}
+                role={hasPort ? 'link' : undefined}
+                tabindex={hasPort ? 0 : undefined}
+                on:keydown={(e) => { if (hasPort && e.key === 'Enter') openApp(app); }}
               >
                 <div class="installed-head">
                   <span
@@ -292,7 +298,7 @@
                     </button>
                     {#if openMenuId === app.id}
                       <div class="kebab-menu glass-raised" role="menu">
-                        {#if app.ports.length > 0}
+                        {#if hasPort}
                           <button role="menuitem" on:click|stopPropagation={() => { openMenuId=''; openApp(app); }}>{$t('actions.open')}</button>
                         {/if}
                         {#if $serverSettings.web_terminal && app.running}
