@@ -197,16 +197,16 @@ function readHostCgroupMemory(): { used: number; total: number } | null {
 
 function resolveMemory(mem: Systeminformation.MemData | null): { used: number; total: number } {
   // The LXC/host cgroup is authoritative and matches Proxmox; prefer it.
-  const cg = readHostCgroupMemory();
-  if (cg && cg.total > 0) return cg;
+  const hostCg = readHostCgroupMemory();
+  if (hostCg && hostCg.total > 0) return hostCg;
 
   const host = readHostMeminfo();
   if (host && host.total > 0) return host;
 
   const hostTotal = mem?.total ?? 0;
-  const cg = readCgroupMemory();
-  if (cg && Number.isFinite(cg.limit) && cg.limit > 0 && (hostTotal === 0 || cg.limit < hostTotal)) {
-    return { used: cg.used, total: cg.limit };
+  const selfCg = readCgroupMemory();
+  if (selfCg && Number.isFinite(selfCg.limit) && selfCg.limit > 0 && (hostTotal === 0 || selfCg.limit < hostTotal)) {
+    return { used: selfCg.used, total: selfCg.limit };
   }
   return { used: mem ? (mem.active ?? mem.used) : 0, total: hostTotal };
 }
