@@ -11,7 +11,7 @@
 curl -fsSL https://raw.githubusercontent.com/hasan-ismail/OpenMasjidOS/master/install.sh | bash
 ```
 
-After installation, open your browser to **`http://<your-server-ip>`** and follow the setup wizard.
+After installation, open your browser to **`http://openmasjidos.local:8723`** (or **`http://<your-server-ip>:8723`**) and follow the setup wizard.
 
 ---
 
@@ -350,7 +350,7 @@ Create a VPS with **Ubuntu 22.04 LTS**, SSH in, and run the one-liner above.
 
 > **Important:** If you host on a VPS, your dashboard is accessible on the public internet. Make sure to:
 > 1. Set a strong admin password in the setup wizard.
-> 2. Configure your VPS firewall to restrict port 80 to known IPs, or put it behind a reverse proxy with HTTPS.
+> 2. Configure your VPS firewall to restrict port 8723 to known IPs, or put it behind a reverse proxy with HTTPS.
 > 3. Consider using a private network/VPN for masjid-internal access.
 
 ---
@@ -441,38 +441,37 @@ If you want to build an app for your masjid, see [`docs/APP_MANIFEST_SPEC.md`](d
 
 ## Development
 
-**Requirements:** Go 1.22+, Node.js 20+, Docker
+**Requirements:** Node.js 20+, Docker
+
+OpenMasjidOS is a TypeScript monorepo (npm workspaces): a Node + Fastify + tRPC
+daemon (`packages/core`) and a React + Vite + Tailwind dashboard (`packages/ui`).
 
 ```bash
 # Clone
 git clone https://github.com/hasan-ismail/OpenMasjidOS.git
 cd OpenMasjidOS
 
-# Run backend + frontend with hot reload
-make dev
+# Install all workspaces
+npm install
 
-# Production build (builds UI, embeds into Go binary, produces Docker image)
-make build
+# Run the daemon + UI together with hot reload
+npm run dev
 
-# Run tests
-make test
+# Type-check both packages
+npm run lint
 
-# Run linters
-make lint
+# Production build (builds the UI, bundles the daemon)
+npm run build
 
-# Build and tag Docker image
-make image
+# Build & tag the runtime Docker image
+npm run image
 ```
 
-The backend (Go) runs on port 80 by default. Set `OPENMASJID_PORT=8080` for local development to avoid needing root.
+The daemon listens on **8723**. In dev, the Vite dev server runs on
+`http://localhost:5173` and proxies `/trpc` (HTTP + WebSocket) and `/api` to the
+daemon automatically — open `http://localhost:5173`.
 
-```bash
-OPENMASJID_PORT=8080 make dev
-```
-
-Then open `http://localhost:5173` — the Vite dev server proxies API requests to the Go backend automatically.
-
-See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for a detailed description of how the system is structured.
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for how the system is structured.
 
 ---
 

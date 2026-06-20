@@ -1,0 +1,126 @@
+/*
+ * glass.css — Sakīna Glass material + ambient utilities. Imported after
+ * Tailwind so these classes win ties. Every value is token-driven (tokens.css).
+ */
+
+.glass {
+  position: relative;
+  border-radius: var(--radius-card);
+  background-image: linear-gradient(var(--glass-tint), var(--glass-tint));
+  background-color: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-raised {
+  position: relative;
+  border-radius: var(--radius-card);
+  background-image: linear-gradient(var(--glass-tint), var(--glass-tint));
+  background-color: var(--glass-bg-raised);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  box-shadow: var(--glass-shadow-raised);
+}
+
+.glass-inset {
+  position: relative;
+  border-radius: var(--radius-button);
+  background-color: var(--glass-bg-inset);
+  -webkit-backdrop-filter: blur(var(--glass-blur-inset)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur-inset)) saturate(var(--glass-saturate));
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.25),
+    0 0 0 1px var(--glass-border);
+}
+
+.glass-dock {
+  position: relative;
+  background-image: linear-gradient(var(--glass-tint), var(--glass-tint));
+  background-color: var(--glass-bg-raised);
+  -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-saturate-strong));
+  backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-saturate-strong));
+  box-shadow: var(--glass-shadow-raised);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-dock { background-color: var(--color-surface-overlay); }
+}
+
+/* PERFORMANCE CAP — a glass pane inside a glass pane must not re-blur. */
+.glass :where(.glass, .glass-raised),
+.glass-raised :where(.glass, .glass-raised) {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.glass .glass-allow-nested-blur,
+.glass-raised .glass-allow-nested-blur {
+  -webkit-backdrop-filter: blur(var(--glass-blur-inset)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur-inset)) saturate(var(--glass-saturate));
+}
+
+/* FALLBACK — opaque fills when backdrop-filter is unsupported. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass        { background-color: var(--color-surface-raised); }
+  .glass-raised { background-color: var(--color-surface-overlay); }
+  .glass-inset  { background-color: var(--color-surface); }
+}
+
+/* Accent glow — a soft colored bloom behind a primary/active element. */
+.glow-accent {
+  position: relative;
+  isolation: isolate;
+}
+.glow-accent::before {
+  content: "";
+  position: absolute;
+  inset: -28%;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(circle, var(--color-primary-subtle), transparent 70%);
+  background: radial-gradient(circle,
+    color-mix(in srgb, var(--color-primary) calc(var(--glow-strength) * 100%), transparent),
+    transparent 70%);
+  filter: blur(20px);
+  opacity: var(--glow-strength);
+}
+.glow-accent--gold::before {
+  background: radial-gradient(circle, var(--color-gold-subtle), transparent 70%);
+  background: radial-gradient(circle,
+    color-mix(in srgb, var(--color-gold) calc(var(--glow-strength) * 100%), transparent),
+    transparent 70%);
+}
+
+/* Live status dot — heartbeat glow; state conveyed by color + label, not motion. */
+.status-dot {
+  position: relative;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  background: var(--color-success);
+  flex-shrink: 0;
+}
+.status-dot--error { background: var(--color-danger); }
+.status-dot--idle { background: var(--color-ink-faint); }
+.status-dot::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    color-mix(in srgb, var(--color-success) 55%, transparent), transparent 70%);
+  animation: pulseGlow 2.4s ease-in-out infinite;
+}
+.status-dot--error::after {
+  background: radial-gradient(circle,
+    color-mix(in srgb, var(--color-danger) 55%, transparent), transparent 70%);
+}
+.status-dot--idle::after { content: none; }
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.45; transform: scale(0.85); }
+  50%      { opacity: 1;    transform: scale(1.15); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-dot::after { animation: none; opacity: 0.8; transform: scale(1); }
+}

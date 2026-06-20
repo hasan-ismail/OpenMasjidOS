@@ -1,0 +1,242 @@
+/**
+ * Platform settings only (CLAUDE.md §13) — appearance, language, account,
+ * advanced. No masjid/prayer config ever lives here; that belongs to apps.
+ */
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Download, GitBranch, RefreshCw, Check } from 'lucide-react';
+import { trpc } from '../lib/trpc';
+import { usePrefs, prefsStore, ACCENTS, WALLPAPERS } from '../lib/prefs';
+import { Toggle } from '../components/Toggle';
+import { Page } from '../components/Page';
+import { useToast } from '../components/ToastProvider';
+import { cn } from '../lib/cn';
+
+export function Settings() {
+  const { t } = useTranslation();
+  const { toast } = useToast();
+  const prefs = usePrefs();
+  const utils = trpc.useUtils();
+
+  const serverSettings = trpc.settings.get.useQuery();
+  const sysInfo = trpc.system.info.useQuery();
+  const updateInfo = trpc.system.checkUpdate.useQuery(undefined, { enabled: false });
+
+  const updateSettings = trpc.settings.update.useMutation({
+    onSuccess: () => utils.settings.get.invalidate(),
+  });
+
+  const themes: Array<{ id: 'dark' | 'light' | 'system'; label: string }> = [
+    { id: 'dark', label: t('settings.themeDark') },
+    { id: 'light', label: t('settings.themeLight') },
+    { id: 'system', label: t('settings.themeSystem') },
+  ];
+
+  const langs = [
+    { id: 'en', label: t('settings.languages.english') },
+    { id: 'ar', label: t('settings.languages.arabic') },
+    { id: 'ur', label: t('settings.languages.urdu') },
+  ];
+
+  return (
+    <Page>
+      <header className="page-head">
+        <h1 className="page-title">{t('settings.title')}</h1>
+        <p className="page-sub">{t('settings.subtitle')}</p>
+      </header>
+
+      {/* Appearance */}
+      <section className="glass-raised panel">
+        <h2 className="panel-title">{t('settings.appearance')}</h2>
+
+        <div className="setting-row">
+          <div className="setting-row__text"><div className="setting-row__title">{t('settings.theme')}</div></div>
+          <div className="segmented glass-inset">
+            {themes.map((th) => (
+              <button key={th.id} className={cn(prefs.theme === th.id && 'is-active')} onClick={() => prefsStore.patch({ theme: th.id })}>
+                {th.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="setting-row">
+          <div className="setting-row__text"><div className="setting-row__title">{t('settings.accent')}</div></div>
+          <div className="swatch-row">
+            {Object.entries(ACCENTS).map(([id, a]) => (
+              <button
+                key={id}
+                className={cn('swatch', prefs.accent === id && 'is-active')}
+                style={{ background: a.primary }}
+                aria-label={a.label}
+                onClick={() => prefsStore.patch({ accent: id })}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="setting-row">
+          <div className="setting-row__text"><div className="setting-row__title">{t('settings.wallpaper')}</div></div>
+          <div className="wallpaper-row">
+            {Object.entries(WALLPAPERS).map(([id, w]) => (
+              <button
+                key={id}
+                className={cn('wallpaper', prefs.wallpaper === id && 'is-active')}
+                style={{ background: w.preview }}
+                aria-label={w.label}
+                onClick={() => prefsStore.patch({ wallpaper: id })}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="setting-row">
+          <div className="setting-row__text">
+            <div className="setting-row__title">{t('settings.dashboardName')}</div>
+            <div className="setting-row__hint">{t('settings.dashboardNameHint')}</div>
+          </div>
+          <input
+            className="input glass-inset"
+            style={{ maxWidth: '14rem' }}
+            placeholder={t('settings.dashboardNamePlaceholder')}
+            value={prefs.dashboardName}
+            onChange={(e) => prefsStore.patch({ dashboardName: e.target.value })}
+          />
+        </div>
+
+        <div className="setting-row">
+          <div className="setting-row__text"><div className="setting-row__title">{t('settings.showSplash')}</div></div>
+          <Toggle checked={prefs.showSplash} onChange={(v) => prefsStore.patch({ showSplash: v })} label={t('settings.showSplash')} />
+        </div>
+      </section>
+
+      {/* Language */}
+      <section className="glass-raised panel">
+        <h2 className="panel-title">{t('settings.language')}</h2>
+        <div className="setting-row">
+          <div className="setting-row__text">
+            <div className="setting-row__title">{t('settings.languageLabel')}</div>
+            <div className="setting-row__hint">{t('settings.languageHint')}</div>
+          </div>
+          <select className="select glass-inset" style={{ maxWidth: '12rem' }} value={prefs.language} onChange={(e) => prefsStore.patch({ language: e.target.value })}>
+            {langs.map((l) => (
+              <option key={l.id} value={l.id}>{l.label}</option>
+            ))}
+          </select>
+        </div>
+      </section>
+
+      {/* Account */}
+      <ChangePassword />
+
+      {/* Advanced */}
+      <section className="glass-raised panel">
+        <h2 className="panel-title">{t('settings.advanced')}</h2>
+
+        <div className="setting-row">
+          <div className="setting-row__text">
+            <div className="setting-row__title">{t('settings.customApps')}</div>
+            <div className="setting-row__hint">{t('settings.customAppsHint')}</div>
+          </div>
+          <Toggle
+            checked={serverSettings.data?.allowCustomApps ?? false}
+            onChange={(v) => updateSettings.mutate({ allowCustomApps: v })}
+            label={t('settings.customApps')}
+          />
+        </div>
+
+        <div className="setting-row">
+          <div className="setting-row__text">
+            <div className="setting-row__title">{t('settings.updates')}</div>
+            <div className="setting-row__hint">
+              {updateInfo.data
+                ? updateInfo.data.updateAvailable
+                  ? t('settings.updateAvailable', { version: updateInfo.data.latest })
+                  : t('settings.upToDate')
+                : ''}
+            </div>
+          </div>
+          <button className="btn" onClick={() => updateInfo.refetch()} disabled={updateInfo.isFetching}>
+            <RefreshCw size={15} /> {updateInfo.isFetching ? t('settings.checking') : t('settings.checkUpdates')}
+          </button>
+        </div>
+
+        <div className="setting-row">
+          <div className="setting-row__text">
+            <div className="setting-row__title">{t('settings.network')}</div>
+            <div className="setting-row__hint">
+              {sysInfo.data
+                ? `${t('settings.hostname')}: ${sysInfo.data.network.localDomain} · ${t('settings.address')}: ${(sysInfo.data.network.addresses[0] ?? '—')}:${sysInfo.data.network.port}`
+                : ''}
+            </div>
+          </div>
+        </div>
+
+        <div className="setting-row">
+          <div className="setting-row__text">
+            <div className="setting-row__title">{t('settings.backup')}</div>
+            <div className="setting-row__hint">{t('settings.backupHint')} · {t('settings.restoreSoon')}</div>
+          </div>
+          <a className="btn" href="/api/backup">
+            <Download size={15} /> {t('settings.downloadBackup')}
+          </a>
+        </div>
+
+        <div className="setting-row">
+          <div className="setting-row__text">
+            <div className="setting-row__title">{t('settings.sourceCode')}</div>
+            <div className="setting-row__hint">{t('settings.sourceCodeHint')}</div>
+          </div>
+          <a className="btn btn--ghost" href={sysInfo.data?.sourceUrl ?? '#'} target="_blank" rel="noopener noreferrer">
+            <GitBranch size={15} /> {t('settings.sourceCode')}
+          </a>
+        </div>
+
+        <div className="setting-row">
+          <div className="setting-row__text"><div className="setting-row__title">{t('settings.version')}</div></div>
+          <span style={{ color: 'var(--color-ink-muted)', fontVariantNumeric: 'tabular-nums' }}>v{sysInfo.data?.version ?? '—'}</span>
+        </div>
+      </section>
+    </Page>
+  );
+}
+
+function ChangePassword() {
+  const { t } = useTranslation();
+  const { toast } = useToast();
+  const [current, setCurrent] = useState('');
+  const [next, setNext] = useState('');
+  const [error, setError] = useState('');
+
+  const change = trpc.auth.changePassword.useMutation({
+    onSuccess: () => {
+      setCurrent('');
+      setNext('');
+      setError('');
+      toast(t('settings.passwordChanged'), 'success');
+    },
+    onError: (e) => setError(e.message || t('errors.generic')),
+  });
+
+  return (
+    <section className="glass-raised panel">
+      <h2 className="panel-title">{t('settings.account')}</h2>
+      <div className="field" style={{ maxWidth: '20rem' }}>
+        <label className="label">{t('settings.currentPassword')}</label>
+        <input className="input glass-inset" type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} />
+      </div>
+      <div className="field" style={{ maxWidth: '20rem' }}>
+        <label className="label">{t('settings.newPassword')}</label>
+        <input className="input glass-inset" type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} />
+      </div>
+      {error && <p className="form-error">{error}</p>}
+      <button
+        className="btn btn--primary"
+        disabled={change.isPending || !current || next.length < 8}
+        onClick={() => change.mutate({ currentPassword: current, newPassword: next })}
+      >
+        <Check size={15} /> {t('settings.changePassword')}
+      </button>
+    </section>
+  );
+}

@@ -34,7 +34,7 @@ set -euo pipefail
 # -----------------------------------------------------------------------------
 # Constants — change these if you need a non-standard setup
 # -----------------------------------------------------------------------------
-PORT=80
+PORT=8723
 DATA_DIR=/opt/openmasjid
 IMAGE=ghcr.io/hasan-ismail/openmasjid-core:latest
 COMPOSE_PROJECT=openmasjid
@@ -384,27 +384,20 @@ services:
       # across core container restarts and upgrades.
       - ${DATA_DIR}:/data
 
-      # Mount the host's /proc and /sys (read-only) so the dashboard's system
-      # stats (CPU, RAM, network, uptime) reflect the MACHINE, not the container.
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
-
     environment:
       # Tell the core where its data lives inside the container
       OPENMASJID_DATA_DIR: /data
-      # The port the Go HTTP server binds to inside the container
+      # The port the daemon binds to inside the container
       OPENMASJID_PORT: "${PORT}"
-      # Point gopsutil at the mounted host /proc and /sys for host-level stats.
-      HOST_PROC: /host/proc
-      HOST_SYS: /host/sys
+      NODE_ENV: production
 
     healthcheck:
-      # The image is distroless (no shell/wget/curl); the binary self-checks.
-      test: ["CMD", "/openmasjid", "-healthcheck"]
-      interval: 10s
+      # The Alpine runtime ships busybox wget — a tiny HTTP check.
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:${PORT}/api/health"]
+      interval: 30s
       timeout: 5s
-      retries: 6
-      start_period: 15s
+      retries: 3
+      start_period: 20s
 
     labels:
       # Label the core itself so it is easy to identify

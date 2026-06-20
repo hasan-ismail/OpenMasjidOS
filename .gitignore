@@ -1,14 +1,14 @@
+# Dependencies
+node_modules/
+
 # Build outputs
 dist/
-frontend/build/
-frontend/.svelte-kit/
-backend/openmasjid
+packages/*/dist/
+packages/ui/dist/
 
-# Dependencies
-frontend/node_modules/
-
-# Go
-backend/go.sum
+# Logs
+*.log
+npm-debug.log*
 
 # Editor / OS
 .DS_Store
@@ -20,6 +20,7 @@ Thumbs.db
 # Env / secrets
 .env
 .env.local
+.env.*.local
 
 # Claude Code local settings (keep project settings, ignore local overrides)
 .claude/settings.local.json

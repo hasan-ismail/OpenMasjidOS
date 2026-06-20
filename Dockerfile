@@ -1,61 +1,62 @@
-# Stage 1: Build the SvelteKit frontend
-FROM node:20-alpine AS ui-builder
+# syntax=docker/dockerfile:1
+#
+# OpenMasjidOS core — multi-stage build.
+#   1. build:   install the monorepo, build the React UI (Vite) and the
+#               TypeScript daemon (tsc), then drop dev dependencies.
+#   2. runtime: a slim Node + Docker-CLI image that runs the daemon, which
+#               serves the built UI and the tRPC API on one port.
+#
+# We use Alpine and @node-rs/argon2 (prebuilt musl binaries) so the multi-arch
+# (amd64 + arm64) build needs no native compilation. See docs/ARCHITECTURE.md.
 
-WORKDIR /app/frontend
-
-COPY frontend/package.json ./
-RUN npm install
-
-COPY frontend/ ./
-RUN npm run build
-
-# Stage 2: Build the Go backend binary
-FROM golang:1.22-alpine AS go-builder
-
+# ---- Build stage ------------------------------------------------------------
+FROM node:20-alpine AS build
 WORKDIR /app
 
-# Copy VERSION so the build can stamp it into the binary via ldflags.
-COPY VERSION ./
+# Copy workspace manifests first so dependency install layers cache well.
+COPY package.json ./
+COPY packages/core/package.json packages/core/
+COPY packages/ui/package.json packages/ui/
 
-COPY backend/go.mod ./
-RUN go mod download
+# No committed lockfile (the project builds through CI, not a dev's laptop),
+# so a plain install resolves the manifests for the current arch.
+RUN npm install --no-audit --no-fund
 
-COPY backend/ ./
+# Copy the rest of the sources and build both packages.
+COPY tsconfig.base.json VERSION ./
+COPY packages ./packages
+RUN npm run build
 
-# Copy the built UI assets into the exact path expected by go:embed in
-# internal/api/embed.go:  //go:embed all:ui/build
-COPY --from=ui-builder /app/frontend/build ./internal/api/ui/build
+# Strip dev dependencies (vite, tsc, tsx…) — the runtime only needs prod deps.
+RUN npm prune --omit=dev --no-audit --no-fund
 
-RUN go mod tidy
+# ---- Runtime stage ----------------------------------------------------------
+FROM node:20-alpine AS runtime
+WORKDIR /app
 
-# Stamp the version from the VERSION file into the binary at link time.
-# The api.version variable is declared in internal/api/router.go and defaults
-# to "0.1.0"; the -X flag overrides it with whatever is in VERSION.
-RUN VERSION=$(cat /app/VERSION) && \
-    CGO_ENABLED=0 GOOS=linux go build \
-      -ldflags="-w -s -X github.com/OpenMasjidOS/OpenMasjidOS/internal/api.version=${VERSION}" \
-      -o openmasjid ./cmd/openmasjid
+# The core installs/removes apps by shelling out to `docker` + `docker compose`
+# against the mounted host socket, so the CLI and compose plugin must be present.
+RUN apk add --no-cache docker-cli docker-cli-compose ca-certificates tar
 
-# Stage 3: Production image — Alpine + the Docker CLI and Compose plugin.
-#
-# We need a base WITH the docker CLI + `docker compose` (not distroless) because
-# the core installs/removes apps by shelling out to `docker compose` against the
-# mounted host socket. The Go binary is statically linked (CGO disabled) so it
-# runs fine on Alpine/musl.
-FROM alpine:3.20
+ENV NODE_ENV=production \
+    OPENMASJID_DATA_DIR=/data \
+    OPENMASJID_PORT=8723 \
+    OPENMASJID_VERSION_FILE=/app/VERSION
 
-RUN apk add --no-cache docker-cli docker-cli-compose ca-certificates
+# Built output, installed (prod-only) deps, manifests, and the VERSION file.
+# The monorepo layout is preserved so the core resolves the UI at ../ui/dist.
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/package.json /app/VERSION ./
+COPY --from=build /app/packages/core/package.json ./packages/core/package.json
+COPY --from=build /app/packages/core/dist ./packages/core/dist
+COPY --from=build /app/packages/ui/package.json ./packages/ui/package.json
+COPY --from=build /app/packages/ui/dist ./packages/ui/dist
 
-COPY --from=go-builder /app/openmasjid /openmasjid
+EXPOSE 8723
 
-EXPOSE 80
+# Runs as root: it must read the root-owned Docker socket and write to /data.
+# Least-privilege still applies to the APP containers the core launches.
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 --start-period=20s \
+  CMD wget -qO- http://127.0.0.1:8723/api/health || exit 1
 
-# Runs as root. The core is the control plane: it must read the root-owned
-# Docker socket (/var/run/docker.sock), write config/state to /data, and run
-# `docker compose`. Least-privilege still applies to the APP containers it launches.
-
-# The binary self-checks via the -healthcheck flag (works without curl/wget).
-HEALTHCHECK --interval=10s --timeout=5s --retries=6 --start-period=15s \
-  CMD ["/openmasjid", "-healthcheck"]
-
-ENTRYPOINT ["/openmasjid"]
+ENTRYPOINT ["node", "packages/core/dist/index.js"]
