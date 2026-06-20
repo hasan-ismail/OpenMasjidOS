@@ -88,7 +88,7 @@
       "memory": "Memory",
       "disk": "Storage",
       "temp": "Temperature",
-      "uptime": "Up",
+      "uptime": "Uptime",
       "apps": "Apps running"
     },
     "installedApps": "Your apps",
@@ -118,7 +118,8 @@
     "removeTitle": "Remove {{name}}?",
     "removeBody": "This turns the app off and removes it from your dashboard.",
     "removeData": "Also delete this app's data (cannot be undone)",
-    "removeConfirm": "Remove app"
+    "removeConfirm": "Remove app",
+    "removing": "Removing the app…"
   },
   "store": {
     "title": "App Store",
@@ -254,6 +255,19 @@
     "sshKeyAdded": "SSH key added. You can now sign in as root with that key.",
     "sshPasswordNote": "To allow root login with a password instead, run this on the machine (then reconnect):",
     "sshPasswordCmd": "sudo sed -i 's/^#\\?PermitRootLogin.*/PermitRootLogin yes/; s/^#\\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config && sudo systemctl restart ssh sshd 2>/dev/null || sudo service ssh restart",
+    "storage": "Storage",
+    "freeSpace": "Free up space",
+    "freeSpaceHint": "Removes downloaded app images that no app is using anymore (e.g. apps you've removed). Your installed apps and their data are not affected.",
+    "freeing": "Freeing up space…",
+    "freedSpace": "Freed up {{amount}}.",
+    "freedNone": "Nothing to clean up — you're all tidy.",
+    "clock": "Clock",
+    "showClock": "Show a clock on the dashboard",
+    "clockFormat": "Time format",
+    "clock12h": "12-hour",
+    "clock24h": "24-hour",
+    "timezone": "Time zone",
+    "timezoneAuto": "Automatic (this device)",
     "backup": "Backup & restore",
     "downloadBackup": "Download a backup",
     "backupHint": "Saves a copy of your settings and app data as a single file.",

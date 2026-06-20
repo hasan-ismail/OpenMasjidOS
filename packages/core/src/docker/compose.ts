@@ -62,16 +62,30 @@ export async function composeRestart(project: string): Promise<RunResult> {
   return run(['compose', '-p', project, 'restart']);
 }
 
-/** `docker compose -p <project> down [-v]`. Removes the app's containers. */
+/** `docker compose -p <project> down [-v] [--rmi all]`. Removes the app's
+ *  containers, and (when requested) its volumes and images so a full uninstall
+ *  actually reclaims disk. Images shared with another running app are skipped by
+ *  Docker, so this never breaks other apps. */
 export async function composeDown(
   project: string,
   composeFile?: string,
   removeVolumes = false,
+  removeImages = false,
 ): Promise<RunResult> {
   const args = ['compose', '-p', project, ...fileArgs(composeFile), 'down'];
   if (removeVolumes) args.push('-v');
-  log.info(`compose down: ${project} (volumes: ${removeVolumes})`);
+  if (removeImages) args.push('--rmi', 'all');
+  log.info(`compose down: ${project} (volumes: ${removeVolumes}, images: ${removeImages})`);
   return run(args);
+}
+
+/** Reclaim disk by removing images not used by any container (running OR
+ *  stopped), plus dangling layers. Installed apps keep their containers, so
+ *  their images are preserved; only leftovers from removed apps + old core
+ *  images are freed. Returns the raw `docker` output (has "Total reclaimed…"). */
+export async function pruneUnusedImages(): Promise<RunResult> {
+  log.info('pruning unused images');
+  return run(['image', 'prune', '-a', '-f']);
 }
 
 export async function composeLogs(project: string, tail = 200): Promise<string> {

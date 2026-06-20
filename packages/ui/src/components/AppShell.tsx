@@ -8,6 +8,7 @@ import { ProfileMenu } from './ProfileMenu';
 import { Dock } from './Dock';
 import { Splash } from './Splash';
 import { WindowManager } from './WindowManager';
+import { Clock } from './Clock';
 import { usePrefs } from '../lib/prefs';
 
 export function AppShell({ children, onSignedOut }: { children: ReactNode; onSignedOut: () => void }) {
@@ -31,7 +32,10 @@ export function AppShell({ children, onSignedOut }: { children: ReactNode; onSig
       </AnimatePresence>
 
       <div className="topbar">
-        <ProfileMenu onSignedOut={onSignedOut} />
+        <Clock />
+        <div style={{ marginInlineStart: 'auto' }}>
+          <ProfileMenu onSignedOut={onSignedOut} />
+        </div>
       </div>
       <main className="app-main">{children}</main>
       <WindowManager />

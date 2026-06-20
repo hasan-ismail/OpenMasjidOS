@@ -16,6 +16,12 @@ export interface Prefs {
   language: string;
   showSplash: boolean;
   pinnedApps: string[];
+  /** Show the glass clock widget on the dashboard. */
+  showClock: boolean;
+  /** 24-hour clock when true, else 12-hour. */
+  clock24h: boolean;
+  /** IANA time zone for the clock; "" = the device's local zone. */
+  timezone: string;
 }
 
 const KEY = 'omos-prefs';
@@ -29,6 +35,9 @@ const DEFAULTS: Prefs = {
   language: 'en',
   showSplash: true,
   pinnedApps: [],
+  showClock: true,
+  clock24h: false,
+  timezone: '',
 };
 
 export const ACCENTS: Record<string, { label: string; primary: string; hover: string; subtle: string }> = {

@@ -8,6 +8,7 @@ import { router, protectedProcedure } from '../trpc';
 import { VERSION } from '../../version';
 import { networkInfo, checkForUpdate, SOURCE_URL } from '../../system/system';
 import { isValidSshKey, addRootSshKey } from '../../system/ssh';
+import { pruneUnusedImages } from '../../docker/compose';
 
 export const systemRouter = router({
   info: protectedProcedure.query(() => ({
@@ -17,6 +18,20 @@ export const systemRouter = router({
   })),
 
   checkUpdate: protectedProcedure.query(() => checkForUpdate()),
+
+  /** Reclaim disk: remove images no app is using anymore. Returns how much
+   *  space was freed (parsed from Docker's output), e.g. "1.2GB". */
+  freeSpace: protectedProcedure.mutation(async () => {
+    const res = await pruneUnusedImages();
+    if (res.code !== 0) {
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Could not free up space right now. Please try again.',
+      });
+    }
+    const m = (res.stdout + res.stderr).match(/Total reclaimed space:\s*([\d.]+\s*\w+)/i);
+    return { reclaimed: m ? m[1].replace(/\s+/g, ' ').trim() : '0B' };
+  }),
 
   /** Add an SSH public key to the host's root account (key-based login). */
   addSshKey: protectedProcedure

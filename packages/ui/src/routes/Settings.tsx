@@ -4,7 +4,7 @@
  */
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Download, Upload, GitBranch, RefreshCw, Check, SquareTerminal, KeyRound } from 'lucide-react';
+import { Download, Upload, GitBranch, RefreshCw, Check, SquareTerminal, KeyRound, HardDrive } from 'lucide-react';
 import { trpc } from '../lib/trpc';
 import { usePrefs, prefsStore, ACCENTS, WALLPAPERS } from '../lib/prefs';
 import { Toggle } from '../components/Toggle';
@@ -16,6 +16,16 @@ import { Modal } from '../components/Modal';
 import { useWindows } from '../components/Windows';
 import { useToast } from '../components/ToastProvider';
 import { cn } from '../lib/cn';
+
+// IANA zones for the clock picker, when the browser exposes them.
+const TIMEZONES: string[] = (() => {
+  try {
+    const fn = (Intl as unknown as { supportedValuesOf?: (k: string) => string[] }).supportedValuesOf;
+    return fn ? fn('timeZone') : [];
+  } catch {
+    return [];
+  }
+})();
 
 export function Settings() {
   const { t } = useTranslation();
@@ -64,6 +74,11 @@ export function Settings() {
 
   const updateSettings = trpc.settings.update.useMutation({
     onSuccess: () => utils.settings.get.invalidate(),
+  });
+
+  const freeSpace = trpc.system.freeSpace.useMutation({
+    onSuccess: (r) => toast(r.reclaimed === '0B' ? t('settings.freedNone') : t('settings.freedSpace', { amount: r.reclaimed }), 'success'),
+    onError: (e) => toast(e.message || t('errors.generic'), 'error'),
   });
 
   const themes: Array<{ id: 'dark' | 'light' | 'system'; label: string }> = [
@@ -163,6 +178,42 @@ export function Settings() {
           <div className="setting-row__text"><div className="setting-row__title">{t('settings.showSplash')}</div></div>
           <Toggle checked={prefs.showSplash} onChange={(v) => prefsStore.patch({ showSplash: v })} label={t('settings.showSplash')} />
         </div>
+
+        <div className="setting-row">
+          <div className="setting-row__text"><div className="setting-row__title">{t('settings.showClock')}</div></div>
+          <Toggle checked={prefs.showClock} onChange={(v) => prefsStore.patch({ showClock: v })} label={t('settings.showClock')} />
+        </div>
+
+        {prefs.showClock && (
+          <>
+            <div className="setting-row">
+              <div className="setting-row__text"><div className="setting-row__title">{t('settings.clockFormat')}</div></div>
+              <div className="segmented glass-inset">
+                <button className={cn(!prefs.clock24h && 'is-active')} onClick={() => prefsStore.patch({ clock24h: false })}>
+                  {t('settings.clock12h')}
+                </button>
+                <button className={cn(prefs.clock24h && 'is-active')} onClick={() => prefsStore.patch({ clock24h: true })}>
+                  {t('settings.clock24h')}
+                </button>
+              </div>
+            </div>
+
+            <div className="setting-row">
+              <div className="setting-row__text"><div className="setting-row__title">{t('settings.timezone')}</div></div>
+              <select
+                className="select glass-inset"
+                style={{ maxWidth: '16rem' }}
+                value={prefs.timezone}
+                onChange={(e) => prefsStore.patch({ timezone: e.target.value })}
+              >
+                <option value="">{t('settings.timezoneAuto')}</option>
+                {TIMEZONES.map((tz) => (
+                  <option key={tz} value={tz}>{tz.replace(/_/g, ' ')}</option>
+                ))}
+              </select>
+            </div>
+          </>
+        )}
       </section>
 
       {/* Account */}
@@ -252,6 +303,16 @@ export function Settings() {
         </div>
 
         <SshAccess />
+
+        <div className="setting-row">
+          <div className="setting-row__text">
+            <div className="setting-row__title">{t('settings.storage')}</div>
+            <div className="setting-row__hint">{t('settings.freeSpaceHint')}</div>
+          </div>
+          <button className="btn" disabled={freeSpace.isPending} onClick={() => freeSpace.mutate()}>
+            <HardDrive size={15} /> {freeSpace.isPending ? t('settings.freeing') : t('settings.freeSpace')}
+          </button>
+        </div>
 
         <div className="setting-row">
           <div className="setting-row__text">

@@ -258,7 +258,8 @@ export async function appLogs(id: string, tail = 200): Promise<string> {
  */
 export async function removeApp(id: string, deleteData = false): Promise<void> {
   const file = fs.existsSync(composePath(id)) ? composePath(id) : undefined;
-  await composeDown(projectOf(id), file, deleteData);
+  // When deleting data, also drop the app's images so the space is reclaimed.
+  await composeDown(projectOf(id), file, deleteData, deleteData);
   try {
     if (deleteData) {
       fs.rmSync(appDir(id), { recursive: true, force: true });

@@ -180,16 +180,21 @@ export function AppCard({ app }: { app: InstalledApp }) {
           <input type="checkbox" checked={deleteData} onChange={(e) => setDeleteData(e.target.checked)} />
           {t('appCard.removeData')}
         </label>
-        <div style={{ display: 'flex', gap: '0.6rem', justifyContent: 'flex-end' }}>
-          <button className="btn" onClick={() => setConfirmOpen(false)}>{t('common.cancel')}</button>
-          <button
-            className="btn btn--danger"
-            disabled={remove.isPending}
-            onClick={() => remove.mutate({ id: app.id, deleteData }, { onSuccess: () => setConfirmOpen(false) })}
-          >
-            {t('appCard.removeConfirm')}
-          </button>
-        </div>
+        {remove.isPending ? (
+          <p style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <span className="spinner" /> {t('appCard.removing')}
+          </p>
+        ) : (
+          <div style={{ display: 'flex', gap: '0.6rem', justifyContent: 'flex-end' }}>
+            <button className="btn" onClick={() => setConfirmOpen(false)}>{t('common.cancel')}</button>
+            <button
+              className="btn btn--danger"
+              onClick={() => remove.mutate({ id: app.id, deleteData }, { onSuccess: () => setConfirmOpen(false) })}
+            >
+              {t('appCard.removeConfirm')}
+            </button>
+          </div>
+        )}
       </Modal>
     </>
   );

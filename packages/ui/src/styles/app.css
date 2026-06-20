@@ -185,8 +185,28 @@ button {
   top: 0;
   z-index: 40;
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 1rem;
   padding: 1rem 1.25rem 0;
+}
+.clock-widget {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-button);
+}
+.clock-time {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+.clock-date {
+  font-size: 0.72rem;
+  color: var(--color-ink-muted);
 }
 .profile-btn {
   width: 2.6rem;
@@ -701,6 +721,8 @@ button {
 @media (prefers-reduced-motion: reduce) {
   .win-enter { animation: none; }
   .dock-pop { transition: opacity var(--dur-micro) ease; transform: translateX(-50%); }
+  /* Stop the continuously-animating aurora — accessibility + saves GPU. */
+  .scene::before { animation: none; }
 }
 
 /* ── Toasts ─────────────────────────────────────────────────────────────── */

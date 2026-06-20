@@ -29,14 +29,16 @@ export function Dashboard() {
   const prefs = usePrefs();
 
   const me = trpc.auth.me.useQuery();
-  const initial = trpc.stats.get.useQuery(undefined, { refetchInterval: 5000 });
+  // The WS subscription streams live stats (~2s); the query is just for the
+  // first paint, with a slow refetch as a fallback if the socket drops.
+  const initial = trpc.stats.get.useQuery(undefined, { refetchInterval: 30000 });
   const [live, setLive] = useState<StatsSnapshot | null>(null);
   trpc.stats.stream.useSubscription(undefined, {
     onData: (d: StatsSnapshot) => setLive(d),
   });
   const stats = live ?? initial.data ?? null;
 
-  const appsQuery = trpc.apps.list.useQuery(undefined, { refetchInterval: 5000 });
+  const appsQuery = trpc.apps.list.useQuery(undefined, { refetchInterval: 8000 });
   const apps = appsQuery.data ?? [];
 
   const name = prefs.dashboardName.trim() || me.data?.username || t('dashboard.yourMasjid');
