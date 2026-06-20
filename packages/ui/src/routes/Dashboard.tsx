@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
-import { Cpu, MemoryStick, HardDrive, Thermometer, Clock, Boxes } from 'lucide-react';
+import { Cpu, MemoryStick, HardDrive, Thermometer, Clock, Boxes, AlertTriangle } from 'lucide-react';
 import { trpc } from '../lib/trpc';
 import { usePrefs } from '../lib/prefs';
 import { formatBytes, formatUptime, percent } from '../lib/format';
@@ -45,6 +45,9 @@ export function Dashboard() {
       ? `${stats.cpuCores} cores${stats.cpuSpeedGHz ? ` · ${stats.cpuSpeedGHz.toFixed(1)} GHz` : ''}`
       : undefined;
 
+  const diskPct = percent(stats?.diskUsed ?? 0, stats?.diskTotal ?? 0);
+  const diskLow = (stats?.diskTotal ?? 0) > 0 && diskPct >= 80;
+
   return (
     <Page>
       <header className="page-head">
@@ -74,7 +77,8 @@ export function Dashboard() {
           icon={<HardDrive size={15} />}
           value={formatBytes(stats?.diskUsed ?? 0)}
           sub={`/ ${formatBytes(stats?.diskTotal ?? 0)}`}
-          percent={percent(stats?.diskUsed ?? 0, stats?.diskTotal ?? 0)}
+          percent={diskPct}
+          warn={diskLow}
         />
         <StatCard
           label={t('dashboard.stats.temp')}
@@ -92,6 +96,16 @@ export function Dashboard() {
           value={stats?.appsRunning ?? apps.filter((a) => a.running).length}
         />
       </motion.section>
+
+      {diskLow && (
+        <div className="warn-banner glass" role="status">
+          <AlertTriangle size={22} />
+          <div>
+            <div className="warn-banner__title">{t('dashboard.diskWarnTitle', { percent: Math.round(diskPct) })}</div>
+            <div className="warn-banner__body">{t('dashboard.diskWarnBody')}</div>
+          </div>
+        </div>
+      )}
 
       <h2 className="section-title">{t('dashboard.installedApps')}</h2>
 

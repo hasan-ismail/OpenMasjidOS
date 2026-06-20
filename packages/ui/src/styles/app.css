@@ -127,10 +127,12 @@ button {
   border-radius: 1.25rem;
   z-index: 50;
   max-width: calc(100vw - 2rem);
-  overflow-x: auto;
-  scrollbar-width: none;
+  flex-wrap: wrap;
+  justify-content: center;
+  /* Visible (not scroll) so hover labels/previews can overflow above the dock —
+     overflow-x:auto would force overflow-y to auto and clip them. */
+  overflow: visible;
 }
-.dock::-webkit-scrollbar { display: none; }
 .dock-item {
   position: relative;
   width: 3rem;
@@ -503,7 +505,82 @@ button {
   margin-block-end: 0.85rem;
 }
 .modal-title { font-family: var(--font-display); font-size: 1.2rem; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+.modal-x { margin-inline-start: auto; flex-shrink: 0; }
 .modal-body { color: var(--color-ink-muted); }
+
+/* ── Floating windows (terminals, logs, file viewers) ───────────────────────
+   Owned by the window manager so they survive route changes. Draggable by the
+   header; minimized ones hide but stay mounted. */
+.win-pos {
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+.win-pos--center {
+  left: 50%;
+  top: 7vh;
+  transform: translateX(-50%);
+}
+.win {
+  display: flex;
+  flex-direction: column;
+  width: min(34rem, 94vw);
+  max-height: 86vh;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+.win--wide { width: min(60rem, 96vw); }
+.win-enter { animation: winIn 0.22s var(--ease-settle) both; }
+@keyframes winIn {
+  from { opacity: 0; transform: scale(0.965); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.win-head {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.7rem 1rem;
+  cursor: grab;
+  user-select: none;
+  border-block-end: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+.win-head:active { cursor: grabbing; }
+.win-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.win-title span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.win-title svg { flex-shrink: 0; color: var(--color-ink-muted); }
+.win-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 1.1rem 1.25rem 1.25rem;
+  color: var(--color-ink-muted);
+}
+
+/* ── Media viewer (file manager) ────────────────────────────────────────── */
+.media-view {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 100%;
+}
+.media-view img,
+.media-view video {
+  max-width: 100%;
+  max-height: 70vh;
+  border-radius: var(--radius-button);
+}
+.media-view audio { width: 100%; }
 
 /* macOS-style traffic lights */
 .traffic { display: flex; gap: 0.5rem; align-items: center; flex-shrink: 0; }
@@ -542,6 +619,87 @@ button {
   height: 0.3rem;
   border-radius: 50%;
   background: var(--color-warning);
+}
+
+/* Hover labels + minimized-window previews above dock items. */
+.dock-item { -webkit-tap-highlight-color: transparent; }
+.dock-pop {
+  position: absolute;
+  inset-block-end: calc(100% + 0.6rem);
+  inset-inline-start: 50%;
+  transform: translateX(-50%) translateY(0.3rem);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-micro) ease, transform var(--dur-settle) var(--ease-settle);
+  z-index: 5;
+}
+.dock-item:hover .dock-pop,
+.dock-item:focus-visible .dock-pop {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.dock-tip {
+  white-space: nowrap;
+  padding: 0.3rem 0.6rem;
+  border-radius: 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+/* A miniature window preview for minimized windows. */
+.dock-preview {
+  width: 11rem;
+  border-radius: 0.7rem;
+  overflow: hidden;
+  text-align: start;
+}
+.dock-preview__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.4rem 0.55rem;
+  border-block-end: 1px solid var(--color-border);
+}
+.dock-preview__dots { display: flex; gap: 0.25rem; }
+.dock-preview__dots i { width: 0.5rem; height: 0.5rem; border-radius: 50%; }
+.dock-preview__title {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--color-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dock-preview__body {
+  padding: 0.6rem;
+  font-size: 0.72rem;
+  color: var(--color-ink-faint);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.4rem;
+}
+/* Dragging a pinned app to reorder. */
+.dock-item--drag-over { box-shadow: inset 0.18rem 0 0 var(--color-primary); }
+
+/* ── Warning banner (e.g. low disk) ─────────────────────────────────────── */
+.warn-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1.1rem;
+  margin-block-end: 1.25rem;
+  border-radius: var(--radius-card);
+  border-inline-start: 3px solid var(--color-warning);
+}
+.warn-banner svg { color: var(--color-warning); flex-shrink: 0; }
+.warn-banner__title { font-weight: 600; color: var(--color-ink); }
+.warn-banner__body { font-size: 0.85rem; color: var(--color-ink-muted); margin-block-start: 0.1rem; }
+.gauge-fill--warn { background: linear-gradient(90deg, var(--color-warning), #f6c453); }
+
+@media (prefers-reduced-motion: reduce) {
+  .win-enter { animation: none; }
+  .dock-pop { transition: opacity var(--dur-micro) ease; transform: translateX(-50%); }
 }
 
 /* ── Toasts ─────────────────────────────────────────────────────────────── */

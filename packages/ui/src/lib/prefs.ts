@@ -145,6 +145,21 @@ export const prefsStore = {
     persist();
     emit();
   },
+  /** Reorder a pinned app: move `id` to just before `targetId` (or to the end
+   *  when `targetId` is null). Used by drag-to-reorder in the dock. */
+  movePin(id: string, targetId: string | null) {
+    const without = state.pinnedApps.filter((x) => x !== id);
+    if (!state.pinnedApps.includes(id)) return;
+    let at = without.length;
+    if (targetId) {
+      const idx = without.indexOf(targetId);
+      if (idx !== -1) at = idx;
+    }
+    without.splice(at, 0, id);
+    state = { ...state, pinnedApps: without };
+    persist();
+    emit();
+  },
   /** Apply all persisted side effects on first load. */
   hydrate() {
     applyAccent(state.accent);

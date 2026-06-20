@@ -9,9 +9,9 @@ import { trpc } from '../lib/trpc';
 import { usePrefs, prefsStore, ACCENTS, WALLPAPERS } from '../lib/prefs';
 import { Toggle } from '../components/Toggle';
 import { Page } from '../components/Page';
-import { Modal } from '../components/Modal';
 import { Terminal } from '../components/Terminal';
 import { UpdateModal } from '../components/UpdateModal';
+import { useWindows } from '../components/Windows';
 import { useToast } from '../components/ToastProvider';
 import { cn } from '../lib/cn';
 
@@ -24,8 +24,18 @@ export function Settings() {
   const serverSettings = trpc.settings.get.useQuery();
   const sysInfo = trpc.system.info.useQuery();
   const updateInfo = trpc.system.checkUpdate.useQuery(undefined, { enabled: false });
-  const [rootTermOpen, setRootTermOpen] = useState(false);
+  const windows = useWindows();
   const [updateOpen, setUpdateOpen] = useState(false);
+
+  function openRootTerminal() {
+    windows.open({
+      title: t('settings.rootTerminalTitle'),
+      dedupeKey: 'root-terminal',
+      wide: true,
+      icon: <SquareTerminal size={15} />,
+      node: <Terminal wsPath="/api/terminal/root" />,
+    });
+  }
 
   const updateSettings = trpc.settings.update.useMutation({
     onSuccess: () => utils.settings.get.invalidate(),
@@ -178,7 +188,7 @@ export function Settings() {
             <div className="setting-row__text">
               <div className="setting-row__title">{t('settings.rootTerminalOpen')}</div>
             </div>
-            <button className="btn" onClick={() => setRootTermOpen(true)}>
+            <button className="btn" onClick={openRootTerminal}>
               <SquareTerminal size={15} /> {t('settings.rootTerminalOpen')}
             </button>
           </div>
@@ -243,10 +253,6 @@ export function Settings() {
           <span style={{ color: 'var(--color-ink-muted)', fontVariantNumeric: 'tabular-nums' }}>v{sysInfo.data?.version ?? '—'}</span>
         </div>
       </section>
-
-      <Modal open={rootTermOpen} onClose={() => setRootTermOpen(false)} wide title={t('settings.rootTerminalTitle')}>
-        {rootTermOpen && <Terminal wsPath="/api/terminal/root" />}
-      </Modal>
 
       <UpdateModal open={updateOpen} onClose={() => setUpdateOpen(false)} currentVersion={sysInfo.data?.version ?? ''} />
     </Page>

@@ -13,11 +13,20 @@ export function SceneBackground() {
   const prefs = usePrefs();
   const img = safeImageUrl(prefs.wallpaperImage);
   if (img) {
+    // Set sizing inline: `.scene { background: … }` is a shorthand that resets
+    // background-size to `auto`, which would otherwise show a 4K image at native
+    // size (cropped to the top-left). Inline always wins, so the image is
+    // scaled to fill the screen.
     return (
       <div
         className="scene scene--image"
         aria-hidden="true"
-        style={{ backgroundImage: `url("${img}")` }}
+        style={{
+          backgroundImage: `url("${img}")`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
       />
     );
   }

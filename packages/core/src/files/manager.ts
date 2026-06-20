@@ -17,13 +17,24 @@ export interface FileEntry {
 export class FileError extends Error {
   constructor(
     message: string,
-    public code: 'OUTSIDE' | 'NOT_FOUND' | 'IS_DIR' | 'NOT_DIR' | 'EXISTS' | 'BAD_NAME',
+    public code:
+      | 'OUTSIDE'
+      | 'NOT_FOUND'
+      | 'IS_DIR'
+      | 'NOT_DIR'
+      | 'EXISTS'
+      | 'BAD_NAME'
+      | 'TOO_LARGE'
+      | 'BINARY',
   ) {
     super(message);
   }
 }
 
 const ROOT = path.resolve(DATA_DIR);
+
+/** Largest file we'll load into the in-browser text editor (2 MiB). */
+const MAX_TEXT_BYTES = 2 * 1024 * 1024;
 
 function within(p: string): boolean {
   return p === ROOT || p.startsWith(ROOT + path.sep);
@@ -134,4 +145,72 @@ export function resolveUploadDir(relDir: string): string {
 
 export function uploadPath(relDir: string, name: string): string {
   return path.join(resolveUploadDir(relDir), safeName(name));
+}
+
+/** Read a small text file for the in-browser editor. Rejects directories,
+ *  oversized files, and binary content (NUL bytes). */
+export function readTextFile(rel: string): { content: string } {
+  const full = resolve(rel);
+  let stat: fs.Stats;
+  try {
+    stat = fs.statSync(full);
+  } catch {
+    throw new FileError('That file does not exist.', 'NOT_FOUND');
+  }
+  if (stat.isDirectory()) throw new FileError('That is a folder, not a file.', 'IS_DIR');
+  if (stat.size > MAX_TEXT_BYTES) {
+    throw new FileError('That file is too large to open in the editor.', 'TOO_LARGE');
+  }
+  const buf = fs.readFileSync(full);
+  if (buf.includes(0)) {
+    throw new FileError("That looks like a binary file, so it can't be edited as text.", 'BINARY');
+  }
+  return { content: buf.toString('utf8') };
+}
+
+/** Save text back to a file. The parent folder must already exist; the path is
+ *  always confined to the sandbox. */
+export function writeTextFile(rel: string, content: string): void {
+  if (typeof content !== 'string') throw new FileError('Nothing to save.', 'BAD_NAME');
+  if (Buffer.byteLength(content, 'utf8') > MAX_TEXT_BYTES) {
+    throw new FileError('That file is too large to save from the editor.', 'TOO_LARGE');
+  }
+  const full = resolve(rel);
+  if (full === ROOT) throw new FileError('That item cannot be edited.', 'BAD_NAME');
+  if (fs.existsSync(full) && fs.statSync(full).isDirectory()) {
+    throw new FileError('That is a folder, not a file.', 'IS_DIR');
+  }
+  const dir = path.dirname(full);
+  if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) {
+    throw new FileError('That folder does not exist.', 'NOT_FOUND');
+  }
+  fs.writeFileSync(full, content, 'utf8');
+}
+
+/** Content-type for inline viewing of known media. Anything not listed is
+ *  served as a safe download type by the caller. */
+const RAW_MIME: Record<string, string> = {
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp',
+  '.svg': 'image/svg+xml',
+  '.avif': 'image/avif',
+  '.bmp': 'image/bmp',
+  '.ico': 'image/x-icon',
+  '.mp4': 'video/mp4',
+  '.webm': 'video/webm',
+  '.ogg': 'video/ogg',
+  '.ogv': 'video/ogg',
+  '.mov': 'video/quicktime',
+  '.m4v': 'video/x-m4v',
+  '.mp3': 'audio/mpeg',
+  '.wav': 'audio/wav',
+  '.m4a': 'audio/mp4',
+  '.flac': 'audio/flac',
+};
+
+export function rawMime(name: string): string | null {
+  return RAW_MIME[path.extname(name).toLowerCase()] ?? null;
 }

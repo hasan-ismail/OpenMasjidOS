@@ -33,7 +33,13 @@
     "empty": "This folder is empty.",
     "loadError": "Couldn't open that folder.",
     "uploadError": "Upload failed. Please try again.",
-    "genericError": "Something went wrong. Please try again."
+    "genericError": "Something went wrong. Please try again.",
+    "save": "Save",
+    "saved": "File saved."
+  },
+  "windows": {
+    "open": "Open window",
+    "minimized": "Minimized — click to reopen"
   },
   "profile": {
     "menu": "Account menu",
@@ -82,7 +88,9 @@
     "installedApps": "Your apps",
     "noAppsTitle": "No apps installed yet",
     "noAppsBody": "Browse the App Store to find apps for your masjid — prayer times, announcements, donation pages, and more.",
-    "browseStore": "Browse the App Store"
+    "browseStore": "Browse the App Store",
+    "diskWarnTitle": "Storage is almost full ({{percent}}% used)",
+    "diskWarnBody": "Free up space by removing apps or files you no longer need, so your apps keep running smoothly."
   },
   "actions": {
     "open": "Open",

@@ -18,16 +18,19 @@ import {
   X,
 } from 'lucide-react';
 import { trpc } from '../lib/trpc';
-import { filesDownloadUrl, uploadFile, joinPath } from '../lib/files';
+import { filesDownloadUrl, uploadFile, joinPath, fileKind } from '../lib/files';
 import { formatBytes } from '../lib/format';
 import { Page } from '../components/Page';
 import { Modal } from '../components/Modal';
+import { FileViewer } from '../components/FileViewer';
+import { useWindows } from '../components/Windows';
 import { useToast } from '../components/ToastProvider';
 
 export function Files() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const utils = trpc.useUtils();
+  const windows = useWindows();
 
   const [path, setPath] = useState('/');
   const [busy, setBusy] = useState(false);
@@ -66,6 +69,22 @@ export function Files() {
       setBusy(false);
       if (fileInput.current) fileInput.current.value = '';
     }
+  }
+
+  function openEntry(entry: { name: string; isDir: boolean }) {
+    if (entry.isDir) {
+      setPath(joinPath(path, entry.name));
+      return;
+    }
+    const full = joinPath(path, entry.name);
+    const kind = fileKind(entry.name);
+    windows.open({
+      title: entry.name,
+      dedupeKey: `file:${full}`,
+      wide: kind !== 'audio',
+      icon: <FileIcon size={15} />,
+      node: <FileViewer path={full} name={entry.name} kind={kind} />,
+    });
   }
 
   const segments = path === '/' ? [] : path.replace(/^\//, '').split('/');
@@ -120,8 +139,8 @@ export function Files() {
                 <button
                   className="file-main"
                   type="button"
-                  onClick={() => entry.isDir && setPath(joinPath(path, entry.name))}
-                  style={{ cursor: entry.isDir ? 'pointer' : 'default' }}
+                  onClick={() => openEntry(entry)}
+                  style={{ cursor: 'pointer' }}
                 >
                   <span className="file-icon">
                     {entry.isDir ? <Folder size={18} /> : <FileIcon size={18} />}

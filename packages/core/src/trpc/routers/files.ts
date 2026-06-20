@@ -5,7 +5,15 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { router, protectedProcedure } from '../trpc';
-import { listDir, makeDir, renameEntry, removeEntry, FileError } from '../../files/manager';
+import {
+  listDir,
+  makeDir,
+  renameEntry,
+  removeEntry,
+  readTextFile,
+  writeTextFile,
+  FileError,
+} from '../../files/manager';
 
 function wrap<T>(fn: () => T): T {
   try {
@@ -42,6 +50,17 @@ export const filesRouter = router({
     .input(z.object({ path: z.string().min(1) }))
     .mutation(({ input }) => wrap(() => {
       removeEntry(input.path);
+      return { ok: true };
+    })),
+
+  read: protectedProcedure
+    .input(z.object({ path: z.string().min(1) }))
+    .query(({ input }) => wrap(() => readTextFile(input.path))),
+
+  write: protectedProcedure
+    .input(z.object({ path: z.string().min(1), content: z.string().max(2 * 1024 * 1024) }))
+    .mutation(({ input }) => wrap(() => {
+      writeTextFile(input.path, input.content);
       return { ok: true };
     })),
 });

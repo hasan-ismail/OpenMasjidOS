@@ -9,9 +9,11 @@ interface StatCardProps {
   /** 0–100; renders a gauge bar when provided. */
   percent?: number;
   icon?: ReactNode;
+  /** Tint the gauge as a warning (e.g. nearly-full disk). */
+  warn?: boolean;
 }
 
-export function StatCard({ label, value, sub, percent, icon }: StatCardProps) {
+export function StatCard({ label, value, sub, percent, icon, warn }: StatCardProps) {
   return (
     <motion.div className="stat-card glass fx-glint" variants={staggerItem}>
       <div className="stat-label">
@@ -23,7 +25,7 @@ export function StatCard({ label, value, sub, percent, icon }: StatCardProps) {
       </div>
       {percent != null && (
         <div className="gauge-track" role="progressbar" aria-valuenow={Math.round(percent)} aria-valuemin={0} aria-valuemax={100}>
-          <div className="gauge-fill" style={{ width: `${Math.max(2, Math.min(100, percent))}%` }} />
+          <div className={`gauge-fill${warn ? ' gauge-fill--warn' : ''}`} style={{ width: `${Math.max(2, Math.min(100, percent))}%` }} />
         </div>
       )}
     </motion.div>

@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import { pipeline } from 'node:stream/promises';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { COOKIE_NAME, getSessionUser } from '../auth/sessions';
-import { resolveFile, uploadPath, FileError } from '../files/manager';
+import { resolveFile, uploadPath, rawMime, FileError } from '../files/manager';
 
 function authed(req: FastifyRequest): boolean {
   return Boolean(getSessionUser(req.cookies?.[COOKIE_NAME]));
@@ -22,6 +22,28 @@ export function registerFiles(server: FastifyInstance): void {
       const { full, name } = resolveFile(p);
       reply.header('content-disposition', `attachment; filename="${encodeURIComponent(name)}"`);
       reply.type('application/octet-stream');
+      return reply.send(fs.createReadStream(full));
+    } catch (err) {
+      const code = err instanceof FileError && err.code === 'NOT_FOUND' ? 404 : 400;
+      return reply.code(code).send({ error: (err as Error).message });
+    }
+  });
+
+  // Serve a file inline for viewing (images, video, audio). Only known media
+  // types are served with their real content-type; everything else is forced to
+  // a plain download type. A strict CSP sandbox + nosniff neutralises any
+  // attempt to get HTML/JS to execute same-origin from user content.
+  server.get('/api/files/raw', async (req, reply) => {
+    if (!authed(req)) return reply.code(401).send({ error: 'Please sign in.' });
+    const p = (req.query as { path?: string }).path ?? '';
+    try {
+      const { full, name } = resolveFile(p);
+      const mime = rawMime(name);
+      reply.header('X-Content-Type-Options', 'nosniff');
+      reply.header('Content-Security-Policy', "default-src 'none'; img-src 'self' data:; media-src 'self'; style-src 'unsafe-inline'; sandbox");
+      reply.header('Cache-Control', 'private, no-store');
+      reply.header('Content-Disposition', `inline; filename="${encodeURIComponent(name)}"`);
+      reply.type(mime ?? 'application/octet-stream');
       return reply.send(fs.createReadStream(full));
     } catch (err) {
       const code = err instanceof FileError && err.code === 'NOT_FOUND' ? 404 : 400;

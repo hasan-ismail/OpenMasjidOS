@@ -26,6 +26,8 @@ import { AppIcon } from './AppIcon';
 import { useToast } from './ToastProvider';
 import { Modal } from './Modal';
 import { Terminal } from './Terminal';
+import { AppLogs } from './AppLogs';
+import { useWindows } from './Windows';
 import { staggerItem } from '../lib/motion';
 import type { InstalledApp } from '../lib/types';
 
@@ -42,13 +44,33 @@ export function AppCard({ app }: { app: InstalledApp }) {
   const { toast } = useToast();
   const prefs = usePrefs();
   const settings = trpc.settings.get.useQuery();
+  const windows = useWindows();
   const pinned = prefs.pinnedApps.includes(app.id);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [shellOpen, setShellOpen] = useState(false);
   const [deleteData, setDeleteData] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  function openShell() {
+    windows.open({
+      title: t('settings.appShellTitle', { name: app.name }),
+      dedupeKey: `shell:${app.id}`,
+      wide: true,
+      icon: <SquareTerminal size={15} />,
+      node: <Terminal wsPath={`/api/terminal/app/${encodeURIComponent(app.id)}`} />,
+    });
+  }
+
+  function openLogs() {
+    windows.open({
+      title: `${t('appDetail.logs')} — ${app.name}`,
+      dedupeKey: `logs:${app.id}`,
+      wide: true,
+      icon: <ScrollText size={15} />,
+      node: <AppLogs id={app.id} />,
+    });
+  }
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -131,11 +153,11 @@ export function AppCard({ app }: { app: InstalledApp }) {
                   </button>
                 )}
                 {settings.data?.webTerminal && app.running && (
-                  <button className="menu-item" onClick={() => { close(); setShellOpen(true); }}>
+                  <button className="menu-item" onClick={() => { close(); openShell(); }}>
                     <SquareTerminal size={16} /> {t('actions.shell')}
                   </button>
                 )}
-                <button className="menu-item" onClick={() => { close(); navigate(`/apps/${encodeURIComponent(app.id)}`); }}>
+                <button className="menu-item" onClick={() => { close(); openLogs(); }}>
                   <ScrollText size={16} /> {t('actions.viewLogs')}
                 </button>
                 <button className="menu-item" onClick={() => { close(); prefsStore.togglePin(app.id); }}>
@@ -168,10 +190,6 @@ export function AppCard({ app }: { app: InstalledApp }) {
             {t('appCard.removeConfirm')}
           </button>
         </div>
-      </Modal>
-
-      <Modal open={shellOpen} onClose={() => setShellOpen(false)} wide title={t('settings.appShellTitle', { name: app.name })}>
-        {shellOpen && <Terminal wsPath={`/api/terminal/app/${encodeURIComponent(app.id)}`} />}
       </Modal>
     </>
   );

@@ -4,6 +4,26 @@ export function filesDownloadUrl(p: string): string {
   return `/api/files/download?path=${encodeURIComponent(p)}`;
 }
 
+/** Inline-viewable URL for images/video/audio (see /api/files/raw). */
+export function filesRawUrl(p: string): string {
+  return `/api/files/raw?path=${encodeURIComponent(p)}`;
+}
+
+export type FileKind = 'image' | 'video' | 'audio' | 'text';
+
+const IMAGE_EXT = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'avif', 'bmp', 'ico']);
+const VIDEO_EXT = new Set(['mp4', 'webm', 'ogv', 'mov', 'm4v']);
+const AUDIO_EXT = new Set(['mp3', 'wav', 'm4a', 'flac', 'ogg']);
+
+/** How a file should be opened in the file manager (by extension). */
+export function fileKind(name: string): FileKind {
+  const ext = name.includes('.') ? name.split('.').pop()!.toLowerCase() : '';
+  if (IMAGE_EXT.has(ext)) return 'image';
+  if (VIDEO_EXT.has(ext)) return 'video';
+  if (AUDIO_EXT.has(ext)) return 'audio';
+  return 'text';
+}
+
 export async function uploadFile(dir: string, file: File): Promise<void> {
   const fd = new FormData();
   fd.append('file', file);

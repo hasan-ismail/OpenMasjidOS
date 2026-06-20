@@ -7,6 +7,7 @@ import { AnimatePresence } from 'motion/react';
 import { ProfileMenu } from './ProfileMenu';
 import { Dock } from './Dock';
 import { Splash } from './Splash';
+import { WindowManager } from './WindowManager';
 import { usePrefs } from '../lib/prefs';
 
 export function AppShell({ children, onSignedOut }: { children: ReactNode; onSignedOut: () => void }) {
@@ -33,6 +34,7 @@ export function AppShell({ children, onSignedOut }: { children: ReactNode; onSig
         <ProfileMenu onSignedOut={onSignedOut} />
       </div>
       <main className="app-main">{children}</main>
+      <WindowManager />
       <Dock />
     </div>
   );
