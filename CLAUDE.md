@@ -60,6 +60,7 @@ AGPL is strong copyleft with a **network clause (Section 13)**: anyone who runs 
 - **Core backend (daemon):** a type-safe **tRPC** API (over HTTP, with WebSocket subscriptions for live data). Manages container lifecycle via the Docker Engine API.
 - **Dashboard home with live system stats:** CPU %, RAM used/total, disk used/total, CPU temperature (where available), uptime, and count of running apps — updated live — alongside the grid of installed apps.
 - **App management:** install / start / stop / restart / remove / update apps; view status and logs.
+- **File explorer:** a dock app to browse, upload, download, rename, and delete files under the data dir (sandboxed server-side — no path-traversal or symlink escape).
 - **App Store client:** fetches the catalog from `OpenMasjidAPPS`, renders listings, handles one-click install.
 - **Settings (platform-only):** dashboard customization (theme, accent, dashboard name, UI language, display preferences) and an **Advanced** section (see §13). **Settings contains NO masjid/prayer details** — those belong to apps.
 - **Advanced → custom apps:** an opt-in toggle (off by default) that, when enabled, adds a **"3rd Party App"** button to the App Store. That button opens a UI where an advanced user can install any container by **pasting a `docker-compose.yml`**. Clearly gated behind warnings.

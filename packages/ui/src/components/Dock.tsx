@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Store as StoreIcon, Settings as SettingsIcon } from 'lucide-react';
+import { Store as StoreIcon, Settings as SettingsIcon, FolderOpen } from 'lucide-react';
 import { trpc } from '../lib/trpc';
 import { usePrefs, prefsStore } from '../lib/prefs';
 import { cn } from '../lib/cn';
@@ -48,6 +48,9 @@ export function Dock() {
       </NavLink>
       <NavLink to="/store" className={({ isActive }) => cn('dock-item', isActive && 'is-active')} title={t('nav.store')} aria-label={t('nav.store')}>
         <StoreIcon size={20} />
+      </NavLink>
+      <NavLink to="/files" className={({ isActive }) => cn('dock-item', isActive && 'is-active')} title={t('nav.files')} aria-label={t('nav.files')}>
+        <FolderOpen size={20} />
       </NavLink>
       <NavLink to="/settings" className={({ isActive }) => cn('dock-item', isActive && 'is-active')} title={t('nav.settings')} aria-label={t('nav.settings')}>
         <SettingsIcon size={20} />

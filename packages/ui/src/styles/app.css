@@ -271,6 +271,7 @@ button {
 }
 .app-card:hover {
   transform: translateY(var(--lift-y));
+  box-shadow: var(--glass-shadow-raised), 0 0 24px -6px var(--glass-glow);
 }
 .app-card__top {
   display: flex;
@@ -545,6 +546,54 @@ button {
   border-radius: var(--radius-button);
   color: var(--color-ink-muted);
 }
+
+/* ── File explorer ──────────────────────────────────────────────────────── */
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex-wrap: wrap;
+  margin-block-end: 0.25rem;
+}
+.crumb {
+  border: 0;
+  background: transparent;
+  color: var(--color-ink-muted);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-weight: 600;
+}
+.crumb:hover { background: var(--color-surface-hover); color: var(--color-ink); }
+.crumb-sep { color: var(--color-ink-faint); }
+.file-list { list-style: none; margin: 0; padding: 0; }
+.file-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 1rem;
+  border-block-end: 1px solid var(--color-border);
+}
+.file-row:last-child { border-block-end: 0; }
+.file-row:hover { background: var(--color-surface-hover); }
+.file-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: 0;
+  background: transparent;
+  color: var(--color-ink);
+  text-align: start;
+  padding: 0;
+}
+.file-icon { color: var(--color-primary); display: inline-flex; flex-shrink: 0; }
+.file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-size { color: var(--color-ink-muted); font-size: 0.82rem; font-variant-numeric: tabular-nums; min-width: 4rem; text-align: end; }
+.file-actions { display: flex; align-items: center; gap: 0.15rem; flex-shrink: 0; }
 
 /* ── Auth screen ────────────────────────────────────────────────────────── */
 .auth-wrap {

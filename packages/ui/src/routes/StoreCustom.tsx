@@ -7,7 +7,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, ShieldCheck, Plus, Trash2, Store as StoreIcon } from 'lucide-react';
+import { AlertTriangle, ShieldCheck, Plus, Trash2, Store as StoreIcon, Search } from 'lucide-react';
 import { trpc } from '../lib/trpc';
 import { appInitial, appColor } from '../lib/apps';
 import { Page } from '../components/Page';
@@ -79,7 +79,14 @@ function CommunityTab() {
   const apps = trpc.community.apps.useQuery();
   const [repoUrl, setRepoUrl] = useState('');
   const [repoError, setRepoError] = useState('');
+  const [query, setQuery] = useState('');
   const [ackApp, setAckApp] = useState<CommunityApp | null>(null);
+
+  const visibleApps = (apps.data ?? []).filter((a) => {
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    return a.name.toLowerCase().includes(q) || (a.tagline ?? '').toLowerCase().includes(q);
+  });
 
   const addRepo = trpc.community.addRepo.useMutation({
     onSuccess: () => {
@@ -150,13 +157,26 @@ function CommunityTab() {
         {repoError && <p className="form-error">{repoError}</p>}
       </div>
 
+      {(apps.data ?? []).length > 0 && (
+        <div className="glass-inset" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0 0.7rem', maxWidth: '22rem', marginBottom: '1rem' }}>
+          <Search size={16} style={{ color: 'var(--color-ink-faint)' }} />
+          <input
+            className="input"
+            style={{ background: 'transparent', boxShadow: 'none', paddingInline: 0 }}
+            placeholder={t('community.search')}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+      )}
+
       {apps.isFetching ? (
         <p className="hint">{t('community.loadingApps')}</p>
-      ) : (apps.data ?? []).length === 0 ? (
+      ) : visibleApps.length === 0 ? (
         <div className="empty-state"><StoreIcon size={40} /><p>{t('community.noApps')}</p></div>
       ) : (
         <div className="app-grid">
-          {(apps.data ?? []).map((app) => (
+          {visibleApps.map((app) => (
             <div key={app.id} className="app-card glass">
               <div className="app-card__top">
                 <div className="app-icon" style={{ background: app.icon ? 'var(--color-surface-overlay)' : appColor(app.id) }}>

@@ -10,6 +10,7 @@ import Fastify from 'fastify';
 import fastifyCookie from '@fastify/cookie';
 import fastifyWebsocket from '@fastify/websocket';
 import fastifyStatic from '@fastify/static';
+import fastifyMultipart from '@fastify/multipart';
 import { fastifyTRPCPlugin, type FastifyTRPCPluginOptions } from '@trpc/server/adapters/fastify';
 
 import { HOST, PORT, UI_DIR, CONFIG_DIR, APPS_DIR } from './config';
@@ -21,6 +22,7 @@ import { createContext } from './trpc/context';
 import { dockerReachable } from './docker/client';
 import { backupStream, backupFilename } from './system/backup';
 import { registerTerminals } from './api/terminals';
+import { registerFiles } from './api/files';
 import { COOKIE_NAME, getSessionUser } from './auth/sessions';
 
 async function main() {
@@ -31,6 +33,7 @@ async function main() {
 
   await server.register(fastifyCookie);
   await server.register(fastifyWebsocket);
+  await server.register(fastifyMultipart, { limits: { fileSize: 2 * 1024 * 1024 * 1024 } });
 
   // tRPC — HTTP and WebSocket on the same /trpc prefix.
   const trpcPluginOptions: FastifyTRPCPluginOptions<AppRouter> = {
@@ -66,6 +69,9 @@ async function main() {
 
   // WebSocket terminals (root shell + per-app shell), gated by settings + auth.
   registerTerminals(server);
+
+  // File explorer download/upload (streaming, cookie-authenticated).
+  registerFiles(server);
 
   // Static UI + SPA fallback. In local dev the UI is served by Vite, so dist may
   // not exist — guard the registration so the daemon still boots.

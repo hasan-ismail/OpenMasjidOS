@@ -10,6 +10,7 @@ import { appsRouter } from './routers/apps';
 import { storeRouter } from './routers/store';
 import { customRouter } from './routers/custom';
 import { communityRouter } from './routers/community';
+import { filesRouter } from './routers/files';
 import { settingsRouter } from './routers/settings';
 import { systemRouter } from './routers/system';
 
@@ -20,6 +21,7 @@ export const appRouter = router({
   store: storeRouter,
   custom: customRouter,
   community: communityRouter,
+  files: filesRouter,
   settings: settingsRouter,
   system: systemRouter,
 });

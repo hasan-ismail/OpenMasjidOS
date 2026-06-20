@@ -84,12 +84,33 @@ export function Settings() {
             {Object.entries(WALLPAPERS).map(([id, w]) => (
               <button
                 key={id}
-                className={cn('wallpaper', prefs.wallpaper === id && 'is-active')}
+                className={cn('wallpaper', !prefs.wallpaperImage && prefs.wallpaper === id && 'is-active')}
                 style={{ background: w.preview }}
                 aria-label={w.label}
-                onClick={() => prefsStore.patch({ wallpaper: id })}
+                onClick={() => prefsStore.patch({ wallpaper: id, wallpaperImage: '' })}
               />
             ))}
+          </div>
+        </div>
+
+        <div className="setting-row">
+          <div className="setting-row__text">
+            <div className="setting-row__title">{t('settings.wallpaperImage')}</div>
+            <div className="setting-row__hint">{t('settings.wallpaperImageHint')}</div>
+          </div>
+          <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+            <input
+              className="input glass-inset"
+              style={{ maxWidth: '16rem' }}
+              placeholder="https://…/wallpaper.jpg"
+              value={prefs.wallpaperImage}
+              onChange={(e) => prefsStore.patch({ wallpaperImage: e.target.value.trim() })}
+            />
+            {prefs.wallpaperImage && (
+              <button className="btn btn--sm" onClick={() => prefsStore.patch({ wallpaperImage: '' })}>
+                {t('common.cancel')}
+              </button>
+            )}
           </div>
         </div>
 

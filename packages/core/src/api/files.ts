@@ -1,0 +1,52 @@
+/**
+ * File download + upload over HTTP (they stream binary, so they aren't tRPC).
+ * Authenticated by the session cookie, like the backup route. Sandboxed via the
+ * file manager.
+ */
+import fs from 'node:fs';
+import { pipeline } from 'node:stream/promises';
+import type { FastifyInstance, FastifyRequest } from 'fastify';
+import { COOKIE_NAME, getSessionUser } from '../auth/sessions';
+import { resolveFile, uploadPath, FileError } from '../files/manager';
+
+function authed(req: FastifyRequest): boolean {
+  return Boolean(getSessionUser(req.cookies?.[COOKIE_NAME]));
+}
+
+export function registerFiles(server: FastifyInstance): void {
+  // Download a file as an attachment.
+  server.get('/api/files/download', async (req, reply) => {
+    if (!authed(req)) return reply.code(401).send({ error: 'Please sign in.' });
+    const p = (req.query as { path?: string }).path ?? '';
+    try {
+      const { full, name } = resolveFile(p);
+      reply.header('content-disposition', `attachment; filename="${encodeURIComponent(name)}"`);
+      reply.type('application/octet-stream');
+      return reply.send(fs.createReadStream(full));
+    } catch (err) {
+      const code = err instanceof FileError && err.code === 'NOT_FOUND' ? 404 : 400;
+      return reply.code(code).send({ error: (err as Error).message });
+    }
+  });
+
+  // Upload a file into a directory (multipart).
+  server.post('/api/files/upload', async (req, reply) => {
+    if (!authed(req)) return reply.code(401).send({ error: 'Please sign in.' });
+    const dir = (req.query as { path?: string }).path ?? '/';
+    try {
+      const file = await req.file();
+      if (!file) return reply.code(400).send({ error: 'No file was uploaded.' });
+      const dest = uploadPath(dir, file.filename);
+      await pipeline(file.file, fs.createWriteStream(dest));
+      if (file.file.truncated) {
+        // Exceeded the configured size limit — remove the partial file.
+        fs.rmSync(dest, { force: true });
+        return reply.code(413).send({ error: 'That file is too large.' });
+      }
+      return { ok: true };
+    } catch (err) {
+      const code = err instanceof FileError && err.code === 'NOT_FOUND' ? 404 : 400;
+      return reply.code(code).send({ error: (err as Error).message });
+    }
+  });
+}

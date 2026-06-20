@@ -171,30 +171,55 @@
   --font-display: "Space Grotesk Variable", "Space Grotesk", var(--font-sans);
 }
 
-/* Wallpapers — selectable in Settings (applied via data-wallpaper on <html>). */
+/* Wallpapers — selectable in Settings (applied via data-wallpaper on <html>).
+   Tuned vivid so the liquid-glass refraction has rich colour to bend. */
+[data-wallpaper="ocean"] {
+  --scene-base: #061427;
+  --aurora-cyan: rgba(56, 189, 248, 0.42);
+  --aurora-navy: rgba(37, 99, 235, 0.42);
+  --aurora-gold: rgba(45, 212, 191, 0.20);
+}
 [data-wallpaper="twilight"] {
   --scene-base: #0a0618;
-  --aurora-cyan: rgba(167, 139, 250, 0.30);
-  --aurora-navy: rgba(30, 20, 60, 0.60);
-  --aurora-gold: rgba(236, 72, 153, 0.14);
+  --aurora-cyan: rgba(192, 132, 252, 0.42);
+  --aurora-navy: rgba(124, 58, 237, 0.40);
+  --aurora-gold: rgba(236, 72, 153, 0.22);
+}
+[data-wallpaper="berry"] {
+  --scene-base: #1a0518;
+  --aurora-cyan: rgba(244, 114, 182, 0.40);
+  --aurora-navy: rgba(162, 28, 175, 0.42);
+  --aurora-gold: rgba(251, 113, 133, 0.22);
 }
 [data-wallpaper="sunset"] {
   --scene-base: #190d08;
-  --aurora-cyan: rgba(251, 146, 60, 0.26);
-  --aurora-navy: rgba(60, 22, 30, 0.55);
-  --aurora-gold: rgba(245, 200, 80, 0.16);
+  --aurora-cyan: rgba(251, 191, 36, 0.36);
+  --aurora-navy: rgba(244, 63, 94, 0.34);
+  --aurora-gold: rgba(251, 146, 60, 0.30);
+}
+[data-wallpaper="ember"] {
+  --scene-base: #190806;
+  --aurora-cyan: rgba(251, 146, 60, 0.40);
+  --aurora-navy: rgba(220, 38, 38, 0.40);
+  --aurora-gold: rgba(250, 204, 21, 0.24);
 }
 [data-wallpaper="forest"] {
   --scene-base: #04140e;
-  --aurora-cyan: rgba(34, 197, 94, 0.26);
-  --aurora-navy: rgba(10, 40, 30, 0.55);
-  --aurora-gold: rgba(132, 204, 22, 0.13);
+  --aurora-cyan: rgba(74, 222, 128, 0.38);
+  --aurora-navy: rgba(21, 128, 61, 0.42);
+  --aurora-gold: rgba(132, 204, 22, 0.22);
 }
 [data-wallpaper="night"] {
   --scene-base: #02060f;
-  --aurora-cyan: rgba(56, 90, 160, 0.22);
-  --aurora-navy: rgba(10, 20, 45, 0.60);
-  --aurora-gold: rgba(80, 100, 160, 0.08);
+  --aurora-cyan: rgba(96, 165, 250, 0.30);
+  --aurora-navy: rgba(30, 58, 138, 0.55);
+  --aurora-gold: rgba(99, 102, 241, 0.16);
+}
+[data-wallpaper="graphite"] {
+  --scene-base: #0b0f17;
+  --aurora-cyan: rgba(148, 163, 184, 0.20);
+  --aurora-navy: rgba(51, 65, 85, 0.50);
+  --aurora-gold: rgba(203, 213, 225, 0.10);
 }
 
 /* Smooth theme transition */

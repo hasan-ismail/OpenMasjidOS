@@ -14,8 +14,26 @@
   "nav": {
     "dashboard": "Dashboard",
     "store": "App Store",
+    "files": "Files",
     "settings": "Settings",
     "aria": { "primary": "Main navigation" }
+  },
+  "files": {
+    "title": "Files",
+    "subtitle": "Browse the files and data for OpenMasjidOS and your apps.",
+    "home": "Home",
+    "newFolder": "New folder",
+    "newFolderPrompt": "Folder name",
+    "upload": "Upload",
+    "uploading": "Uploading…",
+    "download": "Download",
+    "rename": "Rename",
+    "delete": "Delete",
+    "deleteConfirm": "Delete \"{{name}}\"? This can't be undone.",
+    "empty": "This folder is empty.",
+    "loadError": "Couldn't open that folder.",
+    "uploadError": "Upload failed. Please try again.",
+    "genericError": "Something went wrong. Please try again."
   },
   "profile": {
     "menu": "Account menu",
@@ -140,6 +158,7 @@
     "subtitle": "Install community apps from app stores, or paste your own Docker Compose file.",
     "tabCommunity": "Community apps",
     "tabCompose": "Docker Compose",
+    "search": "Search community apps…",
     "repos": "App stores",
     "reposHint": "Add a CasaOS-compatible app store (a link to its repository). Only add stores you trust.",
     "addRepo": "Add app store",
@@ -174,6 +193,8 @@
     "themeSystem": "Follow system",
     "accent": "Accent colour",
     "wallpaper": "Wallpaper",
+    "wallpaperImage": "Custom wallpaper image",
+    "wallpaperImageHint": "Paste an image URL to use your own wallpaper. Overrides the preset above.",
     "dashboardName": "Dashboard name",
     "dashboardNamePlaceholder": "OpenMasjidOS",
     "dashboardNameHint": "Shown in the greeting. Leave blank for the default.",

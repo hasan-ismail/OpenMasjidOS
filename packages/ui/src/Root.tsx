@@ -11,6 +11,7 @@ import { Dashboard } from './routes/Dashboard';
 import { Store } from './routes/Store';
 import { StoreCustom } from './routes/StoreCustom';
 import { AppDetail } from './routes/AppDetail';
+import { Files } from './routes/Files';
 import { Settings } from './routes/Settings';
 import { NotFound } from './routes/NotFound';
 
@@ -33,6 +34,7 @@ export function Root() {
         <Route path="/store" element={<Store />} />
         <Route path="/store/custom" element={<StoreCustom />} />
         <Route path="/apps/:id" element={<AppDetail />} />
+        <Route path="/files" element={<Files />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

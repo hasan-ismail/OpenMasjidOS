@@ -124,3 +124,55 @@
 @media (prefers-reduced-motion: reduce) {
   .status-dot::after { animation: none; opacity: 0.8; transform: scale(1); }
 }
+
+/* ── Liquid-glass refractive edge ──────────────────────────────────────────
+   A 1px light-catching ring around glass panes (bright top-left → faint
+   bottom-right), drawn with the padding + mask-exclude technique so only the
+   border shows. Purely decorative; on engines without mask-composite it simply
+   doesn't render. This is what gives the panes their "wet glass" edge. */
+.glass::after,
+.glass-raised::after,
+.glass-dock::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  z-index: 1;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.55),
+    rgba(255, 255, 255, 0.05) 32%,
+    transparent 52%,
+    rgba(255, 255, 255, 0.12)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0.65;
+}
+[data-theme="light"] .glass::after,
+[data-theme="light"] .glass-raised::after,
+[data-theme="light"] .glass-dock::after {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.95),
+    rgba(255, 255, 255, 0.3) 32%,
+    transparent 52%,
+    rgba(2, 132, 199, 0.12)
+  );
+}
+
+/* Full-screen custom wallpaper image (Settings → custom image URL). */
+.scene--image {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.scene--image::before { display: none; }

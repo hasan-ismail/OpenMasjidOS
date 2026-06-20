@@ -1,0 +1,47 @@
+/**
+ * File explorer operations (JSON). Upload/download are HTTP routes (they stream
+ * binary) — see api/files.ts. Everything is sandboxed to the data dir.
+ */
+import { z } from 'zod';
+import { TRPCError } from '@trpc/server';
+import { router, protectedProcedure } from '../trpc';
+import { listDir, makeDir, renameEntry, removeEntry, FileError } from '../../files/manager';
+
+function wrap<T>(fn: () => T): T {
+  try {
+    return fn();
+  } catch (err) {
+    if (err instanceof FileError) {
+      const code = err.code === 'NOT_FOUND' ? 'NOT_FOUND' : 'BAD_REQUEST';
+      throw new TRPCError({ code, message: err.message });
+    }
+    throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: (err as Error).message });
+  }
+}
+
+export const filesRouter = router({
+  list: protectedProcedure
+    .input(z.object({ path: z.string().default('/') }))
+    .query(({ input }) => wrap(() => listDir(input.path))),
+
+  mkdir: protectedProcedure
+    .input(z.object({ path: z.string(), name: z.string().min(1) }))
+    .mutation(({ input }) => wrap(() => {
+      makeDir(input.path, input.name);
+      return { ok: true };
+    })),
+
+  rename: protectedProcedure
+    .input(z.object({ path: z.string(), name: z.string().min(1) }))
+    .mutation(({ input }) => wrap(() => {
+      renameEntry(input.path, input.name);
+      return { ok: true };
+    })),
+
+  remove: protectedProcedure
+    .input(z.object({ path: z.string().min(1) }))
+    .mutation(({ input }) => wrap(() => {
+      removeEntry(input.path);
+      return { ok: true };
+    })),
+});

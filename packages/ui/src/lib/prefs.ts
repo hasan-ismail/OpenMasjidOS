@@ -10,6 +10,8 @@ export interface Prefs {
   theme: 'dark' | 'light' | 'system';
   accent: string;
   wallpaper: string;
+  /** Optional custom wallpaper image URL — overrides the preset when set. */
+  wallpaperImage: string;
   dashboardName: string;
   language: string;
   showSplash: boolean;
@@ -22,6 +24,7 @@ const DEFAULTS: Prefs = {
   theme: 'dark',
   accent: 'cyan',
   wallpaper: 'aurora',
+  wallpaperImage: '',
   dashboardName: '',
   language: 'en',
   showSplash: true,
@@ -37,11 +40,15 @@ export const ACCENTS: Record<string, { label: string; primary: string; hover: st
 };
 
 export const WALLPAPERS: Record<string, { label: string; preview: string }> = {
-  aurora: { label: 'Aurora', preview: 'radial-gradient(circle at 30% 30%, #22D3EE, #0A1828 70%)' },
-  twilight: { label: 'Twilight', preview: 'radial-gradient(circle at 30% 30%, #A78BFA, #0a0618 70%)' },
-  sunset: { label: 'Sunset', preview: 'radial-gradient(circle at 30% 30%, #FB923C, #1a0d08 70%)' },
-  forest: { label: 'Forest', preview: 'radial-gradient(circle at 30% 30%, #22C55E, #04140e 70%)' },
-  night: { label: 'Night', preview: 'radial-gradient(circle at 30% 30%, #385AA0, #02060f 75%)' },
+  aurora: { label: 'Aurora', preview: 'radial-gradient(circle at 30% 25%, #22D3EE, #0A1828 70%)' },
+  ocean: { label: 'Ocean', preview: 'linear-gradient(150deg, #38BDF8, #2563EB 55%, #0a1838 100%)' },
+  twilight: { label: 'Twilight', preview: 'linear-gradient(150deg, #C084FC, #7C3AED 55%, #0a0618 100%)' },
+  berry: { label: 'Berry', preview: 'linear-gradient(150deg, #F472B6, #A21CAF 55%, #1a0518 100%)' },
+  sunset: { label: 'Sunset', preview: 'linear-gradient(150deg, #FBBF24, #FB7185 55%, #1a0d08 100%)' },
+  ember: { label: 'Ember', preview: 'linear-gradient(150deg, #FB923C, #DC2626 55%, #190806 100%)' },
+  forest: { label: 'Forest', preview: 'linear-gradient(150deg, #4ADE80, #15803D 55%, #04140e 100%)' },
+  night: { label: 'Night', preview: 'linear-gradient(150deg, #60A5FA, #1E3A8A 55%, #02060f 100%)' },
+  graphite: { label: 'Graphite', preview: 'linear-gradient(150deg, #64748B, #334155 55%, #0b0f17 100%)' },
 };
 
 const RTL_LANGS = new Set(['ar', 'ur']);
