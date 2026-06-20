@@ -126,6 +126,32 @@ func (m *Manager) List(ctx context.Context) ([]App, error) {
 		}
 		apps = append(apps, app)
 	}
+
+	// Orphan recovery: surface any running omos-* project that has no metadata
+	// (e.g. its app.json was lost). A running app must NEVER silently disappear
+	// from the UI — recover it and write metadata back so it stays manageable.
+	known := make(map[string]bool, len(apps))
+	for _, a := range apps {
+		known[a.ID] = true
+	}
+	for _, project := range docker.RunningProjects(ctx) {
+		id := strings.TrimPrefix(project, "omos-")
+		if id == "" || known[id] {
+			continue
+		}
+		recovered := App{
+			ID:        id,
+			Name:      id,
+			Custom:    true,
+			CreatedAt: time.Now().UTC().Format(time.RFC3339),
+			Running:   true,
+			Ports:     docker.ProjectPorts(ctx, project),
+		}
+		_ = m.saveMeta(recovered) // best-effort: re-create metadata so it's manageable
+		known[id] = true
+		apps = append(apps, recovered)
+	}
+
 	sort.Slice(apps, func(i, j int) bool { return apps[i].Name < apps[j].Name })
 	return apps, nil
 }

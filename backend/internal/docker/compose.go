@@ -31,11 +31,21 @@ func ComposeUp(ctx context.Context, projectDir, project, composeYAML string) (st
 	return run(ctx, "compose", "-p", project, "-f", file, "up", "-d", "--remove-orphans")
 }
 
+// composeArgs builds the base `compose -p <project> [-f file]` arguments. The
+// compose file is only added when it exists on disk, so recovered orphan apps
+// (whose metadata/file may be gone) can still be managed by project label.
+func composeArgs(projectDir, project string) []string {
+	args := []string{"compose", "-p", project}
+	if _, err := os.Stat(filepath.Join(projectDir, composeFileName)); err == nil {
+		args = append(args, "-f", filepath.Join(projectDir, composeFileName))
+	}
+	return args
+}
+
 // ComposeDown stops and removes a compose project. When removeData is true,
 // named volumes are deleted as well.
 func ComposeDown(ctx context.Context, projectDir, project string, removeData bool) (string, error) {
-	file := filepath.Join(projectDir, composeFileName)
-	args := []string{"compose", "-p", project, "-f", file, "down", "--remove-orphans"}
+	args := append(composeArgs(projectDir, project), "down", "--remove-orphans")
 	if removeData {
 		args = append(args, "-v")
 	}
@@ -44,20 +54,17 @@ func ComposeDown(ctx context.Context, projectDir, project string, removeData boo
 
 // ComposeStop stops a project's containers without removing them.
 func ComposeStop(ctx context.Context, projectDir, project string) (string, error) {
-	file := filepath.Join(projectDir, composeFileName)
-	return run(ctx, "compose", "-p", project, "-f", file, "stop")
+	return run(ctx, append(composeArgs(projectDir, project), "stop")...)
 }
 
 // ComposeStart starts a previously-stopped project.
 func ComposeStart(ctx context.Context, projectDir, project string) (string, error) {
-	file := filepath.Join(projectDir, composeFileName)
-	return run(ctx, "compose", "-p", project, "-f", file, "start")
+	return run(ctx, append(composeArgs(projectDir, project), "start")...)
 }
 
 // ComposeRestart restarts a project's containers.
 func ComposeRestart(ctx context.Context, projectDir, project string) (string, error) {
-	file := filepath.Join(projectDir, composeFileName)
-	return run(ctx, "compose", "-p", project, "-f", file, "restart")
+	return run(ctx, append(composeArgs(projectDir, project), "restart")...)
 }
 
 // ComposeRunning reports whether a project currently has any running container.
@@ -91,6 +98,26 @@ func ProjectPorts(ctx context.Context, project string) []int {
 	}
 	sort.Ints(ports)
 	return ports
+}
+
+// RunningProjects returns the unique OpenMasjidOS compose project names
+// ("omos-*") that currently have at least one running container. Used to recover
+// apps whose on-disk metadata was lost, so a running app never vanishes from the UI.
+func RunningProjects(ctx context.Context) []string {
+	out, err := run(ctx, "ps", "--format", `{{.Label "com.docker.compose.project"}}`)
+	if err != nil {
+		return nil
+	}
+	seen := map[string]bool{}
+	var projects []string
+	for _, line := range strings.Split(out, "\n") {
+		p := strings.TrimSpace(line)
+		if strings.HasPrefix(p, "omos-") && !seen[p] {
+			seen[p] = true
+			projects = append(projects, p)
+		}
+	}
+	return projects
 }
 
 // FirstContainer returns the ID of the first running container in a project,

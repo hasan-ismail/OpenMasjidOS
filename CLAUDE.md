@@ -202,6 +202,13 @@ What would you like to do?
 - **Reconfigure network:** re-run the static-IP and hostname steps from install.
 - **Uninstall:** stop & remove the core. Then ask, separately and explicitly: *"Also remove all installed apps and their data? This cannot be undone."* Removing data requires the user to type `DELETE` to confirm. Default is to keep app data.
 
+> ### 🚨 GOLDEN RULE — never touch the user's apps on update/repair
+> **Update, Repair, and Reconfigure must NEVER stop, remove, recreate, or orphan a user's installed app containers or their data.** They operate on the **core's own compose project only** (`--project-name openmasjid`). Installed apps run as their own separate compose projects (`omos-<id>`) and must keep running untouched across a core update. Concretely:
+> - Never run `docker system prune`, a daemon-wide `docker compose down`, `docker stop $(docker ps -q)`, or any command that affects containers outside the core project.
+> - Never delete or rewrite anything under `/opt/openmasjid/apps/`.
+> - Only **Uninstall** may stop apps, and only **after** the explicit, separate `DELETE` confirmation above.
+> - The core must also be resilient: if an app's metadata is ever lost, the dashboard recovers it by discovering running `omos-*` projects from Docker, so a running app is **never** silently dropped from the UI. A user losing an app to an update is a P0 bug.
+
 ### 7.2 Guided INSTALL steps
 The script must:
 1. Be **POSIX-ish bash**, fail fast (`set -euo pipefail`), and be idempotent (re-running is always safe).

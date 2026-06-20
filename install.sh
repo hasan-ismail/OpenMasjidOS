@@ -528,17 +528,62 @@ print_success() {
 }
 
 # =============================================================================
-# main — orchestrate everything in the right order
+# Lifecycle: detect state, show a menu, and run the chosen action
 # =============================================================================
 
-main() {
-  print_banner
+# is_installed — true if OpenMasjidOS is already on this machine.
+is_installed() {
+  [ -f "${DATA_DIR}/docker-compose.yml" ] && return 0
+  if command -v docker &>/dev/null; then
+    docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q '^openmasjid-core$' && return 0
+  fi
+  return 1
+}
 
-  echo "  This installer will set up OpenMasjidOS on your server."
-  echo "  It is safe to re-run — if OpenMasjidOS is already installed, this will"
-  echo "  update it to the latest version without touching your data."
-  echo ""
+# menu_fresh / menu_existing — print a menu to the terminal and echo the chosen
+# action to stdout. IMPORTANT: we read from /dev/tty, not stdin — under
+# `curl ... | bash` stdin IS the script, so a plain `read` never reaches the
+# keyboard. /dev/tty is the actual controlling terminal. With no terminal
+# (CI/automation) we fall back to a safe default.
+menu_fresh() {
+  if [ ! -r /dev/tty ]; then echo "install"; return; fi
+  {
+    echo ""
+    echo "  Welcome to OpenMasjidOS."
+    echo "    1) Install"
+    echo "    2) Exit"
+    printf "  Choose [1]: "
+  } > /dev/tty
+  local r=""; read -r r < /dev/tty || r=""
+  case "$r" in
+    2) echo "exit" ;;
+    *) echo "install" ;;
+  esac
+}
 
+menu_existing() {
+  if [ ! -r /dev/tty ]; then echo "update"; return; fi
+  {
+    echo ""
+    echo "  OpenMasjidOS is already installed on this machine."
+    echo "  What would you like to do?"
+    echo "    1) Update   — get the latest version (keeps all your apps & data)"
+    echo "    2) Repair   — re-apply config, re-pull, and restart the core"
+    echo "    3) Remove   — uninstall OpenMasjidOS"
+    echo "    4) Quit"
+    printf "  Choose [1]: "
+  } > /dev/tty
+  local r=""; read -r r < /dev/tty || r=""
+  case "$r" in
+    2) echo "repair" ;;
+    3) echo "uninstall" ;;
+    4) echo "quit" ;;
+    *) echo "update" ;;
+  esac
+}
+
+# do_install — first-time guided install.
+do_install() {
   check_root
   detect_os
   install_docker
@@ -549,5 +594,117 @@ main() {
   print_success
 }
 
+# do_update — pull the latest core and recreate it. NEVER touches installed
+# apps (separate compose projects) or their data — see CLAUDE.md golden rule.
+do_update() {
+  check_root
+  install_docker          # idempotent: present → skip
+  setup_data_dir          # mkdir -p only
+  write_compose_file
+  info "Updating to the latest version..."
+  docker pull "${IMAGE}"
+  docker compose --project-name "${COMPOSE_PROJECT}" --file "${DATA_DIR}/docker-compose.yml" up --detach
+  wait_for_health
+  echo ""
+  info "OpenMasjidOS is up to date. Your installed apps and data were left untouched."
+  echo "  Open it at: http://$(get_server_ip)$( [ "${PORT}" != "80" ] && echo ":${PORT}" )"
+  echo ""
+}
+
+# do_repair — like update but force-recreates the core and re-fixes config.
+# Also only touches the core project.
+do_repair() {
+  check_root
+  install_docker
+  setup_data_dir
+  write_compose_file
+  info "Repairing — re-pulling and recreating the core service..."
+  docker pull "${IMAGE}"
+  docker compose --project-name "${COMPOSE_PROJECT}" --file "${DATA_DIR}/docker-compose.yml" up --detach --force-recreate
+  wait_for_health
+  echo ""
+  info "Repair complete. Your installed apps and data were left untouched."
+  echo "  Open it at: http://$(get_server_ip)$( [ "${PORT}" != "80" ] && echo ":${PORT}" )"
+  echo ""
+}
+
+# do_uninstall — remove the core. Installed apps keep running and their data is
+# kept UNLESS the user explicitly types DELETE (golden rule).
+do_uninstall() {
+  check_root
+  info "Stopping and removing the OpenMasjidOS core..."
+  if [ -f "${DATA_DIR}/docker-compose.yml" ]; then
+    docker compose --project-name "${COMPOSE_PROJECT}" --file "${DATA_DIR}/docker-compose.yml" down || true
+  else
+    docker rm -f openmasjid-core 2>/dev/null || true
+  fi
+  echo ""
+  info "The OpenMasjidOS core has been removed."
+  echo "  Your installed apps are still running and your data is intact at ${DATA_DIR}."
+  echo "  (Re-run this installer any time to bring the dashboard back — it will find your apps.)"
+  echo ""
+
+  local confirm=""
+  if [ -r /dev/tty ]; then
+    printf "  Also remove ALL installed apps and their data? This cannot be undone.\n  Type %sDELETE%s to confirm, or press Enter to keep everything: " "${CLR_BOLD}" "${CLR_RESET}" > /dev/tty
+    read -r confirm < /dev/tty || confirm=""
+  fi
+
+  if [ "$confirm" = "DELETE" ]; then
+    warn "Removing all installed apps and their data..."
+    # Only here — and only after explicit DELETE — do we stop user app projects.
+    # Capture first (|| true) so an empty list can't trip `set -e` / pipefail.
+    local projects=""
+    projects="$(docker ps -a --format '{{.Label "com.docker.compose.project"}}' 2>/dev/null | grep '^omos-' | sort -u || true)"
+    if [ -n "$projects" ]; then
+      while read -r proj; do
+        [ -n "$proj" ] && docker compose -p "$proj" down -v 2>/dev/null || true
+      done <<< "$projects"
+    fi
+    rm -rf "${DATA_DIR}"
+    info "Everything has been removed."
+  else
+    info "Kept all your apps and data."
+  fi
+  echo ""
+}
+
+# =============================================================================
+# main — detect state, branch, run
+# =============================================================================
+
+main() {
+  print_banner
+
+  # Optional non-interactive override: --install / --update / --repair / --uninstall.
+  local action=""
+  for arg in "$@"; do
+    case "$arg" in
+      --install)            action="install" ;;
+      --update)             action="update" ;;
+      --repair)             action="repair" ;;
+      --uninstall|--remove) action="uninstall" ;;
+    esac
+  done
+
+  # No override → detect state and ask.
+  if [ -z "$action" ]; then
+    if is_installed; then
+      action="$(menu_existing)"
+    else
+      action="$(menu_fresh)"
+    fi
+  fi
+
+  case "$action" in
+    install)   do_install ;;
+    update)    do_update ;;
+    repair)    do_repair ;;
+    uninstall) do_uninstall ;;
+    exit|quit|"") echo "  No changes made."; exit 0 ;;
+    *) error "Unknown action: ${action}" ;;
+  esac
+}
+
 # Run!
-main
+main "$@"
