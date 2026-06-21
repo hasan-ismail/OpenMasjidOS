@@ -137,7 +137,7 @@ sudo docker ps   # look for "openmasjid-core", status "Up ..."
 
 ## Apps
 
-Apps live in a separate repository: **[OpenMasjidAPPS](https://github.com/hasan-ismail/OpenMasjidAPPS)**. Each app is a self-contained Docker container described by a manifest; OpenMasjidOS fetches the catalog and handles install, update, and removal. Advanced users can also add CasaOS-compatible community stores or paste a Docker Compose file (enable *Allow custom apps* in Settings → Advanced). To build an app, see [`docs/APP_MANIFEST_SPEC.md`](docs/APP_MANIFEST_SPEC.md).
+Each app lives in its **own** repository and is catalogued by **[OpenMasjidAPPS](https://github.com/hasan-ismail/OpenMasjidAPPS)**, which OpenMasjidOS fetches to populate the App Store and to handle install, update, and removal. Advanced users can also add CasaOS-compatible community stores or paste a Docker Compose file (enable *Allow custom apps* in Settings → Advanced). To build an app, start with [OpenMasjidAPPS](https://github.com/hasan-ismail/OpenMasjidAPPS) (its `CLAUDE.md` + `docs/BUILDING_AN_APP.md`); the platform-side contract is in [`docs/APP_MANIFEST_SPEC.md`](docs/APP_MANIFEST_SPEC.md).
 
 ---
 
