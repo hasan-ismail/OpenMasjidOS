@@ -16,7 +16,7 @@ When it finishes, open **`http://openmasjidos.local`** (or **`http://<your-serve
 
 Created by **Hasan Ismail**, with immense help from **Qari Ijaz** and **Osman Sayed**.
 
-Resources for this project were generously sponsored by the **An-Noor Institute**, **Rihlatul Ilm Foundation**, and **AsmaTec Inc.**
+Resources for this project were generously sponsored by **An-Noor Institute**, **Rihlatul Ilm Foundation**, and **AsmaTec Inc.**
 
 May Allah reward everyone who made it possible.
 
