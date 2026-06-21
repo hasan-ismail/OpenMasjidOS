@@ -66,6 +66,7 @@ Everything lives behind a login on a single, polished dashboard:
 - **A built-in file manager** — browse, upload (drag & drop), download, edit text, and preview images/video.
 - **A premium, themeable interface** — dark or light, accent colours, wallpapers (or your own image), a glass clock, tasteful motion, and right-to-left support.
 - **Advanced tools** (opt-in, off by default) — CasaOS-compatible community stores, paste-a-Compose installs, per-app and root terminals, SSH-key access, one-click in-app updates, and backup/restore.
+- **The OpenMasjidOS Fabric** — apps can inherit the dashboard's theme and wallpaper, and (when they opt in) share its login, so opening one feels like part of the dashboard. Optional and secure: it never shares masjid data, and each app authenticates with its own per-app key.
 
 Each app runs as its own isolated Docker container, so **updating OpenMasjidOS never touches your installed apps or their data.**
 
