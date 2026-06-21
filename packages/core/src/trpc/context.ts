@@ -22,6 +22,9 @@ export interface Context {
   sessionToken: string | null;
   /** Client IP, used for per-source login throttling. */
   ip: string;
+  /** Host header (how the client reached the platform) — used to derive the
+   *  base URL injected into installed apps for integration/SSO. */
+  host: string | null;
   setSessionCookie?: (token: string) => void;
   clearSessionCookie?: () => void;
 }
@@ -53,6 +56,7 @@ export function createContext({ req, res }: CreateFastifyContextOptions): Contex
     username,
     sessionToken: token ?? null,
     ip: req.ip,
+    host: req.headers?.host ?? null,
     setSessionCookie: canMutateCookies ? (t: string) => res.setCookie(COOKIE_NAME, t, COOKIE_OPTS) : undefined,
     clearSessionCookie: canMutateCookies ? () => res.clearCookie(COOKIE_NAME, { path: '/' }) : undefined,
   };

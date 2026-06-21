@@ -84,7 +84,7 @@ export const communityRouter = router({
         portRemap: portRemapInput,
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       ensureEnabled();
       const compose = input.portRemap ? remapPorts(input.compose, input.portRemap) : input.compose;
       let dangers: string[];
@@ -121,6 +121,7 @@ export const communityRouter = router({
           composeText: compose,
           env: {},
           icon: input.icon,
+          baseUrl: ctx.host,
         });
       } catch (err) {
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: (err as Error).message });

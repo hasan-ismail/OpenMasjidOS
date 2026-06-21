@@ -17,6 +17,16 @@ export const settingsRouter = router({
         webTerminal: z.boolean().optional(),
         rootTerminal: z.boolean().optional(),
         updateChannel: z.enum(['stable', 'beta']).optional(),
+        // Presentation mirror, synced from the dashboard so apps can inherit it.
+        appearance: z
+          .object({
+            theme: z.enum(['system', 'dark', 'light']),
+            wallpaper: z.string().max(64),
+            wallpaperImage: z.string().max(2048),
+            accent: z.string().max(32),
+            lang: z.string().max(16),
+          })
+          .optional(),
       }),
     )
     .mutation(({ input }) => updateSettings(input)),

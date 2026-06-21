@@ -22,7 +22,7 @@ export const storeRouter = router({
         settings: z.record(z.string(), z.string()).default({}),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const app = await findCatalogApp(input.id);
       if (!app) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'That app is no longer in the store.' });
@@ -35,7 +35,7 @@ export const storeRouter = router({
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'That app is missing its setup file.' });
       }
       try {
-        return await installCatalogApp(app, input.settings);
+        return await installCatalogApp(app, input.settings, ctx.host);
       } catch (err) {
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: (err as Error).message });
       }

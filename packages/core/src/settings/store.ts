@@ -1,12 +1,23 @@
 /**
  * Platform settings — NEVER masjid/prayer config (that belongs to apps,
- * CLAUDE.md §13). Presentation prefs live client-side; the server owns the
- * security-relevant switches (custom apps, terminals) and the community repo
- * list.
+ * CLAUDE.md §13). The server owns the security-relevant switches (custom apps,
+ * terminals), the community repo list, and a small mirror of the dashboard's
+ * PRESENTATION prefs (`appearance`) so apps can inherit the masjid's look via
+ * GET /api/public/appearance. Appearance is still authored in the browser
+ * (lib/prefs.ts) and synced here — it carries no masjid data.
  */
 import path from 'node:path';
 import { CONFIG_DIR } from '../config';
 import { readJson, writeJson } from '../util/json-store';
+
+/** Presentation only — theme/wallpaper/accent/language. No masjid data. */
+export interface Appearance {
+  theme: 'system' | 'dark' | 'light';
+  wallpaper: string;
+  wallpaperImage: string;
+  accent: string;
+  lang: string;
+}
 
 export interface PlatformSettings {
   /** Gates the App Store "3rd Party App" button (CLAUDE.md §11). */
@@ -19,6 +30,8 @@ export interface PlatformSettings {
   communityRepos: string[];
   /** Update channel for the core itself. */
   updateChannel: 'stable' | 'beta';
+  /** Mirror of the dashboard's presentation prefs, exposed to apps. */
+  appearance: Appearance;
 }
 
 const SETTINGS_PATH = path.join(CONFIG_DIR, 'settings.json');
@@ -28,6 +41,7 @@ const DEFAULTS: PlatformSettings = {
   rootTerminal: false,
   communityRepos: [],
   updateChannel: 'stable',
+  appearance: { theme: 'dark', wallpaper: 'aurora', wallpaperImage: '', accent: 'cyan', lang: 'en' },
 };
 
 let cache: PlatformSettings = readJson(SETTINGS_PATH, DEFAULTS);

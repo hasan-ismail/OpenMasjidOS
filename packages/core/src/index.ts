@@ -26,6 +26,7 @@ import { registerFiles } from './api/files';
 import { registerUpdate } from './api/update';
 import { registerRestore } from './api/restore';
 import { registerAppUpdate } from './api/app-update';
+import { registerIntegration } from './api/integration';
 import { COOKIE_NAME, getSessionUser } from './auth/sessions';
 
 async function main() {
@@ -89,6 +90,9 @@ async function main() {
 
   // Catalog app updates streamed over a WebSocket (pull + recreate).
   registerAppUpdate(server);
+
+  // App integration: SSO cookie introspection + public appearance (optional).
+  registerIntegration(server);
 
   // Static UI + SPA fallback. In local dev the UI is served by Vite, so dist may
   // not exist — guard the registration so the daemon still boots.

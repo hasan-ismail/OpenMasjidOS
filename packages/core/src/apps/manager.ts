@@ -22,6 +22,7 @@ import {
 } from '../docker/compose';
 import { discoverApps } from '../docker/discovery';
 import { findCatalogApp } from '../store/catalog';
+import { networkInfo } from '../system/system';
 import { isNewerVersion } from '../util/version';
 import type { AppMeta, InstalledApp, CatalogApp } from './types';
 
@@ -67,6 +68,27 @@ function writeEnvFile(id: string, env: Record<string, string>): void {
     ([k, v]) => `${k}=${String(v ?? '').replace(/[\r\n]+/g, ' ')}`,
   );
   fs.writeFileSync(envPath(id), lines.join('\n') + '\n', 'utf8');
+}
+
+/**
+ * Platform integration env, injected into every installed app (CLAUDE.md app
+ * contract). Presentation is handed off in the browser via the Open URL; these
+ * let an app's backend find the platform for OPTIONAL single sign-on (forward
+ * the omos_session cookie to `${OPENMASJID_BASE_URL}/api/auth/session`). Apps
+ * that don't use them simply ignore them. Override the base with the
+ * OPENMASJID_BASE_URL env on the core.
+ */
+function platformEnv(id: string, baseUrl?: string | null): Record<string, string> {
+  const env: Record<string, string> = { OPENMASJID_APP_ID: id };
+  // Prefer an explicit override, then the host the admin reached us on (passed
+  // from the install request), then a best-effort interface IP as a last resort.
+  let base = process.env.OPENMASJID_BASE_URL || baseUrl || '';
+  if (!base) {
+    const net = networkInfo();
+    if (net.addresses[0]) base = `http://${net.addresses[0]}:${net.port}`;
+  }
+  if (base) env.OPENMASJID_BASE_URL = /^https?:\/\//i.test(base) ? base : `http://${base}`;
+  return env;
 }
 
 function listMetaIds(): string[] {
@@ -142,10 +164,11 @@ export async function getInstalled(id: string): Promise<InstalledApp | null> {
 export async function installCatalogApp(
   app: CatalogApp,
   settings: Record<string, string>,
+  baseUrl?: string | null,
 ): Promise<InstalledApp> {
   ensureDir(appDir(app.id));
   fs.writeFileSync(composePath(app.id), app.compose, 'utf8');
-  writeEnvFile(app.id, settings);
+  writeEnvFile(app.id, { ...settings, ...platformEnv(app.id, baseUrl) });
   saveMeta({
     id: app.id,
     name: app.name,
@@ -175,11 +198,12 @@ async function installStack(opts: {
   composeText: string;
   env: Record<string, string>;
   icon?: string;
+  baseUrl?: string | null;
 }): Promise<InstalledApp> {
-  const { id, name, kind, composeText, env, icon } = opts;
+  const { id, name, kind, composeText, env, icon, baseUrl } = opts;
   ensureDir(appDir(id));
   fs.writeFileSync(composePath(id), composeText, 'utf8');
-  writeEnvFile(id, env);
+  writeEnvFile(id, { ...env, ...platformEnv(id, baseUrl) });
   saveMeta({ id, name, kind, icon, createdAt: new Date().toISOString() });
 
   const res = await composeUp(projectOf(id), composePath(id), envPath(id));
@@ -195,6 +219,7 @@ export function installCustomApp(opts: {
   composeText: string;
   env: Record<string, string>;
   icon?: string;
+  baseUrl?: string | null;
 }): Promise<InstalledApp> {
   return installStack({ ...opts, kind: 'custom' });
 }
@@ -205,6 +230,7 @@ export function installCommunityApp(opts: {
   composeText: string;
   env: Record<string, string>;
   icon?: string;
+  baseUrl?: string | null;
 }): Promise<InstalledApp> {
   return installStack({ ...opts, kind: 'community' });
 }

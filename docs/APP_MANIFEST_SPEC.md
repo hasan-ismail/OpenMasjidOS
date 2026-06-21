@@ -86,3 +86,37 @@ masjid name). **No platform profile is ever injected** — the platform holds no
 
 The full per-app repo layout, image-publishing, and `registry.yaml` steps are documented in
 **OpenMasjidAPPS** — start there.
+
+## Platform integration (optional — appearance + single sign-on)
+
+All of this is **optional and backwards-compatible**: an app must work standalone. If these hooks
+are absent or the platform is unreachable, the app uses its own appearance + its own login.
+**None of it moves masjid data into the platform** — it's presentation + auth convenience only.
+
+**Appearance inherit (so the app matches the masjid's look)**
+- **On open**, the dashboard appends the viewer's presentation prefs to the app URL as a fragment:
+  `#omos=<base64url(JSON)>` where the JSON is
+  `{ v:1, theme, wallpaper, wallpaperImage?, accent, lang }`. The fragment is never sent to a server
+  or logged. The app reads `location.hash` on load, applies + persists it, and clears the hash.
+- **Live sync** (optional): `GET /api/public/appearance` returns the same payload
+  (`{ v:1, theme, wallpaper, wallpaperImage, accent, lang }`). It's public and **CORS-enabled**
+  (`Access-Control-Allow-Origin: *`), so an app's browser can poll it to follow theme changes.
+
+**Single sign-on (so the app can share the dashboard login)**
+- On install the platform injects into the app's env:
+  - `OPENMASJID_APP_ID` — the app's id.
+  - `OPENMASJID_BASE_URL` — where the platform is reachable (derived from the install request's
+    host; override on the core with the `OPENMASJID_BASE_URL` env).
+- The session cookie (`omos_session`, HttpOnly, SameSite=Strict) is sent by the browser to the
+  app's port too (same host, different port = same-site). The app's **backend** forwards that cookie
+  to `GET ${OPENMASJID_BASE_URL}/api/auth/session`, which replies
+  `{ "authenticated": true, "username": "…" }` or `{ "authenticated": false }`. If authenticated,
+  treat the request as signed-in; otherwise fall back to the app's own login.
+- This call is **server→server** (the app backend → the platform). `/api/auth/session` is **not**
+  CORS-enabled on purpose, so a cross-origin page can't read someone's auth status. Never trust a
+  browser-supplied username/header — only ever trust what `/api/auth/session` confirms for the
+  cookie on that request. Cache a positive result briefly (~30–60 s) per token.
+
+> Same-host assumption: cookie-based SSO works because the dashboard and the app share a host on
+> different ports. An app on a different host simply won't see the cookie and falls back to its own
+> login — which is fine.

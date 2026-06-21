@@ -9,6 +9,7 @@ import { Dock } from './Dock';
 import { Splash } from './Splash';
 import { WindowManager } from './WindowManager';
 import { Clock } from './Clock';
+import { AppearanceSync } from './AppearanceSync';
 import { usePrefs } from '../lib/prefs';
 
 const SPLASH_FLAG = 'omos-splash-shown';
@@ -56,6 +57,7 @@ export function AppShell({ children, onSignedOut }: { children: ReactNode; onSig
       <main className="app-main">{children}</main>
       <WindowManager />
       <Dock />
+      <AppearanceSync />
     </div>
   );
 }
