@@ -17,8 +17,12 @@ import {
   composeStart,
   composeRestart,
   composeLogs,
+  composePull,
+  composeUpStream,
 } from '../docker/compose';
 import { discoverApps } from '../docker/discovery';
+import { findCatalogApp } from '../store/catalog';
+import { isNewerVersion } from '../util/version';
 import type { AppMeta, InstalledApp, CatalogApp } from './types';
 
 const projectOf = (id: string) => `omos-${id}`;
@@ -250,6 +254,76 @@ export async function restartApp(id: string): Promise<void> {
 
 export async function appLogs(id: string, tail = 200): Promise<string> {
   return composeLogs(projectOf(id), tail);
+}
+
+export interface UpdateCheck {
+  updateAvailable: boolean;
+  current: string;
+  latest: string | null;
+}
+
+/** Is a newer version of this (catalog) app available in the store? Community /
+ *  custom apps have no store source, so they never report an update here. */
+export async function checkCatalogUpdate(id: string): Promise<UpdateCheck> {
+  const meta = loadMeta(id);
+  const current = meta?.version ?? '';
+  if (!meta || meta.kind !== 'catalog') return { updateAvailable: false, current, latest: null };
+  const app = await findCatalogApp(id);
+  if (!app) return { updateAvailable: false, current, latest: null };
+  return { updateAvailable: isNewerVersion(current, app.version), current, latest: app.version };
+}
+
+/**
+ * Update a catalog app to the store's current version, streaming progress via
+ * onLine. The user's existing settings (.env) are kept; only the compose +
+ * image change. Re-runs `pull` then `up -d` so the new image is fetched and the
+ * container recreated.
+ */
+export async function updateCatalogApp(id: string, onLine: (s: string) => void): Promise<void> {
+  const meta = loadMeta(id);
+  if (!meta || meta.kind !== 'catalog') {
+    onLine('This app cannot be updated from the store.');
+    return;
+  }
+  const app = await findCatalogApp(id);
+  if (!app) {
+    onLine("Could not find this app in the store anymore. Nothing was changed.");
+    return;
+  }
+  if (!isNewerVersion(meta.version ?? '', app.version)) {
+    onLine(`${meta.name} is already up to date (v${app.version}).`);
+    return;
+  }
+
+  onLine(`Updating ${meta.name} from v${meta.version ?? '?'} to v${app.version}…`);
+  // New compose; keep the user's saved settings (.env) untouched.
+  fs.writeFileSync(composePath(id), app.compose, 'utf8');
+
+  onLine('');
+  onLine('Downloading the new version…');
+  if ((await composePull(projectOf(id), composePath(id), envPath(id), onLine)) !== 0) {
+    onLine('');
+    onLine('Could not download the update. Please check the connection and try again.');
+    return;
+  }
+
+  onLine('');
+  onLine('Applying the update…');
+  if ((await composeUpStream(projectOf(id), composePath(id), envPath(id), onLine)) !== 0) {
+    onLine('');
+    onLine('The update could not start. The previous version may still be running.');
+    return;
+  }
+
+  saveMeta({
+    ...meta,
+    name: app.name || meta.name,
+    icon: app.icon ?? meta.icon,
+    category: app.category ?? meta.category,
+    version: app.version,
+  });
+  onLine('');
+  onLine(`Done — ${meta.name} is now on v${app.version}.`);
 }
 
 /**

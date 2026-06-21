@@ -14,6 +14,7 @@ import {
   stopApp,
   restartApp,
   removeApp,
+  checkCatalogUpdate,
 } from '../../apps/manager';
 
 // App ids are used as filesystem segments + compose project names, so they are
@@ -37,6 +38,9 @@ export const appsRouter = router({
   logs: protectedProcedure
     .input(z.object({ id: appId, tail: z.number().int().min(1).max(2000).optional() }))
     .query(({ input }) => appLogs(input.id, input.tail ?? 200)),
+
+  /** Is a newer version of this catalog app available in the store? */
+  checkUpdate: protectedProcedure.input(idInput).query(({ input }) => checkCatalogUpdate(input.id)),
 
   start: protectedProcedure.input(idInput).mutation(({ input }) =>
     wrap(async () => {

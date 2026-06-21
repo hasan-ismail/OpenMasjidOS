@@ -154,7 +154,17 @@
     "removeBody": "This turns the app off and removes it from your dashboard.",
     "removeData": "Also delete this app's data (cannot be undone)",
     "removeConfirm": "Remove app",
-    "removing": "Removing the app…"
+    "removing": "Removing the app…",
+    "checkUpdate": "Check for update",
+    "checking": "Checking for updates…",
+    "upToDate": "This app is up to date.",
+    "updateTitle": "Update {{name}}?",
+    "updateBody": "Version {{latest}} is available — you have {{current}}. The app will restart; its data is kept.",
+    "updateNow": "Update now"
+  },
+  "appUpdate": {
+    "title": "Updating {{name}}",
+    "done": "{{name}} is up to date now."
   },
   "store": {
     "title": "App Store",

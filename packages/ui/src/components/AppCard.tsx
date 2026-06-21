@@ -13,6 +13,7 @@ import {
   Play,
   Power,
   RotateCw,
+  RefreshCw,
   Pin,
   PinOff,
   Trash2,
@@ -27,6 +28,7 @@ import { useToast } from './ToastProvider';
 import { Modal } from './Modal';
 import { LazyTerminal } from './LazyTerminal';
 import { AppLogs } from './AppLogs';
+import { AppUpdate } from './AppUpdate';
 import { useWindows } from './Windows';
 import { staggerItem } from '../lib/motion';
 import type { InstalledApp } from '../lib/types';
@@ -50,7 +52,38 @@ export function AppCard({ app }: { app: InstalledApp }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteData, setDeleteData] = useState(false);
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const [updateInfo, setUpdateInfo] = useState<{ current: string; latest: string } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Catalog apps can be updated from the store. Check on demand, then confirm.
+  async function checkForUpdate() {
+    setCheckingUpdate(true);
+    toast(t('appCard.checking'), 'info');
+    try {
+      const res = await utils.apps.checkUpdate.fetch({ id: app.id });
+      if (res.updateAvailable && res.latest) {
+        setUpdateInfo({ current: res.current, latest: res.latest });
+      } else {
+        toast(t('appCard.upToDate'), 'success');
+      }
+    } catch {
+      toast(t('errors.generic'), 'error');
+    } finally {
+      setCheckingUpdate(false);
+    }
+  }
+
+  function startUpdate() {
+    setUpdateInfo(null);
+    windows.open({
+      title: t('appUpdate.title', { name: app.name }),
+      dedupeKey: `update:${app.id}`,
+      wide: true,
+      icon: <RefreshCw size={15} />,
+      node: <AppUpdate id={app.id} name={app.name} />,
+    });
+  }
 
   function openShell() {
     windows.open({
@@ -160,6 +193,11 @@ export function AppCard({ app }: { app: InstalledApp }) {
                 <button className="menu-item" onClick={() => { close(); openLogs(); }}>
                   <ScrollText size={16} /> {t('actions.viewLogs')}
                 </button>
+                {app.kind === 'catalog' && (
+                  <button className="menu-item" disabled={checkingUpdate} onClick={() => { close(); void checkForUpdate(); }}>
+                    <RefreshCw size={16} /> {t('appCard.checkUpdate')}
+                  </button>
+                )}
                 <button className="menu-item" onClick={() => { close(); prefsStore.togglePin(app.id); }}>
                   {pinned ? <PinOff size={16} /> : <Pin size={16} />}
                   {pinned ? t('actions.unpin') : t('actions.pin')}
@@ -195,6 +233,14 @@ export function AppCard({ app }: { app: InstalledApp }) {
             </button>
           </div>
         )}
+      </Modal>
+
+      <Modal open={!!updateInfo} onClose={() => setUpdateInfo(null)} title={t('appCard.updateTitle', { name: app.name })}>
+        <p>{t('appCard.updateBody', { current: updateInfo?.current ?? '', latest: updateInfo?.latest ?? '' })}</p>
+        <div style={{ display: 'flex', gap: '0.6rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
+          <button className="btn" onClick={() => setUpdateInfo(null)}>{t('common.cancel')}</button>
+          <button className="btn btn--primary" onClick={startUpdate}>{t('appCard.updateNow')}</button>
+        </div>
       </Modal>
     </>
   );
