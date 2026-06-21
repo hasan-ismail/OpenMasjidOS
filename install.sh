@@ -518,6 +518,31 @@ get_server_ip() {
 }
 
 # =============================================================================
+# Acknowledgements — credit the people and organisations behind the project.
+# Shown at the end of every install / update / repair, right before we print
+# the dashboard address. Keep in step with the README "Acknowledgements".
+# =============================================================================
+
+print_acknowledgements() {
+  echo ""
+  printf "${CLR_CYAN}${CLR_BOLD}  ┌─ With gratitude ──────────────────────────────${CLR_RESET}\n"
+  printf "${CLR_CYAN}  │${CLR_RESET}\n"
+  printf "${CLR_CYAN}  │${CLR_RESET}   OpenMasjidOS is built with the help of:\n"
+  printf "${CLR_CYAN}  │${CLR_RESET}\n"
+  printf "${CLR_CYAN}  │${CLR_RESET}     Created by  ${CLR_BOLD}Hasan Ismail${CLR_RESET}\n"
+  printf "${CLR_CYAN}  │${CLR_RESET}     With help   ${CLR_BOLD}Qari Ijaz${CLR_RESET} & ${CLR_BOLD}Osman Sayed${CLR_RESET}\n"
+  printf "${CLR_CYAN}  │${CLR_RESET}\n"
+  printf "${CLR_CYAN}  │${CLR_RESET}   Generously sponsored by:\n"
+  printf "${CLR_CYAN}  │${CLR_RESET}     ${CLR_BOLD}An-Noor Institute${CLR_RESET}\n"
+  printf "${CLR_CYAN}  │${CLR_RESET}     ${CLR_BOLD}Rihlatul Ilm Foundation${CLR_RESET}\n"
+  printf "${CLR_CYAN}  │${CLR_RESET}     ${CLR_BOLD}AsmaTec Inc.${CLR_RESET}\n"
+  printf "${CLR_CYAN}  │${CLR_RESET}\n"
+  printf "${CLR_CYAN}  │${CLR_RESET}   ${CLR_GREEN}May Allah reward everyone who made it possible.${CLR_RESET}\n"
+  printf "${CLR_CYAN}${CLR_BOLD}  └───────────────────────────────────────────────${CLR_RESET}\n"
+  echo ""
+}
+
+# =============================================================================
 # Step 8: Print the success message
 # =============================================================================
 
@@ -651,6 +676,8 @@ do_install() {
   step "Waiting for everything to be ready"
   wait_for_health
 
+  # Thank the people and sponsors who made this possible, then show the URL.
+  print_acknowledgements
   print_success
 }
 
@@ -667,6 +694,7 @@ do_update() {
   wait_for_health
   echo ""
   info "OpenMasjidOS is up to date. Your installed apps and data were left untouched."
+  print_acknowledgements
   echo "  Open it at: http://$(get_server_ip)$( [ "${PORT}" != "80" ] && echo ":${PORT}" )"
   echo ""
 }
@@ -684,6 +712,7 @@ do_repair() {
   wait_for_health
   echo ""
   info "Repair complete. Your installed apps and data were left untouched."
+  print_acknowledgements
   echo "  Open it at: http://$(get_server_ip)$( [ "${PORT}" != "80" ] && echo ":${PORT}" )"
   echo ""
 }
