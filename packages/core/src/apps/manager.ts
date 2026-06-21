@@ -133,7 +133,7 @@ export function findSsoAppBySecret(secret: string | undefined | null): string | 
 }
 
 /**
- * Platform integration env, injected into every installed app (CLAUDE.md app
+ * OpenMasjidOS Fabric env, injected into every installed app (CLAUDE.md app
  * contract). Presentation is handed off in the browser via the Open URL; these
  * let an app's backend find the platform for OPTIONAL single sign-on (forward
  * the omos_session cookie to `${OPENMASJID_BASE_URL}/api/auth/session`). Apps

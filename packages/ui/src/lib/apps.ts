@@ -8,7 +8,7 @@ export function appUrl(app: { ports: number[] }): string | null {
 }
 
 /**
- * Appearance hand-off (platform↔app integration). We pass the viewer's
+ * Appearance hand-off (OpenMasjidOS Fabric, A1). We pass the viewer's
  * presentation prefs (theme/wallpaper/accent/language) to the app as a URL
  * FRAGMENT (`#omos=…`) — the part after `#` is never sent to a server or logged,
  * and is cross-origin safe. An integrated app reads it on load to match the

@@ -222,7 +222,7 @@ OpenMasjidOS/
 ├── scripts/                   # dev helpers used by package.json/install.sh
 └── docs/
     ├── ARCHITECTURE.md
-    ├── APP_MANIFEST_SPEC.md   # the contract OpenMasjidAPPS must follow
+    ├── APP_MANIFEST_SPEC.md   # catalog contract + the OpenMasjidOS Fabric (app integration: appearance + SSO)
     ├── NETWORKING.md          # static IP + mDNS behaviour and safety notes
     └── THEMING.md
 ```

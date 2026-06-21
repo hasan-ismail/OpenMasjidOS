@@ -1,11 +1,14 @@
 /**
- * Platform↔app integration endpoints (optional, backwards-compatible):
+ * OpenMasjidOS Fabric — the platform↔app integration layer (optional,
+ * backwards-compatible). The Fabric is the unified appearance + single sign-on /
+ * API that lets an installed app inherit the dashboard's look and (opt-in) share
+ * its login:
  *
  *   GET /api/auth/session       — introspect the omos_session cookie so an app's
  *                                 BACKEND can share the dashboard login (SSO).
  *                                 Server→server only; NOT CORS-enabled, so a
  *                                 cross-origin page can't read another user's
- *                                 auth status.
+ *                                 auth status. Bound to the calling app's identity.
  *   GET /api/public/appearance  — the dashboard's presentation prefs (theme,
  *                                 wallpaper, accent, lang) so an app can match
  *                                 the masjid's look. No masjid data, low
@@ -20,7 +23,7 @@ import { findSsoAppBySecret } from '../apps/manager';
 import { getSettings } from '../settings/store';
 import { log } from '../logger';
 
-export function registerIntegration(server: FastifyInstance): void {
+export function registerFabric(server: FastifyInstance): void {
   // B1 — single sign-on introspection. Returns whether the omos_session cookie
   // ON THIS REQUEST is valid. It is the trust anchor (an app mints a signed-in
   // session from a `true`), so it FAILS CLOSED and is bound to the calling app's

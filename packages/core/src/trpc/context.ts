@@ -23,7 +23,7 @@ export interface Context {
   /** Client IP, used for per-source login throttling. */
   ip: string;
   /** Host header (how the client reached the platform) — used to derive the
-   *  base URL injected into installed apps for integration/SSO. */
+   *  base URL injected into installed apps for the OpenMasjidOS Fabric (SSO). */
   host: string | null;
   setSessionCookie?: (token: string) => void;
   clearSessionCookie?: () => void;

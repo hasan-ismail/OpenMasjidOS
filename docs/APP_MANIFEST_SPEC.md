@@ -88,11 +88,13 @@ masjid name). **No platform profile is ever injected** — the platform holds no
 The full per-app repo layout, image-publishing, and `registry.yaml` steps are documented in
 **OpenMasjidAPPS** — start there.
 
-## Platform integration (optional — appearance + single sign-on)
+## OpenMasjidOS Fabric (platform↔app integration — appearance + single sign-on)
 
-All of this is **optional and backwards-compatible**: an app must work standalone. If these hooks
-are absent or the platform is unreachable, the app uses its own appearance + its own login.
-**None of it moves masjid data into the platform** — it's presentation + auth convenience only.
+The **OpenMasjidOS Fabric** is the platform↔app integration layer: the unified appearance + single
+sign-on / API that lets an installed app inherit the dashboard's look and (opt-in) share its login.
+All of it is **optional and backwards-compatible**: an app must work standalone. If these hooks are
+absent or the platform is unreachable, the app uses its own appearance + its own login. **None of it
+moves masjid data into the platform** — it's presentation + auth convenience only.
 
 **Appearance inherit (so the app matches the masjid's look)**
 - **On open**, the dashboard appends the viewer's presentation prefs to the app URL as a fragment:
