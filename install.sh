@@ -369,9 +369,13 @@ setup_data_dir() {
   mkdir -p "${DATA_DIR}/apps"
   mkdir -p "${DATA_DIR}/volumes"
 
-  # Restrict permissions — only root should read config (may contain credentials)
+  # Restrict permissions — only root should read these. config/ holds the admin
+  # credential store; apps/ holds each app's .env (which carries its Fabric
+  # secret). 750 keeps non-root local users out.
   chmod 750 "${DATA_DIR}"
   chmod 750 "${DATA_DIR}/config"
+  chmod 750 "${DATA_DIR}/apps"
+  chmod 750 "${DATA_DIR}/volumes"
 
   info "Data directory ready."
 }
@@ -775,7 +779,9 @@ do_uninstall() {
     projects="$(docker ps -a --format '{{.Label "com.docker.compose.project"}}' 2>/dev/null | grep '^omos-' | sort -u || true)"
     if [ -n "$projects" ]; then
       while read -r proj; do
-        [ -n "$proj" ] && docker compose -p "$proj" down -v 2>/dev/null || true
+        # Run from /tmp so a stray docker-compose.yml in the caller's CWD can't
+        # hijack the teardown — `down` then operates purely by project label.
+        [ -n "$proj" ] && ( cd /tmp && docker compose -p "$proj" down -v ) 2>/dev/null || true
       done <<< "$projects"
     fi
     rm -rf "${DATA_DIR}"

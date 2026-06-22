@@ -7,7 +7,13 @@ function parseCookie(header: string | undefined, name: string): string | null {
   for (const part of header.split(';')) {
     const idx = part.indexOf('=');
     if (idx !== -1 && part.slice(0, idx).trim() === name) {
-      return decodeURIComponent(part.slice(idx + 1).trim());
+      const raw = part.slice(idx + 1).trim();
+      // A malformed %-escape must not throw in every WS/streaming route.
+      try {
+        return decodeURIComponent(raw);
+      } catch {
+        return raw;
+      }
     }
   }
   return null;

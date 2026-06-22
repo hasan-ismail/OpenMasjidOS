@@ -83,7 +83,10 @@ export function listDir(rel: string): { path: string; entries: FileEntry[] } {
   const entries: FileEntry[] = [];
   for (const name of fs.readdirSync(full)) {
     try {
-      const s = fs.statSync(path.join(full, name));
+      // lstat (not stat) so a symlink reports ITSELF, never the metadata of an
+      // out-of-sandbox target. Navigating into it still goes through resolve(),
+      // whose realpath check blocks any escape.
+      const s = fs.lstatSync(path.join(full, name));
       entries.push({ name, isDir: s.isDirectory(), size: s.size, modified: s.mtime.toISOString() });
     } catch {
       /* skip entries we can't stat */

@@ -9,6 +9,7 @@ import { router, protectedProcedure } from '../trpc';
 import { APP_ID_RE, isValidAppId } from '../../util/id';
 import { fetchCatalog, findCatalogApp } from '../../store/catalog';
 import { installCatalogApp } from '../../apps/manager';
+import { checkCompose } from '../../apps/compose-validate';
 
 export const storeRouter = router({
   catalog: protectedProcedure.query(() => fetchCatalog()),
@@ -33,6 +34,21 @@ export const storeRouter = router({
       }
       if (!app.compose) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'That app is missing its setup file.' });
+      }
+      // Defense-in-depth: catalog apps are vetted by the OpenMasjidAPPS build, but
+      // the catalog is still external data — never auto-run a store entry that
+      // requests powerful permissions (a compromised/spoofed catalog).
+      let dangers: string[];
+      try {
+        dangers = checkCompose(app.compose).dangers;
+      } catch (err) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: (err as Error).message });
+      }
+      if (dangers.length > 0) {
+        throw new TRPCError({
+          code: 'PRECONDITION_FAILED',
+          message: 'This app requests powerful system permissions and was blocked for safety.',
+        });
       }
       try {
         return await installCatalogApp(app, input.settings, ctx.host);

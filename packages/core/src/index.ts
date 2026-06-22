@@ -28,7 +28,7 @@ import { registerRestore } from './api/restore';
 import { registerAppUpdate } from './api/app-update';
 import { registerFabric } from './api/fabric';
 import { COOKIE_NAME, getSessionUser } from './auth/sessions';
-import { isAllowedOrigin } from './util/origin';
+import { isAllowedOrigin, isWebSocketUpgrade } from './util/origin';
 
 async function main() {
   ensureDir(CONFIG_DIR);
@@ -73,12 +73,13 @@ async function main() {
     return payload;
   });
 
-  // CSRF defence for the tRPC HTTP path: a state-changing call (POST) carrying the
-  // session cookie must come from our own origin. Same-site apps on another port
-  // share the cookie, so this stops one from driving the admin's control plane.
-  // GET (queries) and dev are unaffected; absent Origin (non-browser) is allowed.
+  // CSRF defence for the tRPC HTTP path: any cookie-carrying call from a foreign
+  // origin is rejected (queries AND mutations — a query can still have a side
+  // effect, and same-site apps on another port share the cookie). WebSocket
+  // upgrades are exempt here (they're origin-checked in createContext), and dev /
+  // absent-Origin (non-browser) requests are allowed by isAllowedOrigin.
   server.addHook('onRequest', async (req, reply) => {
-    if (req.url.startsWith('/trpc') && req.method !== 'GET' && !isAllowedOrigin(req)) {
+    if (req.url.startsWith('/trpc') && !isWebSocketUpgrade(req) && !isAllowedOrigin(req)) {
       return reply.code(403).send({ error: 'This request came from an unexpected place.' });
     }
   });

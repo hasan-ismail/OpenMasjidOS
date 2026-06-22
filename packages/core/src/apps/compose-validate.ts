@@ -64,6 +64,38 @@ function hasInterpolation(v: unknown): boolean {
   return /\$(\{|[A-Za-z_])/.test(v.replace(/\$\$/g, ''));
 }
 
+/** Normalise to an array — compose accepts a scalar OR a list for several
+ *  fields (cap_add, devices, security_opt, group_add…), and a scalar form was
+ *  slipping past array-only checks. */
+function toArr(v: unknown): unknown[] {
+  return Array.isArray(v) ? v : v == null ? [] : [v];
+}
+
+/** Flag a host path (from a service bind mount or a local-driver bind volume) if
+ *  it is sensitive, the whole filesystem, the Docker socket, or escapes via "..". */
+function checkHostPath(label: string, raw: string, dangers: string[]): void {
+  const norm = String(raw).trim().replace(/\/+$/, '') || '/';
+  if (/(^|\/)\.\.(\/|$)/.test(norm)) {
+    dangers.push(`${label} mounts a path that escapes the app folder (it contains "..").`);
+    return;
+  }
+  if (!norm.startsWith('/')) return; // relative path inside the app folder / named volume
+  if (norm.endsWith('docker.sock') || norm === '/var/run/docker.sock') {
+    dangers.push(`${label} mounts the Docker socket — that grants control of every container on the machine.`);
+    return;
+  }
+  if (norm === '/') {
+    dangers.push(`${label} mounts the entire host filesystem.`);
+    return;
+  }
+  for (const root of SENSITIVE_ROOTS) {
+    if (norm === root || norm.startsWith(root + '/')) {
+      dangers.push(`${label} mounts a sensitive host path: ${norm}`);
+      return;
+    }
+  }
+}
+
 function checkVolume(name: string, v: unknown, dangers: string[]): void {
   // A variable anywhere in a mount can't be statically verified — fail closed.
   if (typeof v === 'string' && hasInterpolation(v)) {
@@ -76,35 +108,44 @@ function checkVolume(name: string, v: unknown, dangers: string[]): void {
     dangers.push(`"${name}" uses a variable in a volume mount, so we can't check it's safe.`);
     return;
   }
-  const norm = String(raw).trim().replace(/\/+$/, '') || '/';
-  // A bind source that climbs out of the app folder ("..") resolves to an
-  // arbitrary host path at runtime even though it isn't an absolute path here.
-  if (/(^|\/)\.\.(\/|$)/.test(norm)) {
-    dangers.push(`"${name}" mounts a path that escapes the app folder (it contains "..").`);
-    return;
-  }
-  if (!norm.startsWith('/')) return; // relative path inside the app folder / named volume
+  checkHostPath(`"${name}"`, raw, dangers);
+}
 
-  if (norm.endsWith('docker.sock') || norm === '/var/run/docker.sock') {
-    dangers.push(`"${name}" mounts the Docker socket — that grants control of every container on the machine.`);
-    return;
-  }
-  if (norm === '/') {
-    dangers.push(`"${name}" mounts the entire host filesystem.`);
-    return;
-  }
-  for (const root of SENSITIVE_ROOTS) {
-    if (norm === root || norm.startsWith(root + '/')) {
-      dangers.push(`"${name}" mounts a sensitive host path: ${norm}`);
-      return;
+/**
+ * Docker's built-in `local` driver can turn a "named" volume into a bind to an
+ * arbitrary host path via driver_opts (o: bind / type: none / device: /etc). The
+ * service mount then looks like an ordinary named volume and slips past
+ * checkVolume, so we must inspect the top-level `volumes:` map directly. Without
+ * this a community/custom stack could mount host / or /etc with no risk warning.
+ */
+function checkNamedVolumes(volumes: unknown, dangers: string[]): void {
+  if (!volumes || typeof volumes !== 'object') return;
+  for (const [name, def] of Object.entries(volumes as Record<string, unknown>)) {
+    if (!def || typeof def !== 'object') continue;
+    const opts = (def as { driver_opts?: unknown }).driver_opts;
+    if (!opts || typeof opts !== 'object') continue;
+    const o = String((opts as Record<string, unknown>).o ?? '');
+    const type = String((opts as Record<string, unknown>).type ?? '');
+    const device = (opts as Record<string, unknown>).device;
+    const looksLikeBind =
+      /bind/i.test(o) || type === 'none' || (typeof device === 'string' && device.startsWith('/'));
+    if (!looksLikeBind) continue;
+    if (hasInterpolation(device)) {
+      dangers.push(`Volume "${name}" uses a variable for its host path, so we can't check it's safe.`);
+      continue;
     }
+    if (typeof device === 'string') checkHostPath(`Volume "${name}"`, device, dangers);
   }
 }
 
 export function checkCompose(text: string): ComposeCheck {
   let doc: unknown;
   try {
-    doc = YAML.parse(text);
+    // merge:true resolves YAML merge keys (`<<: *anchor`) the way `docker compose`
+    // does, so a dangerous setting hidden in an anchor (e.g. `<<: *evil` carrying
+    // privileged:true) lands on the service object where the checks below see it.
+    // Without this, `<<` left the keys unmerged and the whole gate was bypassable.
+    doc = YAML.parse(text, { merge: true });
   } catch (err) {
     throw new Error(
       `We couldn't read that Compose file. Please check it's valid YAML. (${(err as Error).message})`,
@@ -156,21 +197,27 @@ export function checkCompose(text: string): ComposeCheck {
     if (svc.userns_mode === 'host') {
       dangers.push(`"${name}" disables user-namespace isolation (userns_mode: host).`);
     }
-    const caps = svc.cap_add;
-    if (Array.isArray(caps) && caps.length > 0) {
+    const caps = toArr(svc.cap_add);
+    if (caps.length > 0) {
       dangers.push(`"${name}" adds extra Linux capabilities: ${caps.map(String).join(', ')}.`);
     }
-    if (Array.isArray(svc.devices) && svc.devices.length > 0) {
+    if (toArr(svc.devices).length > 0) {
       dangers.push(`"${name}" passes host devices into the container.`);
     }
-    const secopt = svc.security_opt;
-    if (Array.isArray(secopt) && secopt.map(String).some((s) => /unconfined/i.test(s))) {
+    if (toArr(svc.device_cgroup_rules).length > 0) {
+      dangers.push(`"${name}" sets device cgroup rules (direct host device access).`);
+    }
+    if (toArr(svc.group_add).map(String).some((g) => /^(0|root|docker)$/i.test(g.trim()))) {
+      dangers.push(`"${name}" joins a privileged host group (group_add: root/docker).`);
+    }
+    if (toArr(svc.security_opt).map(String).some((s) => /unconfined/i.test(s))) {
       dangers.push(`"${name}" weakens kernel sandboxing (security_opt: unconfined).`);
     }
-    if (Array.isArray(svc.volumes)) {
-      for (const v of svc.volumes) checkVolume(name, v, dangers);
-    }
+    for (const v of toArr(svc.volumes)) checkVolume(name, v, dangers);
   }
+
+  // Top-level named volumes can be host binds via the local driver (see above).
+  checkNamedVolumes(parsed.volumes, dangers);
 
   return { parsed, dangers, services: names };
 }

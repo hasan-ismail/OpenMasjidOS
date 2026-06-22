@@ -10,7 +10,9 @@ import YAML from 'yaml';
 import { docker } from '../docker/client';
 
 const HOST_PROC = process.env.HOST_PROC ?? '/host/proc';
-const CORE_PORT = Number.parseInt(process.env.OPENMASJID_PORT ?? '80', 10);
+// Keep this in step with the daemon's own port (config.ts PORT) so we never
+// suggest the port the dashboard itself is on.
+const CORE_PORT = Number.parseInt(process.env.OPENMASJID_PORT ?? '8723', 10);
 
 export interface PublishedPort {
   service: string;
@@ -51,7 +53,7 @@ function parsePortEntry(entry: unknown, service: string): PublishedPort | null {
 export function extractPublishedPorts(composeText: string): PublishedPort[] {
   let doc: unknown;
   try {
-    doc = YAML.parse(composeText);
+    doc = YAML.parse(composeText, { merge: true }); // resolve `<<` so merged-in ports are seen
   } catch {
     return [];
   }
@@ -171,7 +173,7 @@ export function remapPorts(composeText: string, remap: Record<string, number>): 
   if (entries.length === 0) return composeText;
   const map = new Map<number, number>(entries);
 
-  const doc = YAML.parse(composeText) as { services?: Record<string, { ports?: unknown[] }> };
+  const doc = YAML.parse(composeText, { merge: true }) as { services?: Record<string, { ports?: unknown[] }> };
   const services = doc?.services ?? {};
   for (const svc of Object.values(services)) {
     if (svc && Array.isArray(svc.ports)) {

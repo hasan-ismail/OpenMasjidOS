@@ -35,7 +35,13 @@ function parseCookie(header: string | undefined, name: string): string | null {
     const idx = part.indexOf('=');
     if (idx === -1) continue;
     if (part.slice(0, idx).trim() === name) {
-      return decodeURIComponent(part.slice(idx + 1).trim());
+      const raw = part.slice(idx + 1).trim();
+      // A malformed %-escape must not throw and 500 every request.
+      try {
+        return decodeURIComponent(raw);
+      } catch {
+        return raw;
+      }
     }
   }
   return null;

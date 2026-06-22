@@ -33,6 +33,12 @@ export async function fetchCatalog(force = false): Promise<CatalogApp[]> {
   }
 }
 
+/** Keep a URL only if it is http(s) — these render as <img src>/links in the
+ *  admin's browser, and the catalog is untrusted external data. */
+function httpUrl(v: unknown): string | undefined {
+  return typeof v === 'string' && /^https?:\/\//i.test(v) ? v : undefined;
+}
+
 /** Accept either a bare array or a { apps: [...] } envelope. */
 function normalise(data: unknown): CatalogApp[] {
   const arr = Array.isArray(data)
@@ -40,15 +46,24 @@ function normalise(data: unknown): CatalogApp[] {
     : Array.isArray((data as { apps?: unknown })?.apps)
       ? (data as { apps: unknown[] }).apps
       : [];
-  return arr.filter(
-    (a): a is CatalogApp =>
-      typeof a === 'object' &&
-      a !== null &&
-      typeof (a as CatalogApp).id === 'string' &&
-      // The catalog is untrusted external data — drop any entry whose id could
-      // escape the apps dir when used as a path segment (security audit).
-      isValidAppId((a as CatalogApp).id),
-  );
+  return arr
+    .filter(
+      (a): a is CatalogApp =>
+        typeof a === 'object' &&
+        a !== null &&
+        typeof (a as CatalogApp).id === 'string' &&
+        // The catalog is untrusted external data — drop any entry whose id could
+        // escape the apps dir when used as a path segment (security audit).
+        isValidAppId((a as CatalogApp).id),
+    )
+    .map((a) => ({
+      ...a,
+      // Scheme-validate URLs that the UI renders, like the CasaOS community path.
+      icon: httpUrl(a.icon),
+      screenshots: Array.isArray(a.screenshots)
+        ? a.screenshots.map(httpUrl).filter((u): u is string => !!u)
+        : undefined,
+    }));
 }
 
 export async function findCatalogApp(id: string): Promise<CatalogApp | undefined> {
