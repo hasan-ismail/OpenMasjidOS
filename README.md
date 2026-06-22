@@ -3,10 +3,10 @@
 > **Free, open-source software platform for masjids.** Install in one command. Manage everything from a beautiful web dashboard. No technical knowledge required.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/hasan-ismail/OpenMasjidOS/master/install.sh | bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/hasan-ismail/OpenMasjidOS/master/install.sh || wget -qO- https://raw.githubusercontent.com/hasan-ismail/OpenMasjidOS/master/install.sh)"
 ```
 
-When it finishes, open **`http://openmasjidos.local`** (or **`http://<your-server-ip>`**) on the same network and create your admin account.
+(Works whether your system has `curl` or `wget` — no need to install one first; the installer sets up `curl` for you.) When it finishes, open **`http://openmasjidos.local`** (or **`http://<your-server-ip>`**) on the same network and create your admin account.
 
 **Think of it as umbrelOS, but built for masjids** — it runs on your own hardware (a Raspberry Pi, a mini-PC, or a Proxmox server), entirely under your control. No subscriptions, no cloud, no data sharing.
 
@@ -93,7 +93,7 @@ Boot the Pi (ethernet recommended), wait ~90 seconds, then:
 
 ```bash
 ssh openmasjid@openmasjid.local
-sudo apt update && sudo apt upgrade -y
+sudo apt update && sudo apt upgrade -y && sudo apt install -y curl
 curl -fsSL https://raw.githubusercontent.com/hasan-ismail/OpenMasjidOS/master/install.sh | bash
 ```
 
@@ -114,7 +114,7 @@ Suggested: Unprivileged, hostname `openmasjid`, 16 GB disk, 2 cores, 2048 MiB RA
 **Enable Docker in the LXC:** container → **Options → Features** → tick **Nesting** and **keyctl**, then restart it. Then in the container **Console**:
 
 ```bash
-apt update && apt upgrade -y
+apt update && apt upgrade -y && apt install -y curl
 curl -fsSL https://raw.githubusercontent.com/hasan-ismail/OpenMasjidOS/master/install.sh | bash
 ```
 

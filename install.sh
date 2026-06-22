@@ -9,7 +9,7 @@
 # What this script does:
 #   1. Checks that you are running as root (or with sudo)
 #   2. Detects your operating system and CPU architecture
-#   3. Installs Docker if it is not already present
+#   3. Installs curl (if missing) and Docker if they are not already present
 #   4. Creates the data directory at /opt/openmasjid
 #   5. Writes the core docker-compose.yml
 #   6. Pulls the OpenMasjidOS image and starts the service
@@ -19,11 +19,11 @@
 # This script is safe to re-run — it will upgrade an existing install
 # without breaking it or losing your data.
 #
-# Usage:
-#   curl -fsSL https://raw.githubusercontent.com/hasan-ismail/OpenMasjidOS/master/install.sh | bash
+# Usage (works whether your system has curl OR wget — no need to install one first):
+#   bash -c "$(curl -fsSL https://raw.githubusercontent.com/hasan-ismail/OpenMasjidOS/master/install.sh || wget -qO- https://raw.githubusercontent.com/hasan-ismail/OpenMasjidOS/master/install.sh)"
 #
 # If you prefer to inspect before running (recommended!):
-#   curl -fsSL https://raw.githubusercontent.com/hasan-ismail/OpenMasjidOS/master/install.sh -o install.sh
+#   curl -fsSL https://raw.githubusercontent.com/hasan-ismail/OpenMasjidOS/master/install.sh -o install.sh   # or: wget -O install.sh <same URL>
 #   less install.sh      # read it first
 #   bash install.sh      # then run it
 #
@@ -147,9 +147,9 @@ check_root() {
     echo ""
     echo "    sudo bash install.sh"
     echo ""
-    echo "  Or if you piped from curl:"
+    echo "  Or in one line (works with curl or wget):"
     echo ""
-    echo "    curl -fsSL https://raw.githubusercontent.com/hasan-ismail/OpenMasjidOS/master/install.sh | sudo bash"
+    echo '    sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/hasan-ismail/OpenMasjidOS/master/install.sh || wget -qO- https://raw.githubusercontent.com/hasan-ismail/OpenMasjidOS/master/install.sh)"'
     echo ""
     exit 1
   fi
@@ -255,10 +255,38 @@ detect_os() {
 }
 
 # =============================================================================
-# Step 3: Install Docker if needed
+# Step 3: Install curl (if missing), then Docker
 # =============================================================================
 
+# ensure_curl — many minimal systems (a fresh Debian, most LXC templates) ship
+# WITHOUT curl. We use it for the Docker convenience script and the health check,
+# and the admin will want it afterward — so install it up front via whichever
+# package manager this system has. Safe to call when curl is already present.
+ensure_curl() {
+  if command -v curl &>/dev/null; then
+    return 0
+  fi
+  warn "curl is not installed — installing it now..."
+  if command -v apt-get &>/dev/null; then
+    apt-get update -y && apt-get install -y curl
+  elif command -v dnf &>/dev/null; then
+    dnf -y install curl
+  elif command -v yum &>/dev/null; then
+    yum -y install curl
+  elif command -v apk &>/dev/null; then
+    apk add --no-cache curl
+  fi
+  if command -v curl &>/dev/null; then
+    info "curl installed."
+  else
+    warn "Could not install curl automatically — falling back to wget where possible."
+  fi
+}
+
 install_docker() {
+  # Make sure curl exists before anything that relies on it.
+  ensure_curl
+
   info "Checking for Docker..."
 
   # Check if the docker CLI exists and the daemon is reachable

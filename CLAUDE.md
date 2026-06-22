@@ -236,10 +236,11 @@ OpenMasjidOS/
 **Goal:** a non-technical masjid volunteer copies one line, pastes it into their server's terminal, answers a couple of friendly prompts, and a minute later gets a URL to open. Running the *same* line again later gives them safe maintenance options — they never need to remember any other command.
 
 ```bash
-curl -fsSL https://get.openmasjid.org | bash
+bash -c "$(curl -fsSL https://get.openmasjid.org || wget -qO- https://get.openmasjid.org)"
 ```
-(Before a domain exists, the fallback is the raw GitHub URL:
-`curl -fsSL https://raw.githubusercontent.com/OpenMasjidOS/OpenMasjidOS/main/install.sh | bash`)
+(The curl-or-wget form means it still works on minimal systems that ship without curl — the
+installer then installs curl itself for the steps that need it. Before a domain exists, swap the
+domain for the raw GitHub URL: `https://raw.githubusercontent.com/hasan-ismail/OpenMasjidOS/master/install.sh`.)
 
 ### 8.1 Behaviour: detect state, then branch
 On start the script detects whether OpenMasjidOS is already installed (presence of `/opt/openmasjid` and/or the core container).
@@ -264,7 +265,7 @@ What would you like to do?
 The script must:
 1. Be **POSIX-ish bash**, fail fast (`set -euo pipefail`), and be idempotent (re-running is always safe).
 2. Detect OS + architecture; refuse clearly on unsupported platforms with a friendly message.
-3. Ensure Docker is present. If missing, install via the official convenience method, then ensure the `docker compose` plugin exists.
+3. Ensure `curl` is present (many minimal systems/LXC templates ship without it) — install it via the system package manager if missing. Then ensure Docker is present; if missing, install via the official convenience method, then ensure the `docker compose` plugin exists.
 4. **Networking — static IP (optional, guided, safe):**
    - Detect the active network stack (netplan / NetworkManager-`nmcli` / systemd-networkd / dhcpcd) and the current interface, IP, and gateway.
    - **If a cloud/VPS environment is detected, default to SKIP** and say so (the provider manages addressing; changing it can lock the user out).
