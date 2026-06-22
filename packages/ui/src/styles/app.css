@@ -317,8 +317,12 @@ button {
   transition: transform var(--dur-settle) var(--ease-settle), box-shadow var(--dur-settle) var(--ease-settle);
 }
 .app-card:hover {
-  transform: translateY(var(--lift-y));
-  box-shadow: var(--glass-shadow-raised), 0 0 24px -6px var(--glass-glow);
+  transform: translateY(var(--lift-y)) scale(1.012);
+  box-shadow: var(--glass-shadow-raised), 0 0 30px -6px var(--glass-glow);
+  --glint: var(--glint-strong); /* light catches the glass a little brighter */
+}
+.app-card:active {
+  transform: translateY(calc(var(--lift-y) + 3px)) scale(0.992);
 }
 .app-card__top {
   display: flex;
@@ -396,6 +400,21 @@ button {
   box-shadow: var(--glow-primary);
 }
 .btn--primary:hover { background: var(--color-btn-hover); }
+/* A soft specular highlight sweeps across the button on hover (screen-blended so
+   it only brightens, never washes the label). Transform-only → compositor-cheap;
+   the reduced-motion rule collapses the sweep to instant. */
+.btn--primary { position: relative; overflow: hidden; }
+.btn--primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.45) 50%, transparent 65%);
+  transform: translateX(-130%);
+  transition: transform 0.7s var(--ease-settle);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+.btn--primary:hover::after { transform: translateX(130%); }
 .btn--ghost { background: transparent; box-shadow: inset 0 0 0 1px var(--color-border); }
 .btn--ghost:hover { background: var(--color-surface-hover); }
 .btn--danger { background: var(--color-danger); color: #fff; }
@@ -565,10 +584,10 @@ button {
   overflow: hidden;
 }
 .win--wide { width: min(60rem, 96vw); }
-.win-enter { animation: winIn 0.22s var(--ease-settle) both; }
+.win-enter { animation: winIn 0.24s var(--ease-settle) both; }
 @keyframes winIn {
-  from { opacity: 0; transform: scale(0.965); }
-  to   { opacity: 1; transform: scale(1); }
+  from { opacity: 0; transform: scale(0.965) translateY(8px); filter: blur(6px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
 }
 .win-head {
   display: flex;

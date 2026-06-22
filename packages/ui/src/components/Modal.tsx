@@ -44,9 +44,9 @@ export function Modal({ open, onClose, title, wide, children }: ModalProps) {
           <motion.div
             className="modal glass-raised"
             style={wide ? { width: 'min(60rem, 100%)' } : undefined}
-            initial={{ opacity: 0, scale: 0.94, y: 12 }}
-            animate={{ opacity: 1, scale: 1, y: 0, transition: springSoft }}
-            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+            initial={{ opacity: 0, scale: 0.94, y: 12, filter: 'blur(8px)' }}
+            animate={{ opacity: 1, scale: 1, y: 0, filter: 'blur(0px)', transition: springSoft }}
+            exit={{ opacity: 0, scale: 0.96, y: 8, filter: 'blur(6px)' }}
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
