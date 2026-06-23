@@ -131,7 +131,9 @@
     "noAppsBody": "Browse the App Store to find apps for your masjid — prayer times, announcements, donation pages, and more.",
     "browseStore": "Browse the App Store",
     "diskWarnTitle": "Storage is almost full ({{percent}}% used)",
-    "diskWarnBody": "Free up space by removing apps or files you no longer need, so your apps keep running smoothly."
+    "diskWarnBody": "Free up space by removing apps or files you no longer need, so your apps keep running smoothly.",
+    "updateTitle": "A new version is available — v{{version}}",
+    "updateBody": "Update OpenMasjidOS to get the latest features and fixes. Your apps and their data are left untouched."
   },
   "actions": {
     "open": "Open",

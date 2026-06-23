@@ -6,12 +6,13 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
-import { Cpu, MemoryStick, HardDrive, Thermometer, Clock, Boxes, AlertTriangle } from 'lucide-react';
+import { Cpu, MemoryStick, HardDrive, Thermometer, Clock, Boxes, AlertTriangle, Sparkles, Download } from 'lucide-react';
 import { trpc } from '../lib/trpc';
 import { usePrefs } from '../lib/prefs';
 import { formatBytes, formatUptime, percent } from '../lib/format';
 import { StatCard } from '../components/StatCard';
 import { AppCard } from '../components/AppCard';
+import { UpdateModal } from '../components/UpdateModal';
 import { Page } from '../components/Page';
 import { MasjidScene } from '../components/Glyphs';
 import { staggerContainer } from '../lib/motion';
@@ -49,6 +50,12 @@ export function Dashboard() {
 
   const appsQuery = trpc.apps.list.useQuery(undefined, { refetchInterval: 8000 });
   const apps = appsQuery.data ?? [];
+
+  // Auto-check for a core update on load (and every ~6h while open) so a new
+  // version surfaces right on the dashboard instead of going unnoticed.
+  const updateQ = trpc.system.checkUpdate.useQuery(undefined, { refetchInterval: 21_600_000 });
+  const updateReady = updateQ.data?.updateAvailable ?? false;
+  const [updateOpen, setUpdateOpen] = useState(false);
 
   const name = prefs.dashboardName.trim() || me.data?.username || t('dashboard.yourMasjid');
   const cpuSub =
@@ -119,6 +126,19 @@ export function Dashboard() {
         />
       </motion.section>
 
+      {updateReady && (
+        <div className="warn-banner warn-banner--update glass" role="status">
+          <Sparkles size={22} />
+          <div style={{ flex: 1 }}>
+            <div className="warn-banner__title">{t('dashboard.updateTitle', { version: updateQ.data?.latest })}</div>
+            <div className="warn-banner__body">{t('dashboard.updateBody')}</div>
+          </div>
+          <button className="btn btn--primary" onClick={() => setUpdateOpen(true)}>
+            <Download size={15} /> {t('settings.updateNow')}
+          </button>
+        </div>
+      )}
+
       {diskLow && (
         <div className="warn-banner glass" role="status">
           <AlertTriangle size={22} />
@@ -151,6 +171,8 @@ export function Dashboard() {
           ))}
         </motion.div>
       )}
+
+      <UpdateModal open={updateOpen} onClose={() => setUpdateOpen(false)} currentVersion={updateQ.data?.current ?? ''} />
     </Page>
   );
 }

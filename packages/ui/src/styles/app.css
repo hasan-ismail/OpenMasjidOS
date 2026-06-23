@@ -750,6 +750,9 @@ button {
 .warn-banner svg { color: var(--color-warning); flex-shrink: 0; }
 .warn-banner__title { font-weight: 600; color: var(--color-ink); }
 .warn-banner__body { font-size: 0.85rem; color: var(--color-ink-muted); margin-block-start: 0.1rem; }
+/* Update-available banner — same shape, primary accent (not a warning). */
+.warn-banner--update { border-inline-start-color: var(--color-primary); }
+.warn-banner--update svg { color: var(--color-primary); }
 .gauge-fill--warn { background: linear-gradient(90deg, var(--color-warning), #f6c453); }
 
 @media (prefers-reduced-motion: reduce) {
