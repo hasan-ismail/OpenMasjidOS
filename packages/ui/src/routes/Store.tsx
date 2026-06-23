@@ -99,8 +99,8 @@ export function Store() {
               >
                 <div className="app-card__top">
                   <div className="app-icon">{app.icon ? <img src={app.icon} alt="" /> : appInitial(app.name)}</div>
-                  <div style={{ minWidth: 0 }}>
-                    <div className="app-name">{app.name}</div>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div className="app-name" title={app.name}>{app.name}</div>
                     <div className="app-meta" style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis' }}>{app.tagline}</div>
                   </div>
                 </div>

@@ -345,11 +345,15 @@ button {
 .app-icon img { width: 100%; height: 100%; object-fit: cover; }
 .app-name {
   font-weight: 600;
-  line-height: 1.2;
-  white-space: nowrap;
+  line-height: 1.25;
+  /* Wrap to at most two lines so the full app name shows (e.g. "OpenMasjid
+     Student Manager") instead of being clipped with an ellipsis on one line. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 .app-meta {
   display: flex;
