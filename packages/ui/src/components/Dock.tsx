@@ -33,6 +33,7 @@ function sameOrder(a: string[], b: string[]): boolean {
 export function Dock() {
   const { t } = useTranslation();
   const prefs = usePrefs();
+  const utils = trpc.useUtils();
   const { windows, restore } = useWindows();
   const [dropHint, setDropHint] = useState(false);
   const [dragId, setDragId] = useState<string | null>(null);
@@ -78,7 +79,12 @@ export function Dock() {
       }}
     >
       <DockLink to="/" end icon={<MasjidMark size={22} />} label={t('nav.dashboard')} />
-      <DockLink to="/store" icon={<StoreIcon size={20} />} label={t('nav.store')} />
+      <DockLink
+        to="/store"
+        icon={<StoreIcon size={20} />}
+        label={t('nav.store')}
+        onPrefetch={() => void utils.store.catalog.prefetch()}
+      />
       <DockLink to="/files" icon={<FolderOpen size={20} />} label={t('nav.files')} />
       <DockLink to="/settings" icon={<SettingsIcon size={20} />} label={t('nav.settings')} />
 
@@ -90,6 +96,14 @@ export function Dock() {
             className={cn('dock-item', dragId === app.id && 'dock-item--dragging')}
             aria-label={app.name}
             draggable
+            onMouseEnter={() => {
+              void utils.apps.get.prefetch({ id: app.id });
+              void utils.apps.logs.prefetch({ id: app.id, tail: 300 });
+            }}
+            onFocus={() => {
+              void utils.apps.get.prefetch({ id: app.id });
+              void utils.apps.logs.prefetch({ id: app.id, tail: 300 });
+            }}
             onDragStart={(e) => {
               setDragId(app.id);
               e.dataTransfer.effectAllowed = 'move';
@@ -157,9 +171,29 @@ export function Dock() {
   );
 }
 
-function DockLink({ to, end, icon, label }: { to: string; end?: boolean; icon: ReactNode; label: string }) {
+function DockLink({
+  to,
+  end,
+  icon,
+  label,
+  onPrefetch,
+}: {
+  to: string;
+  end?: boolean;
+  icon: ReactNode;
+  label: string;
+  /** Warm the route's data on hover/focus so it's ready before the click. */
+  onPrefetch?: () => void;
+}) {
   return (
-    <NavLink to={to} end={end} className={({ isActive }) => cn('dock-item', isActive && 'is-active')} aria-label={label}>
+    <NavLink
+      to={to}
+      end={end}
+      className={({ isActive }) => cn('dock-item', isActive && 'is-active')}
+      aria-label={label}
+      onMouseEnter={onPrefetch}
+      onFocus={onPrefetch}
+    >
       {icon}
       <span className="dock-pop"><span className="dock-tip glass-raised">{label}</span></span>
     </NavLink>

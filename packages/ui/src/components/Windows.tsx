@@ -6,7 +6,7 @@
  * minimized (hidden with CSS) so live connections (a terminal, a log stream)
  * are never dropped.
  */
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react';
 
 export interface OpenWindowOptions {
   title: string;
@@ -120,9 +120,12 @@ export function WindowsProvider({ children }: { children: ReactNode }) {
     [setWins],
   );
 
-  return (
-    <WindowsCtx.Provider value={{ windows, open, close, minimize, restore: focus, focus, toggleFullscreen }}>
-      {children}
-    </WindowsCtx.Provider>
+  // Stable context value: the callbacks are useCallback-stable, so this only
+  // changes when the window list does — consumers don't re-render every render.
+  const value = useMemo(
+    () => ({ windows, open, close, minimize, restore: focus, focus, toggleFullscreen }),
+    [windows, open, close, minimize, focus, toggleFullscreen],
   );
+
+  return <WindowsCtx.Provider value={value}>{children}</WindowsCtx.Provider>;
 }

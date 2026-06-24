@@ -21,7 +21,10 @@ export function Store() {
   const { toast } = useToast();
   const utils = trpc.useUtils();
 
-  const catalog = trpc.store.catalog.useQuery();
+  // The server already caches the catalog ~5 min; match it here so reopening the
+  // Store paints instantly instead of refetching + skeletoning. The Refresh
+  // button still force-updates via the mutation + invalidate below.
+  const catalog = trpc.store.catalog.useQuery(undefined, { staleTime: 5 * 60 * 1000 });
   const installed = trpc.apps.list.useQuery();
   const settings = trpc.settings.get.useQuery();
   const refresh = trpc.store.refresh.useMutation({ onSuccess: () => utils.store.catalog.invalidate() });

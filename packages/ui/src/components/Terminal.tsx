@@ -5,6 +5,9 @@
 import { useEffect, useRef } from 'react';
 import { Terminal as XTerm } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
+// Bundled with this lazy chunk (not the initial load) — xterm's JS is already
+// loaded on demand, so its stylesheet should ride along with it.
+import '@xterm/xterm/css/xterm.css';
 import { withKey } from '../lib/session';
 
 export function Terminal({ wsPath }: { wsPath: string }) {

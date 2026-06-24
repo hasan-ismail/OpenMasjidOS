@@ -315,6 +315,10 @@ button {
   gap: 0.85rem;
   cursor: pointer;
   transition: transform var(--dur-settle) var(--ease-settle), box-shadow var(--dur-settle) var(--ease-settle);
+  /* Offscreen cards skip painting their blur + mask until scrolled near. The
+     intrinsic size reserves their box so there's no scrollbar jump. */
+  content-visibility: auto;
+  contain-intrinsic-size: 220px 84px;
 }
 .app-card:hover {
   transform: translateY(var(--lift-y)) scale(1.012);
@@ -367,6 +371,21 @@ button {
   align-items: center;
   gap: 0.5rem;
   margin-block-start: auto;
+}
+/* Static layout pieces of an app card, lifted out of inline styles so the
+   element identity is stable across the ~2s stats tick (see AppCard). */
+.app-card__body {
+  min-width: 0;
+  flex: 1;
+}
+.app-card__menu-wrap {
+  position: relative;
+}
+.app-card__menu {
+  position: absolute;
+  inset-inline-end: 0;
+  inset-block-start: 2.4rem;
+  min-width: 10.5rem;
 }
 
 /* ── Tags / badges ──────────────────────────────────────────────────────── */

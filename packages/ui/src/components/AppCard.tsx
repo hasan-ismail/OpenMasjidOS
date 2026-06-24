@@ -3,7 +3,7 @@
  * its detail page when stopped). The ⋮ menu holds the controls. Cards are
  * draggable onto the dock to pin them.
  */
-import { useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -39,13 +39,12 @@ const TAG: Record<InstalledApp['kind'], { cls: string; key: string }> = {
   custom: { cls: 'tag--custom', key: 'tags.custom' },
 };
 
-export function AppCard({ app }: { app: InstalledApp }) {
+export const AppCard = memo(function AppCard({ app, webTerminal }: { app: InstalledApp; webTerminal: boolean }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const utils = trpc.useUtils();
   const { toast } = useToast();
   const prefs = usePrefs();
-  const settings = trpc.settings.get.useQuery();
   const windows = useWindows();
   const pinned = prefs.pinnedApps.includes(app.id);
 
@@ -57,7 +56,7 @@ export function AppCard({ app }: { app: InstalledApp }) {
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Catalog apps can be updated from the store. Check on demand, then confirm.
-  async function checkForUpdate() {
+  const checkForUpdate = useCallback(async () => {
     setCheckingUpdate(true);
     toast(t('appCard.checking'), 'info');
     try {
@@ -72,9 +71,9 @@ export function AppCard({ app }: { app: InstalledApp }) {
     } finally {
       setCheckingUpdate(false);
     }
-  }
+  }, [app.id, t, toast, utils]);
 
-  function startUpdate() {
+  const startUpdate = useCallback(() => {
     setUpdateInfo(null);
     windows.open({
       title: t('appUpdate.title', { name: app.name }),
@@ -83,9 +82,9 @@ export function AppCard({ app }: { app: InstalledApp }) {
       icon: <RefreshCw size={15} />,
       node: <AppUpdate id={app.id} name={app.name} />,
     });
-  }
+  }, [app.id, app.name, t, windows]);
 
-  function openShell() {
+  const openShell = useCallback(() => {
     windows.open({
       title: t('settings.appShellTitle', { name: app.name }),
       dedupeKey: `shell:${app.id}`,
@@ -93,9 +92,9 @@ export function AppCard({ app }: { app: InstalledApp }) {
       icon: <SquareTerminal size={15} />,
       node: <LazyTerminal wsPath={`/api/terminal/app/${encodeURIComponent(app.id)}`} />,
     });
-  }
+  }, [app.id, app.name, t, windows]);
 
-  function openLogs() {
+  const openLogs = useCallback(() => {
     windows.open({
       title: `${t('appDetail.logs')} — ${app.name}`,
       dedupeKey: `logs:${app.id}`,
@@ -103,7 +102,14 @@ export function AppCard({ app }: { app: InstalledApp }) {
       icon: <ScrollText size={15} />,
       node: <AppLogs id={app.id} />,
     });
-  }
+  }, [app.id, app.name, t, windows]);
+
+  // Warm the detail page + logs caches on hover/focus so opening a card is
+  // instant (the data is usually already there by the time the click lands).
+  const prefetch = useCallback(() => {
+    void utils.apps.get.prefetch({ id: app.id });
+    void utils.apps.logs.prefetch({ id: app.id, tail: 300 });
+  }, [app.id, utils]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -128,15 +134,15 @@ export function AppCard({ app }: { app: InstalledApp }) {
 
   const tag = TAG[app.kind] ?? TAG.custom;
 
-  function launch() {
+  const launch = useCallback(() => {
     if (app.running) {
       if (!openApp(app)) navigate(`/apps/${encodeURIComponent(app.id)}`);
     } else {
       navigate(`/apps/${encodeURIComponent(app.id)}`);
     }
-  }
+  }, [app, navigate]);
 
-  const close = () => setMenuOpen(false);
+  const close = useCallback(() => setMenuOpen(false), []);
 
   return (
     <>
@@ -149,10 +155,12 @@ export function AppCard({ app }: { app: InstalledApp }) {
         style={menuOpen ? { zIndex: 200 } : undefined}
         onDragStart={(e) => e.dataTransfer.setData('application/omos-app', app.id)}
         onClick={launch}
+        onMouseEnter={prefetch}
+        onFocus={prefetch}
       >
         <div className="app-card__top">
           <AppIcon app={app} />
-          <div style={{ minWidth: 0, flex: 1 }}>
+          <div className="app-card__body">
             <div className="app-name" title={app.name}>{app.name}</div>
             <div className="app-meta">
               <span className={`status-dot ${app.running ? '' : 'status-dot--idle'}`} />
@@ -160,12 +168,12 @@ export function AppCard({ app }: { app: InstalledApp }) {
             </div>
           </div>
 
-          <div style={{ position: 'relative' }} ref={menuRef} onClick={(e) => e.stopPropagation()}>
+          <div className="app-card__menu-wrap" ref={menuRef} onClick={(e) => e.stopPropagation()}>
             <button className="icon-btn" aria-label={t('actions.options')} onClick={() => setMenuOpen((o) => !o)}>
               <MoreVertical size={18} />
             </button>
             {menuOpen && (
-              <div className="menu glass-raised" style={{ position: 'absolute', insetInlineEnd: 0, insetBlockStart: '2.4rem', minWidth: '10.5rem' }}>
+              <div className="menu glass-raised app-card__menu">
                 {app.running && (
                   <button className="menu-item" onClick={() => { close(); openApp(app); }}>
                     <ExternalLink size={16} /> {t('actions.open')}
@@ -185,7 +193,7 @@ export function AppCard({ app }: { app: InstalledApp }) {
                     <Play size={16} /> {t('actions.start')}
                   </button>
                 )}
-                {settings.data?.webTerminal && app.running && (
+                {webTerminal && app.running && (
                   <button className="menu-item" onClick={() => { close(); openShell(); }}>
                     <SquareTerminal size={16} /> {t('actions.shell')}
                   </button>
@@ -244,4 +252,4 @@ export function AppCard({ app }: { app: InstalledApp }) {
       </Modal>
     </>
   );
-}
+});

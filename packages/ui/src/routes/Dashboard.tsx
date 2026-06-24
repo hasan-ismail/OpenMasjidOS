@@ -19,6 +19,15 @@ import { staggerContainer } from '../lib/motion';
 import { cn } from '../lib/cn';
 import type { StatsSnapshot } from '../lib/types';
 
+// Hoisted so each render passes the *same* element to StatCard, keeping its
+// memo intact (a fresh <Cpu/> each render would defeat it).
+const CPU_ICON = <Cpu size={15} />;
+const MEMORY_ICON = <MemoryStick size={15} />;
+const DISK_ICON = <HardDrive size={15} />;
+const TEMP_ICON = <Thermometer size={15} />;
+const UPTIME_ICON = <Clock size={15} />;
+const APPS_ICON = <Boxes size={15} />;
+
 function greetingKey(): 'morning' | 'afternoon' | 'evening' {
   const h = new Date().getHours();
   if (h < 12) return 'morning';
@@ -39,16 +48,20 @@ export function Dashboard() {
   const prefs = usePrefs();
 
   const me = trpc.auth.me.useQuery();
-  // The WS subscription streams live stats (~2s); the query is just for the
-  // first paint, with a slow refetch as a fallback if the socket drops.
-  const initial = trpc.stats.get.useQuery(undefined, { refetchInterval: 30000 });
+  const settings = trpc.settings.get.useQuery();
   const [live, setLive] = useState<StatsSnapshot | null>(null);
+  // The WS subscription streams live stats (~2s); the query is just for the
+  // first paint, with a slow refetch as a fallback that self-disables while the
+  // socket is healthy (no redundant 30s poll once live data is flowing).
+  const initial = trpc.stats.get.useQuery(undefined, { refetchInterval: live ? false : 30000 });
   trpc.stats.stream.useSubscription(undefined, {
     onData: (d: StatsSnapshot) => setLive(d),
   });
   const stats = live ?? initial.data ?? null;
 
-  const appsQuery = trpc.apps.list.useQuery(undefined, { refetchInterval: 8000 });
+  // The dock polls apps.list every 8s and is always mounted; here we rely on the
+  // global staleTime + that shared poll instead of a second interval.
+  const appsQuery = trpc.apps.list.useQuery();
   const apps = appsQuery.data ?? [];
 
   // Auto-check for a core update on load (and every ~6h while open) so a new
@@ -89,21 +102,21 @@ export function Dashboard() {
       <motion.section className="stat-strip" variants={staggerContainer} initial="initial" animate="animate" aria-label={t('dashboard.statsTitle')}>
         <StatCard
           label={t('dashboard.stats.cpu')}
-          icon={<Cpu size={15} />}
+          icon={CPU_ICON}
           value={`${stats?.cpuPercent ?? 0}%`}
           sub={cpuSub}
           percent={stats?.cpuPercent ?? 0}
         />
         <StatCard
           label={t('dashboard.stats.memory')}
-          icon={<MemoryStick size={15} />}
+          icon={MEMORY_ICON}
           value={formatBytes(stats?.memUsed ?? 0)}
           sub={`/ ${formatBytes(stats?.memTotal ?? 0)}`}
           percent={percent(stats?.memUsed ?? 0, stats?.memTotal ?? 0)}
         />
         <StatCard
           label={t('dashboard.stats.disk')}
-          icon={<HardDrive size={15} />}
+          icon={DISK_ICON}
           value={formatBytes(stats?.diskUsed ?? 0)}
           sub={`/ ${formatBytes(stats?.diskTotal ?? 0)}`}
           percent={diskPct}
@@ -111,17 +124,17 @@ export function Dashboard() {
         />
         <StatCard
           label={t('dashboard.stats.temp')}
-          icon={<Thermometer size={15} />}
+          icon={TEMP_ICON}
           value={stats?.cpuTempC != null ? `${stats.cpuTempC}°C` : '—'}
         />
         <StatCard
           label={t('dashboard.stats.uptime')}
-          icon={<Clock size={15} />}
+          icon={UPTIME_ICON}
           value={formatUptime(stats?.uptimeSec ?? 0)}
         />
         <StatCard
           label={t('dashboard.stats.apps')}
-          icon={<Boxes size={15} />}
+          icon={APPS_ICON}
           value={stats?.appsRunning ?? apps.filter((a) => a.running).length}
         />
       </motion.section>
@@ -167,7 +180,7 @@ export function Dashboard() {
       ) : (
         <motion.div className="app-grid" variants={staggerContainer} initial="initial" animate="animate">
           {apps.map((app) => (
-            <AppCard key={app.id} app={app} />
+            <AppCard key={app.id} app={app} webTerminal={settings.data?.webTerminal ?? false} />
           ))}
         </motion.div>
       )}

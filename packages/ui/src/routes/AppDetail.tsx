@@ -16,7 +16,15 @@ export function AppDetail() {
   const { toast } = useToast();
   const utils = trpc.useUtils();
 
-  const appQuery = trpc.apps.get.useQuery({ id }, { refetchInterval: 5000 });
+  // Seed from the warm apps.list cache (getInstalled returns the same row shape)
+  // so the header paints instantly while the fresh fetch lands.
+  const appQuery = trpc.apps.get.useQuery(
+    { id },
+    {
+      refetchInterval: 5000,
+      placeholderData: () => utils.apps.list.getData()?.find((a) => a.id === id),
+    },
+  );
   const logsQuery = trpc.apps.logs.useQuery({ id, tail: 300 });
   const app = appQuery.data;
 

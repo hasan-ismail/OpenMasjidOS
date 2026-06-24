@@ -33,7 +33,10 @@ export function App() {
       });
     };
     const qc = new QueryClient({
-      defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } },
+      // staleTime keeps recently-fetched data fresh across remounts so revisiting
+      // a page paints from cache instead of flashing a skeleton. Per-query
+      // refetchInterval still drives the live data (stats, app list).
+      defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false, staleTime: 30_000 } },
       queryCache: new QueryCache({ onError }),
       mutationCache: new MutationCache({ onError }),
     });

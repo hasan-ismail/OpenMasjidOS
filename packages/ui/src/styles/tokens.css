@@ -41,9 +41,9 @@
   --radius-card: 1rem;
   --radius-button: 0.625rem;
 
-  --glass-blur: 16px;
-  --glass-blur-inset: 9px;
-  --glass-blur-strong: 28px;
+  --glass-blur: 12px;
+  --glass-blur-inset: 7px;
+  --glass-blur-strong: 18px;
   --glass-saturate: 165%;
   --glass-saturate-strong: 200%;
   --glass-bg: rgba(10, 24, 40, 0.55);
@@ -120,9 +120,9 @@
   --radius-card: 1rem;
   --radius-button: 0.625rem;
 
-  --glass-blur: 16px;
-  --glass-blur-inset: 9px;
-  --glass-blur-strong: 24px;
+  --glass-blur: 12px;
+  --glass-blur-inset: 7px;
+  --glass-blur-strong: 18px;
   --glass-saturate: 140%;
   --glass-saturate-strong: 175%;
   --glass-bg: rgba(255, 255, 255, 0.55);
@@ -241,10 +241,18 @@
   --aurora-gold: rgba(203, 213, 225, 0.10);
 }
 
-/* Smooth theme transition */
-*,
-*::before,
-*::after {
+/* Smooth theme transition.
+ * Scoped to the surfaces and text that actually re-colour on a theme flip,
+ * rather than every node in the tree (which put a 4-prop transition — including
+ * the paint-heavy box-shadow — on SVG internals, spacers, motion wrappers, etc.
+ * permanently). Same fade for the surfaces that already animated; just no longer
+ * a universal selector. */
+body,
+h1, h2, h3, h4, p, a, span, small, label, button, input, select, textarea, pre,
+.glass, .glass-raised, .glass-inset, .glass-dock,
+.btn, .panel, .input, .select, .menu, .menu-item, .icon-btn,
+.tag, .toast, .dock-item, .card, .stat-card, .app-card, .app-icon,
+.page-title, .page-sub, .section-title, .panel-title, .hint {
   transition:
     background-color 0.2s ease,
     border-color 0.2s ease,

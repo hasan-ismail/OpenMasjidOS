@@ -2,7 +2,7 @@
  * Minimal toast system. Friendly, plain-language messages only — never raw
  * errors (CLAUDE.md §14). Auto-dismisses; reduced-motion safe (CSS handles it).
  */
-import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 
 type ToastKind = 'info' | 'success' | 'error';
@@ -29,8 +29,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 4000);
   }, []);
 
+  const api = useMemo(() => ({ toast }), [toast]);
+
   return (
-    <ToastCtx.Provider value={{ toast }}>
+    <ToastCtx.Provider value={api}>
       {children}
       <div className="toast-wrap" aria-live="polite">
         <AnimatePresence>

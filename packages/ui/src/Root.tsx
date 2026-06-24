@@ -2,6 +2,7 @@
  * Auth gate + routing. auth.me decides: first-run setup, login, or the shell.
  * Because the shell only renders when authenticated, every route is guarded.
  */
+import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { trpc } from './lib/trpc';
 import { getCsrf } from './lib/session';
@@ -9,12 +10,15 @@ import { AuthScreen } from './components/AuthScreen';
 import { AppShell } from './components/AppShell';
 import { Splash } from './components/Splash';
 import { Dashboard } from './routes/Dashboard';
-import { Store } from './routes/Store';
-import { StoreCustom } from './routes/StoreCustom';
-import { AppDetail } from './routes/AppDetail';
-import { Files } from './routes/Files';
-import { Settings } from './routes/Settings';
-import { NotFound } from './routes/NotFound';
+
+// The dashboard is the landing page, so it stays in the main bundle. The rest
+// load on demand, splitting them (and their deps) out of the initial download.
+const Store = lazy(() => import('./routes/Store').then((m) => ({ default: m.Store })));
+const StoreCustom = lazy(() => import('./routes/StoreCustom').then((m) => ({ default: m.StoreCustom })));
+const AppDetail = lazy(() => import('./routes/AppDetail').then((m) => ({ default: m.AppDetail })));
+const Files = lazy(() => import('./routes/Files').then((m) => ({ default: m.Files })));
+const Settings = lazy(() => import('./routes/Settings').then((m) => ({ default: m.Settings })));
+const NotFound = lazy(() => import('./routes/NotFound').then((m) => ({ default: m.NotFound })));
 
 export function Root() {
   const me = trpc.auth.me.useQuery(undefined, { retry: false });
@@ -33,15 +37,17 @@ export function Root() {
 
   return (
     <AppShell onSignedOut={reload}>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/store" element={<Store />} />
-        <Route path="/store/custom" element={<StoreCustom />} />
-        <Route path="/apps/:id" element={<AppDetail />} />
-        <Route path="/files" element={<Files />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <Suspense fallback={<Splash />}>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/store" element={<Store />} />
+          <Route path="/store/custom" element={<StoreCustom />} />
+          <Route path="/apps/:id" element={<AppDetail />} />
+          <Route path="/files" element={<Files />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
     </AppShell>
   );
 }

@@ -11,8 +11,13 @@ export function AppLogs({ id }: { id: string }) {
   const { t } = useTranslation();
   const logs = trpc.apps.logs.useQuery({ id, tail: 400 }, { refetchInterval: 3000 });
   const ref = useRef<HTMLPreElement>(null);
+  const prevData = useRef<string | undefined>(undefined);
 
   useEffect(() => {
+    // A 3s poll often returns byte-identical logs; skip the scroll write when
+    // nothing changed so we don't touch the DOM on every idle refetch.
+    if (logs.data === prevData.current) return;
+    prevData.current = logs.data;
     const el = ref.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [logs.data]);

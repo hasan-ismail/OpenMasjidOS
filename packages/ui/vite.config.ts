@@ -17,5 +17,17 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        // Group stable, rarely-changing vendors into their own cacheable chunks
+        // so an app-code change doesn't bust the whole vendor download.
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
+          motion: ['motion'],
+          query: ['@trpc/client', '@trpc/server', '@trpc/react-query', '@tanstack/react-query'],
+          i18n: ['i18next', 'react-i18next'],
+        },
+      },
+    },
   },
 });
