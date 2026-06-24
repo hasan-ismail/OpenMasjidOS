@@ -45,6 +45,15 @@ export interface CatalogApp {
    */
   notifications?: boolean;
   /**
+   * Require this app to be served over HTTPS. Set ONLY for apps that need a
+   * secure context — i.e. apps that use Stripe (the in-person M2 reader / Stripe
+   * Terminal SDK and in-page Stripe Elements both require HTTPS). The platform
+   * serves such an app on a dedicated HTTPS port (TLS-terminated with the
+   * dashboard's cert) and surfaces an https:// Open URL. Non-payment apps should
+   * NOT set this — they stay on plain HTTP.
+   */
+  https?: boolean;
+  /**
    * A teaser entry for an app that isn't released yet. Coming-soon apps have no
    * repo/compose; the App Store shows them with a "Coming soon" badge and no
    * install action, and the platform refuses to install them.
@@ -67,6 +76,10 @@ export interface AppMeta {
   sso?: boolean;
   /** True if this app opted into Fabric notifications (CatalogApp.notifications). */
   notify?: boolean;
+  /** True if this app must be served over HTTPS (Stripe apps — CatalogApp.https). */
+  https?: boolean;
+  /** The dedicated host port the platform's TLS proxy serves this app on (https). */
+  httpsPort?: number;
   /**
    * Per-app Fabric secret (random, base64url), issued when the app opts into any
    * Fabric capability (sso and/or notifications). The app presents it in the
@@ -86,4 +99,9 @@ export interface InstalledApp {
   running: boolean;
   ports: number[];
   createdAt: string;
+  /** True when this app is served over HTTPS (a Stripe app behind the TLS proxy). */
+  https: boolean;
+  /** The port to open the app on — the HTTPS proxy port if https, else the first
+   *  published HTTP port. Null when the app publishes no web port. */
+  openPort: number | null;
 }

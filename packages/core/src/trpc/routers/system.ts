@@ -8,6 +8,7 @@ import { router, protectedProcedure } from '../trpc';
 import { VERSION } from '../../version';
 import { networkInfo, checkForUpdate, SOURCE_URL } from '../../system/system';
 import { certInfo, regenerateSelfSignedLive, setCustomCertLive } from '../../system/tls';
+import { reloadProxyCerts } from '../../system/app-proxy';
 import { isValidSshKey, addRootSshKey } from '../../system/ssh';
 import { pruneUnusedImages } from '../../docker/compose';
 
@@ -27,6 +28,7 @@ export const systemRouter = router({
   regenerateCert: protectedProcedure.mutation(() => {
     try {
       regenerateSelfSignedLive();
+      reloadProxyCerts(); // keep per-app HTTPS proxies on the new cert too
       return certInfo();
     } catch (err) {
       throw new TRPCError({
@@ -42,6 +44,7 @@ export const systemRouter = router({
     .mutation(({ input }) => {
       try {
         setCustomCertLive(input.cert, input.key);
+        reloadProxyCerts();
         return certInfo();
       } catch (err) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: (err as Error).message });

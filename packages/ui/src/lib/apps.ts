@@ -1,10 +1,14 @@
 /** Helpers for installed-app cards/dock. */
 import { prefsStore } from './prefs';
 
-/** The LAN URL an app is reachable at (first published port), or null. */
-export function appUrl(app: { ports: number[] }): string | null {
-  if (!app.ports || app.ports.length === 0) return null;
-  return `${window.location.protocol}//${window.location.hostname}:${app.ports[0]}`;
+/** The LAN URL an app is reachable at, or null. The server decides the scheme +
+ *  port per app: a flagged (Stripe) app is `https://…:<proxy port>`, every other
+ *  app is plain `http://…:<published port>`. We must NOT derive the scheme from
+ *  the dashboard's own protocol — the dashboard is HTTPS, but most apps are HTTP. */
+export function appUrl(app: { https?: boolean; openPort?: number | null }): string | null {
+  if (app.openPort == null) return null;
+  const scheme = app.https ? 'https' : 'http';
+  return `${scheme}://${window.location.hostname}:${app.openPort}`;
 }
 
 /**
@@ -30,7 +34,7 @@ function appearanceHash(): string {
 }
 
 /** Best-effort favicon URL for an app (used as its icon when none is set). */
-export function appFaviconUrl(app: { ports: number[] }): string | null {
+export function appFaviconUrl(app: { https?: boolean; openPort?: number | null }): string | null {
   const base = appUrl(app);
   return base ? `${base}/favicon.ico` : null;
 }
@@ -47,7 +51,7 @@ export function appColor(id: string): string {
   return `linear-gradient(150deg, hsl(${h} 70% 55%), hsl(${h2} 75% 45%))`;
 }
 
-export function openApp(app: { ports: number[] }): boolean {
+export function openApp(app: { https?: boolean; openPort?: number | null }): boolean {
   const url = appUrl(app);
   if (!url) return false;
   window.open(url + appearanceHash(), '_blank', 'noopener,noreferrer');

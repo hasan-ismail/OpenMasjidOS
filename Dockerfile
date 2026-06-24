@@ -52,7 +52,9 @@ COPY --from=build /app/packages/core/dist ./packages/core/dist
 COPY --from=build /app/packages/ui/package.json ./packages/ui/package.json
 COPY --from=build /app/packages/ui/dist ./packages/ui/dist
 
-EXPOSE 80 443
+# 80 = HTTP front door, 443 = dashboard (HTTPS), 8443-8452 = per-app HTTPS
+# proxies for Stripe apps that need a secure context.
+EXPOSE 80 443 8443-8452
 
 # Runs as root: it must read the root-owned Docker socket and write to /data.
 # Least-privilege still applies to the APP containers the core launches.

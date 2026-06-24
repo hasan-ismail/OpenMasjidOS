@@ -24,6 +24,7 @@ import {
 import { discoverApps } from '../docker/discovery';
 import { checkCompose } from './compose-validate';
 import { findCatalogApp } from '../store/catalog';
+import { ensureProxy, stopProxy, allocateHttpsPort, activeProxyPorts } from '../system/app-proxy';
 import { networkInfo } from '../system/system';
 import { isNewerVersion } from '../util/version';
 import type { AppMeta, InstalledApp, CatalogApp } from './types';
@@ -225,6 +226,36 @@ function listMetaIds(): string[] {
   }
 }
 
+/** The open target for an app: its dedicated HTTPS proxy port when it's a flagged
+ *  (Stripe) app, otherwise its first published HTTP port. */
+function openTarget(meta: AppMeta | null, ports: number[]): { https: boolean; openPort: number | null } {
+  if (meta?.https && meta.httpsPort) return { https: true, openPort: meta.httpsPort };
+  return { https: false, openPort: ports[0] ?? null };
+}
+
+/** Pick a free dedicated HTTPS port for a flagged app, avoiding ports already
+ *  assigned to other apps and any live proxy. Null if the range is exhausted. */
+function pickHttpsPort(): number | null {
+  const used = activeProxyPorts();
+  for (const id of listMetaIds()) {
+    const hp = loadMeta(id)?.httpsPort;
+    if (hp) used.add(hp);
+  }
+  return allocateHttpsPort(used);
+}
+
+/** Re-establish the TLS proxy for every flagged app on boot (their ports are
+ *  fixed, so this points each proxy at the app's published HTTP port again). */
+export async function restoreAppProxies(): Promise<void> {
+  const apps = await listInstalled();
+  for (const a of apps) {
+    const meta = loadMeta(a.id);
+    if (meta?.https && meta.httpsPort && a.ports[0] != null) {
+      ensureProxy(a.id, meta.httpsPort, a.ports[0]);
+    }
+  }
+}
+
 /** Merge on-disk metadata with live Docker state; recover orphans. */
 export async function listInstalled(): Promise<InstalledApp[]> {
   const discovered = await discoverApps();
@@ -244,6 +275,7 @@ export async function listInstalled(): Promise<InstalledApp[]> {
       running: disc?.running ?? false,
       ports: disc?.ports ?? [],
       createdAt: meta.createdAt,
+      ...openTarget(meta, disc?.ports ?? []),
     });
   }
 
@@ -271,6 +303,7 @@ export async function listInstalled(): Promise<InstalledApp[]> {
       ...recovered,
       running: disc.running,
       ports: disc.ports,
+      ...openTarget(recovered, disc.ports),
     });
   }
 
@@ -295,6 +328,12 @@ export async function installCatalogApp(
   const sso = app.sso === true;
   const notify = app.notifications === true;
   const ssoSecret = sso || notify ? crypto.randomBytes(32).toString('base64url') : undefined;
+  // Stripe apps (https:true) are served over HTTPS on a dedicated proxy port.
+  const wantsHttps = app.https === true;
+  const httpsPort = wantsHttps ? pickHttpsPort() : undefined;
+  if (wantsHttps && httpsPort == null) {
+    log.warn(`No free HTTPS port for "${app.id}" — installing on HTTP. Free a slot or widen OPENMASJID_APP_TLS_MAX.`);
+  }
   writeEnvFile(app.id, { ...settings, ...platformEnv(app.id, baseUrl, ssoSecret) });
   saveMeta({
     id: app.id,
@@ -307,13 +346,19 @@ export async function installCatalogApp(
     sso,
     notify,
     ssoSecret,
+    https: wantsHttps && httpsPort != null,
+    httpsPort: httpsPort ?? undefined,
   });
 
   const res = await composeUp(projectOf(app.id), composePath(app.id), envPath(app.id));
   if (res.code !== 0) {
     throw new Error(res.stderr.trim() || 'The app failed to start.');
   }
-  return (await getInstalled(app.id))!;
+  const installed = (await getInstalled(app.id))!;
+  if (httpsPort != null && installed.ports[0] != null) {
+    ensureProxy(app.id, httpsPort, installed.ports[0]);
+  }
+  return installed;
 }
 
 /**
@@ -522,6 +567,7 @@ export async function updateCatalogApp(id: string, onLine: (s: string) => void):
  * When deleteData is true, also remove its volumes and on-disk files.
  */
 export async function removeApp(id: string, deleteData = false): Promise<void> {
+  stopProxy(id); // tear down any per-app HTTPS proxy first
   const file = fs.existsSync(composePath(id)) ? composePath(id) : undefined;
   // When deleting data, also drop the app's images so the space is reclaimed.
   await composeDown(projectOf(id), file, deleteData, deleteData);

@@ -9,7 +9,8 @@ interface IconApp {
   id: string;
   name: string;
   icon?: string;
-  ports: number[];
+  https?: boolean;
+  openPort?: number | null;
   running: boolean;
 }
 

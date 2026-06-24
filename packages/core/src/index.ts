@@ -16,6 +16,7 @@ import { fastifyTRPCPlugin, type FastifyTRPCPluginOptions } from '@trpc/server/a
 import { HOST, PORT, TLS_PORT, UI_DIR, CONFIG_DIR, APPS_DIR } from './config';
 import { VERSION } from './version';
 import { ensureCert, loadCert, setLiveServer } from './system/tls';
+import { restoreAppProxies } from './apps/manager';
 import { log } from './logger';
 import { ensureDir } from './util/json-store';
 import { appRouter, type AppRouter } from './trpc/router';
@@ -201,6 +202,8 @@ async function main() {
     setLiveServer(server);
     await server.listen({ host: HOST, port: TLS_PORT });
     await startHttpFront();
+    // Re-establish the per-app HTTPS proxies (Stripe apps) after a restart.
+    restoreAppProxies().catch((err) => log.error('Could not restore app HTTPS proxies.', err));
     log.info(`OpenMasjidOS core v${VERSION} on https://${HOST}:${TLS_PORT} (HTTP→HTTPS redirect on ${PORT})`);
   } else {
     await server.listen({ host: HOST, port: PORT });

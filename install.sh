@@ -38,6 +38,10 @@ PORT=80
 # The dashboard is served over HTTPS on this port; PORT (80) is the HTTP front
 # door that redirects to it (and answers the health check + the Fabric API).
 TLS_PORT=443
+# Range of host ports for per-app HTTPS proxies (apps that need a secure context,
+# i.e. Stripe apps). Each such app is assigned one port from this range.
+APP_TLS_MIN=8443
+APP_TLS_MAX=8452
 DATA_DIR=/opt/openmasjid
 IMAGE=ghcr.io/hasan-ismail/openmasjid-core:latest
 COMPOSE_PROJECT=openmasjid
@@ -409,6 +413,12 @@ services:
       # ${TLS_PORT} = the dashboard itself, over HTTPS (self-signed by default).
       - "${PORT}:${PORT}"
       - "${TLS_PORT}:${TLS_PORT}"
+      # Per-app HTTPS proxies for apps that need a secure context (Stripe apps).
+      - "${APP_TLS_MIN}-${APP_TLS_MAX}:${APP_TLS_MIN}-${APP_TLS_MAX}"
+
+    # Lets the per-app TLS proxy reach an app's published port back on the host.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
     volumes:
       # Mount the Docker socket so the core can manage app containers on this host.
@@ -435,6 +445,9 @@ services:
       # The HTTP front-door port, and the HTTPS port the dashboard is served on.
       OPENMASJID_PORT: "${PORT}"
       OPENMASJID_TLS_PORT: "${TLS_PORT}"
+      # Per-app HTTPS proxy port range (must match the published range above).
+      OPENMASJID_APP_TLS_MIN: "${APP_TLS_MIN}"
+      OPENMASJID_APP_TLS_MAX: "${APP_TLS_MAX}"
       # Point the stats collector at the mounted host /proc + cgroup.
       HOST_PROC: /host/proc
       HOST_CGROUP: /host/sys/fs/cgroup

@@ -11,6 +11,11 @@ services:
       # 80 = HTTP front door (health, Fabric, redirect to HTTPS); 443 = dashboard.
       - "80:80"
       - "443:443"
+      # Per-app HTTPS proxies for Stripe apps that need a secure context.
+      - "8443-8452:8443-8452"
+    # Lets the per-app TLS proxy reach an app's published port on the host.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       # The Docker socket — the core manages app containers through it.
       - /var/run/docker.sock:/var/run/docker.sock
