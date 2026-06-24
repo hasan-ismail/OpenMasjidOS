@@ -150,9 +150,11 @@ export const AppCard = memo(function AppCard({ app, webTerminal }: { app: Instal
         className="app-card glass fx-glint"
         variants={staggerItem}
         draggable
-        // The card has a Motion transform (a stacking context), which traps the
-        // ⋮ menu below the dock; lift the whole card above the dock while open.
-        style={menuOpen ? { zIndex: 200 } : undefined}
+        // While the ⋮ menu is open, lift the card above the dock (it has a Motion
+        // transform = stacking context) AND drop content-visibility's paint
+        // containment, which would otherwise clip the menu where it overflows the
+        // card's box. Closed cards keep content-visibility:auto (offscreen skip).
+        style={menuOpen ? { zIndex: 200, contentVisibility: 'visible' } : undefined}
         onDragStart={(e) => e.dataTransfer.setData('application/omos-app', app.id)}
         onClick={launch}
         onMouseEnter={prefetch}
