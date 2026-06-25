@@ -739,10 +739,26 @@ function ScheduledBackupPanel() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const utils = trpc.useUtils();
+  const windows = useWindows();
   const status = trpc.backups.status.useQuery();
   const refresh = () => utils.backups.status.invalidate();
 
-  const [setupOpen, setSetupOpen] = useState(false);
+  // Open the destination setup as a managed window (traffic-light chrome, like
+  // the terminal/file windows) rather than a centered modal.
+  function openSetup() {
+    let id = -1;
+    id = windows.open({
+      title: t('settings.backupSetupTitle'),
+      icon: <Cloud size={15} />,
+      dedupeKey: 'backup-destination',
+      node: (
+        <BackupDestinationForm
+          onClose={() => windows.close(id)}
+          onSaved={() => { windows.close(id); refresh(); }}
+        />
+      ),
+    });
+  }
 
   const update = trpc.backups.update.useMutation({
     onSuccess: refresh,
@@ -795,7 +811,7 @@ function ScheduledBackupPanel() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <button className="btn" onClick={() => setSetupOpen(true)}>
+          <button className="btn" onClick={openSetup}>
             <Cloud size={15} /> {b.configured ? t('settings.backupChange') : t('settings.backupSetUp')}
           </button>
           {b.configured && (
@@ -860,13 +876,11 @@ function ScheduledBackupPanel() {
           </div>
         </>
       )}
-
-      <BackupDestinationModal open={setupOpen} onClose={() => setSetupOpen(false)} onSaved={() => { setSetupOpen(false); refresh(); }} />
     </section>
   );
 }
 
-function BackupDestinationModal({ open, onClose, onSaved }: { open: boolean; onClose: () => void; onSaved: () => void }) {
+function BackupDestinationForm({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [kind, setKind] = useState<BackupKind>('drive');
@@ -915,7 +929,7 @@ function BackupDestinationModal({ open, onClose, onSaved }: { open: boolean; onC
   }
 
   return (
-    <Modal open={open} onClose={() => !save.isPending && onClose()} title={t('settings.backupSetupTitle')}>
+    <>
       <label className="label">{t('settings.backupType')}</label>
       <div className="segmented glass-inset" style={{ marginBlockEnd: '0.7rem' }}>
         {types.map((ty) => (
@@ -1026,6 +1040,6 @@ function BackupDestinationModal({ open, onClose, onSaved }: { open: boolean; onC
           {save.isPending ? t('settings.backupSaving') : t('settings.backupSave')}
         </button>
       </div>
-    </Modal>
+    </>
   );
 }
