@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * A small window manager for in-dashboard windows (terminals, logs, file
  * viewers). Windows are owned at the top level (see WindowManager, mounted in

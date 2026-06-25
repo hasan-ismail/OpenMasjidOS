@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Streams a catalog app's update (download → apply) into a window, then marks it
  * done and refreshes the app list. Opened from the app card's "Check for update"

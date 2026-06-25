@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /** Shared session-cookie auth for the raw WebSocket / streaming HTTP routes. */
 import type { FastifyRequest } from 'fastify';
 import { COOKIE_NAME, CSRF_HEADER, getSessionUser, verifyCsrf } from '../auth/sessions';

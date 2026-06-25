@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * File explorer operations (JSON). Upload/download are HTTP routes (they stream
  * binary) — see api/files.ts. Everything is sandboxed to the data dir.

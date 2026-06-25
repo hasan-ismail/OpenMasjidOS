@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Live host system stats, with container-awareness so the numbers describe the
  * MACHINE, not the container (CLAUDE.md §5, §12).

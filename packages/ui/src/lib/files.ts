@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /** Helpers for the file explorer's streaming endpoints (download/upload). */
 import { getCsrf, withKey } from './session';
 

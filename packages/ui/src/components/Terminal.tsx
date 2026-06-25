@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * An xterm.js terminal wired to a core WebSocket terminal endpoint. Used for
  * the root shell and per-app shells (both gated server-side).

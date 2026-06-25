@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * An installed-app tile. The whole card launches the app in a new tab (or opens
  * its detail page when stopped). The ⋮ menu holds the controls. Cards are

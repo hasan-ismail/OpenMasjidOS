@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Thin wrapper around the `docker compose` plugin. This is the ONE place we
  * shell out (CLAUDE.md §15) — every app lifecycle action funnels through here.

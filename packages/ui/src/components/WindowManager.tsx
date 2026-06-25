@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Renders every open window (terminals, logs, file viewers). Mounted once in
  * AppShell, above the routed page, so windows persist across navigation. Each

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Custom masjid glyph set (dome + crescent over an arch). Original artwork,
  * used as the brand mark and empty-state art (CLAUDE.md §14 motifs). No sacred

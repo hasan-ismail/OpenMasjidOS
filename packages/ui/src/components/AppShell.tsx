@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * The authenticated desktop shell: top-right profile menu, the page content,
  * and the floating dock. Shows a brief, skippable first-load splash.

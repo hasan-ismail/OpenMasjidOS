@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Interactive shells via the Docker Engine API exec with a TTY — no native PTY
  * module needed. Docker allocates the pseudo-terminal on the container side; we

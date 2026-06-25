@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * The single dockerode handle. All Docker Engine API access goes through here
  * (CLAUDE.md §15: no ad-hoc Docker access scattered around). The host socket is

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Platform-only presentation preferences, persisted per-browser in
  * localStorage. NONE of this is masjid/prayer config (CLAUDE.md §13). Exposed to

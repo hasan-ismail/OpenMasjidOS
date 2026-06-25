@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * The typed tRPC React client. The AppRouter TYPE comes from the core package
  * (types only — no server runtime ever enters the browser bundle, CLAUDE.md §7).

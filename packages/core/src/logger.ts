@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * A deliberately tiny structured logger. We never log secrets (passwords,
  * session tokens, cookie values) — see CLAUDE.md §15.

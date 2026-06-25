@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Platform/system info for Settings → Advanced: network details, the AGPL
  * "Source code" link (CLAUDE.md §3 network clause), and the core update check.

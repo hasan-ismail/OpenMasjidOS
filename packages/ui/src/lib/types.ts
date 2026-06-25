@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * UI-side types derived from the tRPC router — never hand-duplicated
  * (CLAUDE.md §6, §15). If the server changes shape, these follow automatically.

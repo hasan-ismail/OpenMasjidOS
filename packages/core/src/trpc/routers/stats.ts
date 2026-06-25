@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Live system stats. `get` is a plain query (instant first paint / fallback);
  * `stream` is a WebSocket subscription that yields a fresh snapshot every ~2s

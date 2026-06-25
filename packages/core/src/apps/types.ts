@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Shared app/manifest types. The manifest is the contract OpenMasjidAPPS must
  * follow (docs/APP_MANIFEST_SPEC.md). The platform never holds masjid data —

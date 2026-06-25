@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * The single source of truth for the version is the repo-root VERSION file
  * (see CLAUDE.md §18). The Docker build copies it to /app/VERSION and points

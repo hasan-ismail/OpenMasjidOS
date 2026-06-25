@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Self-update of the core. A container can't cleanly recreate itself, so we:
  *   1. `docker pull` the latest image (streamed live to the UI), then

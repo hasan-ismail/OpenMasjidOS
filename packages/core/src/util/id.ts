@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Strict app-id validation. App ids become filesystem path segments
  * (APPS_DIR/<id>/…) and compose project names (omos-<id>), so they must never

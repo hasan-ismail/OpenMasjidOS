@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2026 OpenMasjid-Solutions
 # OpenMasjidOS — core service definition
 # This file is written by install.sh and managed by the installer.
 # Edit with care; re-running install.sh will refresh it.

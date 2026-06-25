@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Third-party / custom apps (advanced, opt-in — CLAUDE.md §11). Gated server-
  * side on the allowCustomApps setting. The pasted compose is always parsed and

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * 3rd Party Apps hub (advanced, opt-in — CLAUDE.md §11). Two ways in:
  *   - Community apps: browse CasaOS-compatible app stores you've added.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * App Store: browse the OpenMasjidAPPS catalog and one-click install. The
  * "3rd Party App" entry only appears when custom apps are enabled (CLAUDE.md §11).

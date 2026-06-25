@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Streams plain-text lines from a core WebSocket into a scrolling log view.
  * Used by the live updater (and reusable for other long-running actions).

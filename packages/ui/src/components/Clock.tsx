@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * A small glass clock for the dashboard's top bar. Honors the user's 12/24-hour
  * and time-zone preferences (Settings → Customize). Display-only — never used

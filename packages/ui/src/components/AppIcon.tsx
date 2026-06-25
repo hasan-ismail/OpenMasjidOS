@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * App tile icon. Prefers an explicit icon, else pulls the running app's favicon
  * from its own port, else falls back to a colourful initial.

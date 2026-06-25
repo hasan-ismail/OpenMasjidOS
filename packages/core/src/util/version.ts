@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /** Compare dotted numeric versions. Returns true if `latest` is strictly newer
  *  than `current` (e.g. "1.2.0" vs "1.3.0"). Non-numeric parts count as 0. */
 export function isNewerVersion(current: string, latest: string): boolean {

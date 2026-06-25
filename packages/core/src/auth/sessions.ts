@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Server-side sessions. Tokens are long random strings held in memory and set
  * in an HTTP-only, SameSite=Lax cookie (Lax so the cookie rides the top-level

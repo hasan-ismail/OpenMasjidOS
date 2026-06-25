@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Backup = a gzipped tar of platform config + per-app data, streamed straight
  * to the browser (CLAUDE.md §13.3). It is read-only over the data dir, so it

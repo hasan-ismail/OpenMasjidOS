@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * One-click live updater: opening this modal starts the update and streams it.
  * When the core restarts (the WS drops), it waits for the new version to come

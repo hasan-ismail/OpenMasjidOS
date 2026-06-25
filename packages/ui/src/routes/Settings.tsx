@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Platform settings only (CLAUDE.md §13) — appearance, language, account,
  * advanced. No masjid/prayer config ever lives here; that belongs to apps.

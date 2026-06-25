@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /** Presentation helpers for stats and timestamps. */
 
 export function formatBytes(bytes: number): string {

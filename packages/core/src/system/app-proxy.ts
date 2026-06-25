@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Per-app HTTPS for apps that need a secure context (Stripe apps — the in-person
  * M2 reader / Stripe Terminal SDK and in-page Elements both require HTTPS).

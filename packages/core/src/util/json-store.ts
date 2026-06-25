@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Tiny JSON persistence helpers. Writes go through a temp file + rename so a
  * crash mid-write can never leave a half-written config on disk.

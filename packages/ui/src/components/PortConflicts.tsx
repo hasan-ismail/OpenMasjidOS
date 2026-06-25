@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Shown before installing a 3rd-party app when one of its web-UI ports is
  * already in use. Lets the user pick a free port for each conflict; the chosen

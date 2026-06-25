@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Installed-app lifecycle. Each app is a compose project `omos-<id>` with its
  * files under APPS_DIR/<id>/. meta.json is the source of truth for an app's

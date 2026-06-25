@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * tRPC primitives. publicProcedure is open (auth/first-run only);
  * protectedProcedure requires a valid session — every feature router uses it,

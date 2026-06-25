@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Daemon entry point. One Fastify server hosts everything on one port:
  *   - tRPC over HTTP at /trpc (queries + mutations)

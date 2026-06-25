@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Mirrors the dashboard's presentation prefs to the server (debounced) so apps
  * can read them at GET /api/public/appearance and match the masjid's look. The

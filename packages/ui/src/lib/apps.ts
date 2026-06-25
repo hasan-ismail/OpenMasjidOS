@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /** Helpers for installed-app cards/dock. */
 import { prefsStore } from './prefs';
 

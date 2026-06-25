@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Platform settings the SERVER must own (security-relevant). Presentation prefs
  * live in the browser; this is the custom-apps gate, the terminal toggles, and

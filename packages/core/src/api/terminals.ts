@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * WebSocket terminal endpoints. Off by default and gated server-side by the
  * webTerminal / rootTerminal settings (CLAUDE.md §13). Authenticated by the

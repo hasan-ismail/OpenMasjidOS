@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import '@fontsource-variable/inter';

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * The root tRPC router. Its TYPE is the single contract the UI consumes
  * (`import type { AppRouter }`) — client and server can never drift (CLAUDE.md

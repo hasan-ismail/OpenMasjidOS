@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Builds the tRPC client links: subscriptions ride a WebSocket (live stats),
  * everything else uses batched HTTP. All same-origin — the core serves both the

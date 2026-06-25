@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * The floating bottom dock (umbrelOS-style, our own implementation). Primary
  * nav + pinned apps + open/minimized windows. Drag an app card here to pin it;

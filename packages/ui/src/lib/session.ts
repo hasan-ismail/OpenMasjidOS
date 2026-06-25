@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * The dashboard key (CSRF token). The platform requires it on every cookie-
  * authenticated request, and it lives ONLY here — in this origin's localStorage.

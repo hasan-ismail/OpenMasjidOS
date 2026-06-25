@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * First-load splash: a brief, skippable geometric assembly (<1s) honoring
  * CLAUDE.md §14. Also used as the auth-loading screen.

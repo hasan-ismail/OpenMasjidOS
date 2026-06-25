@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * App Store catalog client. The catalog is a static catalog.json published by
  * the separate OpenMasjidAPPS repo — there is no app-store server to run. We

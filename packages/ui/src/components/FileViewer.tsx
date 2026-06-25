@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Content for a file-manager window: an inline image/video/audio viewer, or a
  * simple text editor (Save writes back, guarded server-side). Rendered inside

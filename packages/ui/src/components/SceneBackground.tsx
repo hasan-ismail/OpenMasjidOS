@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /** The fixed ambient backdrop: a custom wallpaper image if set, else the static
  *  aurora + khatam pattern + vignette. */
 import { usePrefs } from '../lib/prefs';

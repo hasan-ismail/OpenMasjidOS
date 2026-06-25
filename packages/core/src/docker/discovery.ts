@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Discovers OpenMasjidOS apps that are actually present in Docker, keyed by
  * their compose project (`omos-<id>`). This is the safety net behind the golden

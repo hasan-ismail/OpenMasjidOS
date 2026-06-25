@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * App Store: read the OpenMasjidAPPS catalog and one-click install. The app's
  * settings (collected in the UI before install) are passed straight through as

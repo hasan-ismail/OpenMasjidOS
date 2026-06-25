@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * The admin account store. There is exactly one admin in v1.0 (CLAUDE.md §9).
  * The password is only ever held as an argon2id hash; the plaintext never

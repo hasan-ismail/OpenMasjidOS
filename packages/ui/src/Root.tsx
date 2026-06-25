@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Auth gate + routing. auth.me decides: first-run setup, login, or the shell.
  * Because the shell only renders when authenticated, every route is guarded.

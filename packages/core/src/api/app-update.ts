@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Streams a catalog app's update (pull → recreate) over a WebSocket so the
  * dashboard can show live progress in a window — same pattern as the core

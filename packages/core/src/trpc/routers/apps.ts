@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Installed-app management: list, logs, and lifecycle controls. Update/repair
  * of the CORE never run here — only the installer touches the core project.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Apple-style pointer reactivity: light refracting through the glass as the
  * cursor moves over it. We set --mx/--my (the cursor position within the hovered

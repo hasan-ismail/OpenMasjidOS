@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * File explorer: browse the data directory (sandboxed server-side), with new
  * folder, upload, download, rename, and delete. Glass-styled, RTL-safe.

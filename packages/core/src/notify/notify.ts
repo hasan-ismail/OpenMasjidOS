@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * OpenMasjidOS Fabric — notifications. The admin configures ONE webhook
  * (Slack / Discord / generic) in Settings; apps relay messages through the

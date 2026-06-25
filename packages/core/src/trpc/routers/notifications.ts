@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Notifications (OpenMasjidOS Fabric). Admin-only helper to send a test message
  * to the configured webhook. Apps send through the REST endpoint

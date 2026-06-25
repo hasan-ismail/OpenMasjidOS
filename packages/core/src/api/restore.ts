@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Restore endpoints: an HTTP upload for the backup file (multipart, streamed to
  * disk + validated), and a WebSocket that streams the actual restore so the

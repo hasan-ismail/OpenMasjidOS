@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * OpenMasjidOS Fabric — the platform↔app integration layer (optional,
  * backwards-compatible). The Fabric is the unified appearance + single sign-on /

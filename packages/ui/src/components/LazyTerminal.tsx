@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Lazily loads the xterm.js terminal (a sizeable dependency) only when a shell
  * is actually opened, so it stays out of the initial bundle and the dashboard

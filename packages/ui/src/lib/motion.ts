@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Shared Motion presets so transitions feel consistent (CLAUDE.md §14). Motion
  * automatically honors prefers-reduced-motion when the user's OS asks for it,

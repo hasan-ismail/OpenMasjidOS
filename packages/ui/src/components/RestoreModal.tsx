@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Streams a restore (extract → restart apps → recreate core) over a WebSocket,
  * then waits for the core to come back and offers a reload — so an admin can

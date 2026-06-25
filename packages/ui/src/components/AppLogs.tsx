@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * An app's logs, rendered inside a floating window (opened from the app card's
  * "View logs"). Auto-refreshes and sticks to the bottom, like a live tail.

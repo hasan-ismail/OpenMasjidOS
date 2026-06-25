@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Web-UI port-conflict detection for app installs. Before an app starts we parse
  * the published host ports out of its compose, compare them against the ports

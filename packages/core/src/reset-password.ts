@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Password recovery CLI: `docker exec -it openmasjid-core node \
  *   packages/core/dist/reset-password.js`. Lets an admin who is locked out set

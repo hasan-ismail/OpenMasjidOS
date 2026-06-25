@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * i18next setup. English is the only complete locale for now, but every string
  * goes through here so the UI is translation- and RTL-ready (CLAUDE.md §4, §14).

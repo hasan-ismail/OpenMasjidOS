@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Central configuration — every path and tunable the daemon needs, resolved
  * once from the environment. The installer mounts persistent data at /data and

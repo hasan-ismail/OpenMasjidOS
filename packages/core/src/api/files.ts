@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * File download + upload over HTTP (they stream binary, so they aren't tRPC).
  * Authenticated by the session cookie, like the backup route. Sandboxed via the

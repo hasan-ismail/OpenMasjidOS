@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Community app stores (CasaOS-compatible). Behind the same allowCustomApps gate
  * as the custom-compose installer (CLAUDE.md §11). Repos are validated before

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Live update endpoint. Streams the update process (pull → apply → restart) to
  * the dashboard over a WebSocket so a non-technical admin can update with one

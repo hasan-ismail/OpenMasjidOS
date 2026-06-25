@@ -1,4 +1,6 @@
 # syntax=docker/dockerfile:1
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2026 OpenMasjid-Solutions
 #
 # OpenMasjidOS core — multi-stage build.
 #   1. build:   install the monorepo, build the React UI (Vite) and the

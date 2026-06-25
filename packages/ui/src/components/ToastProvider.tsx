@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Minimal toast system. Friendly, plain-language messages only — never raw
  * errors (CLAUDE.md §14). Auto-dismisses; reduced-motion safe (CSS handles it).

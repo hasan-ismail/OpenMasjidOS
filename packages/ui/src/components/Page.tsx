@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 import { motion } from 'motion/react';
 import type { ReactNode } from 'react';
 import { fadeRise } from '../lib/motion';

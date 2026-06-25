@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Home: a live system-stats strip (tRPC subscription, seeded by a query for
  * instant first paint) above the installed-apps grid.

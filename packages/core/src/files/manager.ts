@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 OpenMasjid-Solutions
 /**
  * Sandboxed file manager. Everything is confined to the data directory; path
  * traversal (../) and symlink-escape are both rejected, so the browser can
