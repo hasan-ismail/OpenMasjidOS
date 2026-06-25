@@ -6,7 +6,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Download, Upload, GitBranch, RefreshCw, Check, SquareTerminal, KeyRound, HardDrive, Bell, Heart, ShieldCheck, Cloud, CloudUpload, Trash2 } from 'lucide-react';
+import { Download, Upload, GitBranch, RefreshCw, Check, SquareTerminal, KeyRound, HardDrive, Bell, Heart, ShieldCheck, Cloud, CloudUpload, Trash2, Copy, ExternalLink } from 'lucide-react';
 import { trpc } from '../lib/trpc';
 import { getCsrf, setCsrf, withKey } from '../lib/session';
 import { usePrefs, prefsStore, ACCENTS, WALLPAPERS } from '../lib/prefs';
@@ -941,9 +941,41 @@ function BackupDestinationForm({ onClose, onSaved }: { onClose: () => void; onSa
 
       {kind === 'drive' && (
         <>
-          <p className="setting-row__hint" style={{ whiteSpace: 'pre-line' }}>{t('settings.backupDriveHelp')}</p>
-          <pre className="logs glass-inset" style={{ maxHeight: 'none' }}>rclone authorize "drive"</pre>
-          <label className="label" style={{ marginBlockStart: '0.6rem' }}>{t('settings.backupDriveToken')}</label>
+          <p className="setting-row__hint">{t('settings.backupDriveIntro')}</p>
+          <ol style={{ margin: '0.4rem 0 0.6rem', paddingInlineStart: '1.2rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', color: 'var(--color-ink)', lineHeight: 1.5 }}>
+            <li>
+              {t('settings.backupDriveStep1')}{' '}
+              <a
+                href="https://rclone.org/downloads/"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: 'var(--color-primary)', textDecoration: 'none', whiteSpace: 'nowrap' }}
+              >
+                {t('settings.backupDriveStep1Link')} <ExternalLink size={12} style={{ verticalAlign: 'middle' }} />
+              </a>
+            </li>
+            <li>
+              {t('settings.backupDriveStep2')}
+              <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'stretch', marginBlockStart: '0.35rem' }}>
+                <pre className="logs glass-inset" style={{ maxHeight: 'none', flex: 1, margin: 0 }}>rclone authorize "drive"</pre>
+                <button
+                  type="button"
+                  className="btn btn--sm"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText('rclone authorize "drive"');
+                      toast(t('settings.backupCopied'), 'success');
+                    } catch {
+                      toast(t('errors.generic'), 'error');
+                    }
+                  }}
+                >
+                  <Copy size={14} /> {t('settings.backupCopy')}
+                </button>
+              </div>
+            </li>
+            <li>{t('settings.backupDriveStep3')}</li>
+          </ol>
           <textarea
             className="textarea glass-inset"
             style={{ minHeight: '5rem', fontFamily: 'ui-monospace, monospace' }}
