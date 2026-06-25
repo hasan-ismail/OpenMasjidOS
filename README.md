@@ -1,4 +1,30 @@
-# OpenMasjidOS
+<p align="center">
+<img src="docs/screenshots/01-dashboard.png" alt="logo gotta be here" width="100%"/>
+</p>
+
+<h1 align="center"><b>OpenMasjidOS</b></h1>
+
+<p align="center">
+  <a href="#a-look-inside">A look inside</a> |
+  <a href="#install">Install Guide</a> |
+  <a href="#license">License</a>
+</p>
+
+<div align="center">
+  <a href="https://github.com/OpenMasjid-Solutions/OpenMasjidOS/releases">
+    <img src="https://img.shields.io/github/v/release/OpenMasjid-Solutions/OpenMasjidOS?style=flat-square&color=blue" alt="Latest Release" />
+  </a>
+  <a href="https://github.com/OpenMasjid-Solutions/OpenMasjidOS">
+    <img src="https://img.shields.io/github/stars/OpenMasjid-Solutions/OpenMasjidOS?style=flat-square&color=blue" alt="Stars" />
+  </a>
+  <a href="https://discord.gg/MpPDbyQfaF">
+    <img src="https://img.shields.io/badge/Discord-Join-blue?style=flat-square&logo=discord" alt="Discord" />
+  </a>
+</div>
+
+<h5 align="center">
+Leave a star if you like the project! ⭐️
+</h5>
 
 > **Free, open-source software platform for masjids.** Install in one command. Manage everything from a beautiful web dashboard. No technical knowledge required.
 
