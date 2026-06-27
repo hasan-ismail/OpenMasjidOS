@@ -18,6 +18,7 @@ import { systemRouter } from './routers/system';
 import { notificationsRouter } from './routers/notifications';
 import { backupsRouter } from './routers/backups';
 import { stripeRouter } from './routers/stripe';
+import { cloudflareRouter } from './routers/cloudflare';
 
 export const appRouter = router({
   auth: authRouter,
@@ -32,6 +33,7 @@ export const appRouter = router({
   notifications: notificationsRouter,
   backups: backupsRouter,
   stripe: stripeRouter,
+  cloudflare: cloudflareRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -55,6 +55,14 @@ export interface CatalogApp {
    */
   stripe?: boolean;
   /**
+   * Opt in to OpenMasjidOS Fabric remote-access info. When true, the platform
+   * issues this app the per-app secret and the app may GET /api/fabric/site to
+   * learn its PUBLIC URL (the admin's Cloudflare-tunnel domain + the app's path)
+   * for building absolute links — Stripe success/cancel URLs, webhook endpoints,
+   * QR codes. Returns an empty URL when remote access isn't enabled.
+   */
+  domain?: boolean;
+  /**
    * Require this app to be served over HTTPS. Set ONLY for apps that need a
    * secure context — i.e. apps that use Stripe (the in-person M2 reader / Stripe
    * Terminal SDK and in-page Stripe Elements both require HTTPS). The platform
@@ -88,6 +96,8 @@ export interface AppMeta {
   notify?: boolean;
   /** True if this app opted into Fabric Stripe access (CatalogApp.stripe). */
   stripe?: boolean;
+  /** True if this app opted into Fabric remote-access info (CatalogApp.domain). */
+  domain?: boolean;
   /** True if this app must be served over HTTPS (Stripe apps — CatalogApp.https). */
   https?: boolean;
   /** The dedicated host port the platform's TLS proxy serves this app on (https). */

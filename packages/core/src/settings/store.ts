@@ -61,6 +61,19 @@ export interface BackupConfig {
   lastBackupName: string;
 }
 
+/**
+ * Cloudflare Tunnel (remote access). The admin sets a tunnel token + their domain
+ * once here; the OS runs `cloudflared` so apps are reachable from the internet at
+ * that domain (CLAUDE.md §4 remote-access helper). The token is a SECRET and lives
+ * only in config/cloudflare/.env (chmod 600), never here — this holds only the
+ * non-secret domain + on/off. See system/cloudflared.ts.
+ */
+export interface CloudflareConfig {
+  enabled: boolean;
+  /** The public domain the tunnel serves, e.g. "omos.example.org" (no scheme). */
+  domain: string;
+}
+
 export interface PlatformSettings {
   /** Gates the App Store "3rd Party App" button (CLAUDE.md §11). */
   allowCustomApps: boolean;
@@ -78,6 +91,8 @@ export interface PlatformSettings {
   notifications: NotificationConfig;
   /** Scheduled off-site backup config (non-secret; creds live in rclone.conf). */
   backups: BackupConfig;
+  /** Cloudflare Tunnel remote access (non-secret; token lives in cloudflare/.env). */
+  cloudflare: CloudflareConfig;
 }
 
 const SETTINGS_PATH = path.join(CONFIG_DIR, 'settings.json');
@@ -102,6 +117,7 @@ const DEFAULTS: PlatformSettings = {
     lastMessage: '',
     lastBackupName: '',
   },
+  cloudflare: { enabled: false, domain: '' },
 };
 
 /** Merge persisted settings over defaults so a settings.json written by an older
@@ -113,6 +129,7 @@ function withDefaults(s: Partial<PlatformSettings>): PlatformSettings {
     appearance: { ...DEFAULTS.appearance, ...(s.appearance ?? {}) },
     notifications: { ...DEFAULTS.notifications, ...(s.notifications ?? {}) },
     backups: { ...DEFAULTS.backups, ...(s.backups ?? {}) },
+    cloudflare: { ...DEFAULTS.cloudflare, ...(s.cloudflare ?? {}) },
   };
 }
 
@@ -141,4 +158,8 @@ export function removeCommunityRepo(url: string): PlatformSettings {
 
 export function updateBackups(patch: Partial<BackupConfig>): PlatformSettings {
   return updateSettings({ backups: { ...cache.backups, ...patch } });
+}
+
+export function updateCloudflare(patch: Partial<CloudflareConfig>): PlatformSettings {
+  return updateSettings({ cloudflare: { ...cache.cloudflare, ...patch } });
 }

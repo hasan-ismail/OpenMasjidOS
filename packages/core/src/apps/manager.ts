@@ -146,6 +146,7 @@ export interface FabricApp {
   sso: boolean;
   notify: boolean;
   stripe: boolean;
+  domain: boolean;
 }
 
 interface FabricEntry extends FabricApp {
@@ -176,6 +177,7 @@ function fabricEntries(): FabricEntry[] {
         sso: meta.sso === true,
         notify: meta.notify === true,
         stripe: meta.stripe === true,
+        domain: meta.domain === true,
         ssoSecret: meta.ssoSecret,
       });
     }
@@ -196,7 +198,7 @@ export function findFabricApp(secret: string | undefined | null): FabricApp | nu
   if (!secret || secret.length < 16) return null;
   for (const e of fabricEntries()) {
     if (safeEqual(e.ssoSecret, secret)) {
-      return { id: e.id, name: e.name, sso: e.sso, notify: e.notify, stripe: e.stripe };
+      return { id: e.id, name: e.name, sso: e.sso, notify: e.notify, stripe: e.stripe, domain: e.domain };
     }
   }
   return null;
@@ -341,7 +343,8 @@ export async function installCatalogApp(
   const sso = app.sso === true;
   const notify = app.notifications === true;
   const stripe = app.stripe === true;
-  const ssoSecret = sso || notify || stripe ? crypto.randomBytes(32).toString('base64url') : undefined;
+  const domain = app.domain === true;
+  const ssoSecret = sso || notify || stripe || domain ? crypto.randomBytes(32).toString('base64url') : undefined;
   // Stripe apps (https:true) are served over HTTPS on a dedicated proxy port.
   const wantsHttps = app.https === true;
   const httpsPort = wantsHttps ? pickHttpsPort() : undefined;
@@ -360,6 +363,7 @@ export async function installCatalogApp(
     sso,
     notify,
     stripe,
+    domain,
     ssoSecret,
     https: wantsHttps && httpsPort != null,
     httpsPort: httpsPort ?? undefined,
@@ -577,8 +581,9 @@ export async function updateCatalogApp(id: string, onLine: (s: string) => void):
   const sso = app.sso === true;
   const notify = app.notifications === true;
   const stripe = app.stripe === true;
+  const domain = app.domain === true;
   let ssoSecret = meta.ssoSecret;
-  if (sso || notify || stripe) {
+  if (sso || notify || stripe || domain) {
     if (!ssoSecret) ssoSecret = crypto.randomBytes(32).toString('base64url');
   } else {
     ssoSecret = undefined;
@@ -625,6 +630,7 @@ export async function updateCatalogApp(id: string, onLine: (s: string) => void):
     sso,
     notify,
     stripe,
+    domain,
     ssoSecret,
     https: wantsHttps && httpsPort != null,
     httpsPort: httpsPort ?? undefined,

@@ -26,6 +26,7 @@ import { createContext } from './trpc/context';
 import { dockerReachable } from './docker/client';
 import { backupStream, backupFilename } from './system/backup';
 import { startBackupScheduler } from './system/backup-upload';
+import { ensureCloudflared } from './system/cloudflared';
 import { registerTerminals } from './api/terminals';
 import { registerFiles } from './api/files';
 import { registerUpdate } from './api/update';
@@ -216,6 +217,10 @@ async function main() {
   // Scheduled off-site backups (Google Drive / NAS) — a lightweight tick that
   // runs a backup when one is due. No-op until the admin configures a destination.
   startBackupScheduler();
+
+  // Cloudflare tunnel (remote access) — bring it up if the admin enabled it.
+  // No-op until a token is set + enabled. Never blocks boot.
+  ensureCloudflared().catch((err) => log.error('Could not start the Cloudflare tunnel.', err));
 }
 
 main().catch((err) => {

@@ -25,6 +25,7 @@ import { findFabricApp } from '../apps/manager';
 import { sendNotification } from '../notify/notify';
 import { getSettings } from '../settings/store';
 import { listAccountsPublic, getAccountFull } from '../store/stripe';
+import { appPublicUrl } from '../system/cloudflared';
 import { log } from '../logger';
 
 // Lightweight per-IP fixed-window limiter for the secret-gated Fabric routes,
@@ -136,6 +137,27 @@ export function registerFabric(server: FastifyInstance): void {
       publishableKey: acc.publishableKey,
       secretKey: acc.secretKey,
       webhookSecret: acc.webhookSecret,
+    };
+  });
+
+  // Fabric site — an app learns its PUBLIC URL (the admin's Cloudflare-tunnel
+  // domain + the app's path) so it can build absolute links: Stripe success/cancel
+  // URLs, webhook endpoints, QR codes. Server→server (per-app secret) + the
+  // `domain` capability. No secrets, but kept off CORS for consistency — an app's
+  // backend reads it. `publicUrl` is '' when remote access isn't enabled.
+  server.get('/api/fabric/site', async (req, reply) => {
+    if (!fabricRateOk(req.ip)) return reply.code(429).send({ error: 'Too many requests.' });
+    const presented = req.headers['x-openmasjid-app-secret'];
+    const app = findFabricApp(typeof presented === 'string' ? presented : null);
+    if (!app || !app.domain) {
+      return reply.code(403).send({ error: 'This app is not allowed to read site info.' });
+    }
+    const cf = getSettings().cloudflare;
+    const enabled = cf.enabled && !!cf.domain;
+    return {
+      enabled,
+      domain: enabled ? cf.domain : '',
+      publicUrl: appPublicUrl(app.id),
     };
   });
 

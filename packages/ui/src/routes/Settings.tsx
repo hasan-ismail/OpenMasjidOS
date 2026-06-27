@@ -6,7 +6,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Download, Upload, GitBranch, RefreshCw, Check, SquareTerminal, KeyRound, HardDrive, Bell, Heart, ShieldCheck, Cloud, CloudUpload, Trash2, Copy, ExternalLink, CreditCard, Pencil } from 'lucide-react';
+import { Download, Upload, GitBranch, RefreshCw, Check, SquareTerminal, KeyRound, HardDrive, Bell, Heart, ShieldCheck, Cloud, CloudUpload, Trash2, Copy, ExternalLink, CreditCard, Pencil, Globe } from 'lucide-react';
 import { trpc } from '../lib/trpc';
 import { getCsrf, setCsrf, withKey } from '../lib/session';
 import { usePrefs, prefsStore, ACCENTS, WALLPAPERS } from '../lib/prefs';
@@ -262,6 +262,9 @@ export function Settings() {
 
       {/* Payments (Stripe vault, shared with apps via the Fabric) */}
       <StripePanel />
+
+      {/* Remote access (Cloudflare tunnel + domain) */}
+      <CloudflarePanel />
 
       {/* Advanced */}
       <section className="glass-raised panel">
@@ -1149,6 +1152,95 @@ function StripePanel() {
       <button className="btn btn--primary" style={{ marginBlockStart: '0.6rem' }} onClick={() => openForm(null)}>
         <CreditCard size={15} /> {t('settings.stripeAdd')}
       </button>
+    </section>
+  );
+}
+
+/** Cloudflare Tunnel — paste a token + domain once; the OS runs cloudflared so the
+ *  masjid's apps are reachable from the internet. Apps read their public URL via the
+ *  Fabric (`GET /api/fabric/site`). */
+function CloudflarePanel() {
+  const { t } = useTranslation();
+  const { toast } = useToast();
+  const utils = trpc.useUtils();
+  const status = trpc.cloudflare.status.useQuery();
+  const refresh = () => utils.cloudflare.status.invalidate();
+  const cf = status.data;
+
+  const [domain, setDomain] = useState('');
+  const [token, setToken] = useState('');
+  const seeded = useRef(false);
+  useEffect(() => {
+    if (cf && !seeded.current) {
+      setDomain(cf.domain);
+      seeded.current = true;
+    }
+  }, [cf]);
+
+  const save = trpc.cloudflare.save.useMutation({
+    onSuccess: () => { setToken(''); refresh(); toast(t('settings.cfSaved'), 'success'); },
+    onError: (e) => toast(e.message || t('errors.generic'), 'error'),
+  });
+  const setEnabled = trpc.cloudflare.setEnabled.useMutation({
+    onSuccess: () => refresh(),
+    onError: (e) => toast(e.message || t('errors.generic'), 'error'),
+  });
+  const clear = trpc.cloudflare.clear.useMutation({
+    onSuccess: () => { setToken(''); refresh(); toast(t('settings.cfCleared'), 'success'); },
+    onError: (e) => toast(e.message || t('errors.generic'), 'error'),
+  });
+
+  if (!cf) return null;
+
+  return (
+    <section className="glass-raised panel">
+      <h2 className="panel-title" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+        <Globe size={18} /> {t('settings.remoteAccess')}
+      </h2>
+      <p className="setting-row__hint" style={{ marginBlockEnd: '0.5rem' }}>{t('settings.remoteAccessHint')}</p>
+
+      <div className="setting-row">
+        <div className="setting-row__text">
+          <div className="setting-row__title">{t('settings.cfEnable')}</div>
+          <div className="setting-row__hint">
+            {cf.running ? t('settings.cfRunning') : cf.hasToken ? t('settings.cfStopped') : t('settings.cfNoToken')}
+          </div>
+        </div>
+        <Toggle checked={cf.enabled} onChange={(v) => setEnabled.mutate({ enabled: v })} label={t('settings.cfEnable')} />
+      </div>
+
+      <div className="setting-row">
+        <div className="setting-row__text">
+          <div className="setting-row__title">{t('settings.cfDomain')}</div>
+          <div className="setting-row__hint">{t('settings.cfDomainHint')}</div>
+        </div>
+        <input className="input glass-inset" style={{ maxWidth: '16rem' }} placeholder="omos.example.org" value={domain} onChange={(e) => setDomain(e.target.value)} />
+      </div>
+
+      <div className="field">
+        <label className="label">{t('settings.cfToken')}</label>
+        <input
+          className="input glass-inset"
+          type="password"
+          style={{ fontFamily: 'ui-monospace, monospace' }}
+          placeholder={cf.hasToken ? t('settings.cfTokenSet') : 'eyJ…'}
+          value={token}
+          onChange={(e) => setToken(e.target.value)}
+          autoComplete="off"
+        />
+        <div className="setting-row__hint">{t('settings.cfTokenHint')}</div>
+      </div>
+
+      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBlockStart: '0.6rem' }}>
+        <button className="btn btn--primary" disabled={save.isPending} onClick={() => save.mutate({ domain: domain.trim(), token: token.trim() || undefined })}>
+          <Check size={15} /> {save.isPending ? t('settings.cfSaving') : t('settings.cfSave')}
+        </button>
+        {cf.hasToken && (
+          <button className="btn" disabled={clear.isPending} onClick={() => clear.mutate()}>
+            <Trash2 size={15} /> {t('settings.cfClear')}
+          </button>
+        )}
+      </div>
     </section>
   );
 }
