@@ -140,6 +140,19 @@ export function registerFabric(server: FastifyInstance): void {
     };
   });
 
+  // Fabric Stripe accounts — the NON-secret list (id + label only) so an app can
+  // render its OWN in-app account picker, then fetch the chosen account's keys via
+  // GET /api/fabric/stripe?account=<id>. Capability-gated; no keys here.
+  server.get('/api/fabric/stripe/accounts', async (req, reply) => {
+    if (!fabricRateOk(req.ip)) return reply.code(429).send({ error: 'Too many requests.' });
+    const presented = req.headers['x-openmasjid-app-secret'];
+    const app = findFabricApp(typeof presented === 'string' ? presented : null);
+    if (!app || !app.stripe) {
+      return reply.code(403).send({ error: 'This app is not allowed to use Stripe.' });
+    }
+    return { accounts: listAccountsPublic().map((a) => ({ id: a.id, label: a.label })) };
+  });
+
   // Fabric site — an app learns its PUBLIC URL (the admin's Cloudflare-tunnel
   // domain + the app's path) so it can build absolute links: Stripe success/cancel
   // URLs, webhook endpoints, QR codes. Server→server (per-app secret) + the

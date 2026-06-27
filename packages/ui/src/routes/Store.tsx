@@ -33,6 +33,23 @@ export function Store() {
 
   const [query, setQuery] = useState('');
   const [active, setActive] = useState<CatalogApp | null>(null);
+  const [installingId, setInstallingId] = useState<string | null>(null);
+
+  // One-click install for apps with NO install settings — no popup at all. Apps
+  // that need input (a setting) still open the install dialog.
+  const directInstall = trpc.store.install.useMutation({
+    onSuccess: () => { utils.apps.list.invalidate(); toast(t('common.saved'), 'success'); },
+    onError: (e) => toast(e.message || t('store.installError'), 'error'),
+    onSettled: () => setInstallingId(null),
+  });
+  function startInstall(app: CatalogApp) {
+    if ((app.settings?.length ?? 0) > 0) {
+      setActive(app);
+    } else {
+      setInstallingId(app.id);
+      directInstall.mutate({ id: app.id, settings: {} });
+    }
+  }
 
   const installedIds = new Set((installed.data ?? []).map((a) => a.id));
   const apps = catalog.data ?? [];
@@ -117,8 +134,8 @@ export function Store() {
                       <Check size={15} /> {t('store.installedAlready')}
                     </span>
                   ) : (
-                    <button className="btn btn--sm btn--primary" style={{ marginInlineStart: 'auto' }} onClick={() => setActive(app)}>
-                      {t('actions.install')}
+                    <button className="btn btn--sm btn--primary" style={{ marginInlineStart: 'auto' }} disabled={installingId === app.id} onClick={() => startInstall(app)}>
+                      {installingId === app.id ? t('store.installing') : t('actions.install')}
                     </button>
                   )}
                 </div>
