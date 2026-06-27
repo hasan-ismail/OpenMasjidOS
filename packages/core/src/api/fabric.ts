@@ -24,6 +24,7 @@ import { COOKIE_NAME, getSessionUser } from '../auth/sessions';
 import { findFabricApp } from '../apps/manager';
 import { sendNotification } from '../notify/notify';
 import { getSettings } from '../settings/store';
+import { listAccountsPublic, getAccountFull } from '../store/stripe';
 import { log } from '../logger';
 
 // Lightweight per-IP fixed-window limiter for the secret-gated Fabric routes,
@@ -102,6 +103,40 @@ export function registerFabric(server: FastifyInstance): void {
       app.name,
     );
     return reply.send(result);
+  });
+
+  // Fabric Stripe — an app fetches a NAMED Stripe account's keys that the admin
+  // configured once in OS settings, so several apps share one account without
+  // re-entering keys. Server→server: the app proves itself with its per-app
+  // secret and must hold the `stripe` capability. Returns secret material, so it
+  // is NOT CORS-enabled (no browser can read it cross-origin) and is rate-limited.
+  // The app picks the account by the name the admin chose for it (its own install
+  // setting); omitting it falls back to the only/first account.
+  server.get('/api/fabric/stripe', async (req, reply) => {
+    if (!fabricRateOk(req.ip)) return reply.code(429).send({ error: 'Too many requests.' });
+    const presented = req.headers['x-openmasjid-app-secret'];
+    const app = findFabricApp(typeof presented === 'string' ? presented : null);
+    if (!app || !app.stripe) {
+      return reply.code(403).send({ error: 'This app is not allowed to use Stripe.' });
+    }
+    const accounts = listAccountsPublic();
+    if (accounts.length === 0) {
+      return reply.code(404).send({ error: 'No Stripe account is configured in OpenMasjidOS yet.' });
+    }
+    const q = (req.query ?? {}) as { account?: unknown };
+    const requested = typeof q.account === 'string' && q.account.trim() ? q.account.trim() : accounts[0].id;
+    const acc = getAccountFull(requested);
+    if (!acc) {
+      return reply.code(404).send({ error: `No Stripe account named "${requested}".` });
+    }
+    log.info(`Fabric Stripe: app "${app.id}" fetched account "${acc.label}".`);
+    return {
+      id: acc.id,
+      label: acc.label,
+      publishableKey: acc.publishableKey,
+      secretKey: acc.secretKey,
+      webhookSecret: acc.webhookSecret,
+    };
   });
 
   // A2 — public presentation prefs, readable cross-origin by apps.

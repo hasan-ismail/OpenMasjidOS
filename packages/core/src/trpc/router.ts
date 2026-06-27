@@ -17,6 +17,7 @@ import { settingsRouter } from './routers/settings';
 import { systemRouter } from './routers/system';
 import { notificationsRouter } from './routers/notifications';
 import { backupsRouter } from './routers/backups';
+import { stripeRouter } from './routers/stripe';
 
 export const appRouter = router({
   auth: authRouter,
@@ -30,6 +31,7 @@ export const appRouter = router({
   system: systemRouter,
   notifications: notificationsRouter,
   backups: backupsRouter,
+  stripe: stripeRouter,
 });
 
 export type AppRouter = typeof appRouter;

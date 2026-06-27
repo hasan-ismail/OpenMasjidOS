@@ -6,7 +6,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Download, Upload, GitBranch, RefreshCw, Check, SquareTerminal, KeyRound, HardDrive, Bell, Heart, ShieldCheck, Cloud, CloudUpload, Trash2, Copy, ExternalLink } from 'lucide-react';
+import { Download, Upload, GitBranch, RefreshCw, Check, SquareTerminal, KeyRound, HardDrive, Bell, Heart, ShieldCheck, Cloud, CloudUpload, Trash2, Copy, ExternalLink, CreditCard, Pencil } from 'lucide-react';
 import { trpc } from '../lib/trpc';
 import { getCsrf, setCsrf, withKey } from '../lib/session';
 import { usePrefs, prefsStore, ACCENTS, WALLPAPERS } from '../lib/prefs';
@@ -259,6 +259,9 @@ export function Settings() {
 
       {/* Notifications */}
       <NotificationsPanel />
+
+      {/* Payments (Stripe vault, shared with apps via the Fabric) */}
+      <StripePanel />
 
       {/* Advanced */}
       <section className="glass-raised panel">
@@ -1073,5 +1076,126 @@ function BackupDestinationForm({ onClose, onSaved }: { onClose: () => void; onSa
         </button>
       </div>
     </>
+  );
+}
+
+interface StripeAccountPublic {
+  id: string;
+  label: string;
+  publishableKey: string;
+  hasSecret: boolean;
+  hasWebhook: boolean;
+}
+
+/** Stripe account vault. The admin stores named accounts here once; apps with the
+ *  Fabric `stripe` capability fetch them at runtime — no re-entering keys per app. */
+function StripePanel() {
+  const { t } = useTranslation();
+  const { toast } = useToast();
+  const utils = trpc.useUtils();
+  const accounts = trpc.stripe.list.useQuery();
+  const refresh = () => utils.stripe.list.invalidate();
+  // undefined = modal closed, null = adding new, object = editing that account.
+  const [editing, setEditing] = useState<StripeAccountPublic | null | undefined>(undefined);
+
+  const remove = trpc.stripe.remove.useMutation({
+    onSuccess: () => { refresh(); toast(t('settings.stripeRemoved'), 'success'); },
+    onError: (e) => toast(e.message || t('errors.generic'), 'error'),
+  });
+
+  const list = accounts.data ?? [];
+  return (
+    <section className="glass-raised panel">
+      <h2 className="panel-title" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+        <CreditCard size={18} /> {t('settings.payments')}
+      </h2>
+      <p className="setting-row__hint" style={{ marginBlockEnd: '0.5rem' }}>{t('settings.paymentsHint')}</p>
+
+      {list.length === 0 && <p className="setting-row__hint">{t('settings.stripeNone')}</p>}
+      {list.map((a) => (
+        <div className="setting-row" key={a.id}>
+          <div className="setting-row__text">
+            <div className="setting-row__title">{a.label}</div>
+            <div className="setting-row__hint" style={{ fontFamily: 'ui-monospace, monospace', wordBreak: 'break-all' }}>
+              {a.publishableKey || '—'} · {a.hasSecret ? t('settings.stripeSecretSet') : t('settings.stripeSecretMissing')}
+              {a.hasWebhook ? ` · ${t('settings.stripeWebhookSet')}` : ''}
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button className="btn btn--sm" onClick={() => setEditing(a)}><Pencil size={14} /> {t('settings.stripeEdit')}</button>
+            <button className="btn btn--sm" disabled={remove.isPending} onClick={() => remove.mutate({ id: a.id })}>
+              <Trash2 size={14} /> {t('settings.backupRemove')}
+            </button>
+          </div>
+        </div>
+      ))}
+
+      <button className="btn btn--primary" style={{ marginBlockStart: '0.6rem' }} onClick={() => setEditing(null)}>
+        <CreditCard size={15} /> {t('settings.stripeAdd')}
+      </button>
+
+      {editing !== undefined && (
+        <StripeAccountModal
+          account={editing}
+          onClose={() => setEditing(undefined)}
+          onSaved={() => { setEditing(undefined); refresh(); }}
+        />
+      )}
+    </section>
+  );
+}
+
+function StripeAccountModal({ account, onClose, onSaved }: { account: StripeAccountPublic | null; onClose: () => void; onSaved: () => void }) {
+  const { t } = useTranslation();
+  const isEdit = account !== null;
+  const [label, setLabel] = useState(account?.label ?? '');
+  const [publishableKey, setPublishableKey] = useState(account?.publishableKey ?? '');
+  const [secretKey, setSecretKey] = useState('');
+  const [webhookSecret, setWebhookSecret] = useState('');
+  const [error, setError] = useState('');
+
+  const save = trpc.stripe.save.useMutation({
+    onSuccess: onSaved,
+    onError: (e) => setError(e.message || t('errors.generic')),
+  });
+
+  function submit() {
+    setError('');
+    save.mutate({
+      id: account?.id,
+      label: label.trim(),
+      publishableKey: publishableKey.trim(),
+      secretKey: secretKey.trim() || undefined,
+      webhookSecret: webhookSecret.trim() || undefined,
+    });
+  }
+
+  return (
+    <Modal open onClose={() => !save.isPending && onClose()} title={isEdit ? t('settings.stripeEditTitle') : t('settings.stripeAddTitle')}>
+      <div className="field">
+        <label className="label">{t('settings.stripeLabel')}</label>
+        <input className="input glass-inset" value={label} onChange={(e) => setLabel(e.target.value)} placeholder={t('settings.stripeLabelPlaceholder')} />
+      </div>
+      <div className="field">
+        <label className="label">{t('settings.stripePublishable')}</label>
+        <input className="input glass-inset" style={{ fontFamily: 'ui-monospace, monospace' }} value={publishableKey} onChange={(e) => setPublishableKey(e.target.value)} placeholder="pk_live_…" autoComplete="off" />
+      </div>
+      <div className="field">
+        <label className="label">{t('settings.stripeSecret')}</label>
+        <input className="input glass-inset" type="password" style={{ fontFamily: 'ui-monospace, monospace' }} value={secretKey} onChange={(e) => setSecretKey(e.target.value)} placeholder={isEdit ? t('settings.stripeKeepBlank') : 'sk_live_…'} autoComplete="off" />
+      </div>
+      <div className="field">
+        <label className="label">{t('settings.stripeWebhook')}</label>
+        <input className="input glass-inset" type="password" style={{ fontFamily: 'ui-monospace, monospace' }} value={webhookSecret} onChange={(e) => setWebhookSecret(e.target.value)} placeholder={isEdit ? t('settings.stripeKeepBlank') : 'whsec_…'} autoComplete="off" />
+        <div className="setting-row__hint">{t('settings.stripeWebhookHint')}</div>
+      </div>
+      {error && <p className="form-error">{error}</p>}
+      <div style={{ display: 'flex', gap: '0.6rem', justifyContent: 'flex-end', marginBlockStart: '1rem' }}>
+        <button className="btn" onClick={onClose}>{t('common.cancel')}</button>
+        <button className="btn btn--primary" disabled={save.isPending || !label.trim()} onClick={submit}>
+          {save.isPending ? t('settings.stripeSaving') : t('settings.stripeSave')}
+        </button>
+      </div>
+    </Modal>
   );
 }

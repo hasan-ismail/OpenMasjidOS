@@ -47,6 +47,14 @@ export interface CatalogApp {
    */
   notifications?: boolean;
   /**
+   * Opt in to OpenMasjidOS Fabric Stripe. When true, the platform issues this app
+   * the per-app secret and the app may GET /api/fabric/stripe?account=<name> to
+   * fetch a named Stripe account's keys (publishable + secret + webhook signing
+   * secret) that the admin configured ONCE in OS settings. Lets several apps
+   * (donations, kiosk…) share one Stripe account without re-entering keys.
+   */
+  stripe?: boolean;
+  /**
    * Require this app to be served over HTTPS. Set ONLY for apps that need a
    * secure context — i.e. apps that use Stripe (the in-person M2 reader / Stripe
    * Terminal SDK and in-page Stripe Elements both require HTTPS). The platform
@@ -78,6 +86,8 @@ export interface AppMeta {
   sso?: boolean;
   /** True if this app opted into Fabric notifications (CatalogApp.notifications). */
   notify?: boolean;
+  /** True if this app opted into Fabric Stripe access (CatalogApp.stripe). */
+  stripe?: boolean;
   /** True if this app must be served over HTTPS (Stripe apps — CatalogApp.https). */
   https?: boolean;
   /** The dedicated host port the platform's TLS proxy serves this app on (https). */

@@ -145,6 +145,7 @@ export interface FabricApp {
   name: string;
   sso: boolean;
   notify: boolean;
+  stripe: boolean;
 }
 
 interface FabricEntry extends FabricApp {
@@ -169,7 +170,14 @@ function fabricEntries(): FabricEntry[] {
   for (const id of listMetaIds()) {
     const meta = loadMeta(id);
     if (meta?.ssoSecret) {
-      out.push({ id, name: meta.name ?? id, sso: meta.sso === true, notify: meta.notify === true, ssoSecret: meta.ssoSecret });
+      out.push({
+        id,
+        name: meta.name ?? id,
+        sso: meta.sso === true,
+        notify: meta.notify === true,
+        stripe: meta.stripe === true,
+        ssoSecret: meta.ssoSecret,
+      });
     }
   }
   fabricCache = out;
@@ -188,7 +196,7 @@ export function findFabricApp(secret: string | undefined | null): FabricApp | nu
   if (!secret || secret.length < 16) return null;
   for (const e of fabricEntries()) {
     if (safeEqual(e.ssoSecret, secret)) {
-      return { id: e.id, name: e.name, sso: e.sso, notify: e.notify };
+      return { id: e.id, name: e.name, sso: e.sso, notify: e.notify, stripe: e.stripe };
     }
   }
   return null;
@@ -332,7 +340,8 @@ export async function installCatalogApp(
   // notifications gets a fresh per-app secret so it can prove its identity.
   const sso = app.sso === true;
   const notify = app.notifications === true;
-  const ssoSecret = sso || notify ? crypto.randomBytes(32).toString('base64url') : undefined;
+  const stripe = app.stripe === true;
+  const ssoSecret = sso || notify || stripe ? crypto.randomBytes(32).toString('base64url') : undefined;
   // Stripe apps (https:true) are served over HTTPS on a dedicated proxy port.
   const wantsHttps = app.https === true;
   const httpsPort = wantsHttps ? pickHttpsPort() : undefined;
@@ -350,6 +359,7 @@ export async function installCatalogApp(
     createdAt: new Date().toISOString(),
     sso,
     notify,
+    stripe,
     ssoSecret,
     https: wantsHttps && httpsPort != null,
     httpsPort: httpsPort ?? undefined,
@@ -566,8 +576,9 @@ export async function updateCatalogApp(id: string, onLine: (s: string) => void):
   // install-time OPENMASJID_BASE_URL; only the per-app secret tracks capability.
   const sso = app.sso === true;
   const notify = app.notifications === true;
+  const stripe = app.stripe === true;
   let ssoSecret = meta.ssoSecret;
-  if (sso || notify) {
+  if (sso || notify || stripe) {
     if (!ssoSecret) ssoSecret = crypto.randomBytes(32).toString('base64url');
   } else {
     ssoSecret = undefined;
@@ -613,6 +624,7 @@ export async function updateCatalogApp(id: string, onLine: (s: string) => void):
     version: app.version,
     sso,
     notify,
+    stripe,
     ssoSecret,
     https: wantsHttps && httpsPort != null,
     httpsPort: httpsPort ?? undefined,
