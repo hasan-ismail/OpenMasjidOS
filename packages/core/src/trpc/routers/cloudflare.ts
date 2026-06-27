@@ -15,7 +15,9 @@ import {
   clearTunnel,
   ensureCloudflared,
   cloudflaredRunning,
+  publicHost,
 } from '../../system/cloudflared';
+import { listInstalled } from '../../apps/manager';
 
 async function status() {
   const cf = getSettings().cloudflare;
@@ -24,6 +26,26 @@ async function status() {
 
 export const cloudflareRouter = router({
   status: protectedProcedure.query(() => status()),
+
+  /** The exact Cloudflare "Public Hostname" rows to add for each installed app —
+   *  subdomain `omos`, a per-app path, and the internal service (localhost:port).
+   *  This is what the guided setup shows so the admin can copy it into Cloudflare. */
+  routes: protectedProcedure.query(async () => {
+    const apps = await listInstalled();
+    return {
+      host: publicHost(), // e.g. "omos.example.org" (empty until a domain is set)
+      apps: apps
+        .filter((a) => a.openPort != null)
+        .map((a) => ({
+          id: a.id,
+          name: a.name,
+          path: `/${a.id}`,
+          type: a.https ? 'HTTPS' : 'HTTP',
+          service: `${a.https ? 'https' : 'http'}://localhost:${a.openPort}`,
+          noTlsVerify: a.https, // self-signed per-app cert → tick "No TLS Verify"
+        })),
+    };
+  }),
 
   save: protectedProcedure
     .input(

@@ -1130,6 +1130,21 @@ function StripePanel() {
       </h2>
       <p className="setting-row__hint" style={{ marginBlockEnd: '0.5rem' }}>{t('settings.paymentsHint')}</p>
 
+      <details style={{ marginBlockEnd: '0.6rem' }}>
+        <summary style={{ cursor: 'pointer', fontWeight: 600 }}>{t('settings.stripeGuideTitle')}</summary>
+        <ul style={{ margin: '0.5rem 0 0', paddingInlineStart: '1.2rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', lineHeight: 1.55, color: 'var(--color-ink)' }}>
+          <li>
+            {t('settings.stripeGuideKeys')}{' '}
+            <a href="https://dashboard.stripe.com/apikeys" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)', whiteSpace: 'nowrap' }}>
+              dashboard.stripe.com/apikeys <ExternalLink size={12} style={{ verticalAlign: 'middle' }} />
+            </a>{' '}
+            {t('settings.stripeGuideKeysAfter')}
+          </li>
+          <li>{t('settings.stripeGuideWebhook')}</li>
+          <li style={{ color: 'var(--color-ink-muted)' }}>{t('settings.stripeGuideTest')}</li>
+        </ul>
+      </details>
+
       {list.length === 0 && <p className="setting-row__hint">{t('settings.stripeNone')}</p>}
       {list.map((a) => (
         <div className="setting-row" key={a.id}>
@@ -1164,6 +1179,7 @@ function CloudflarePanel() {
   const { toast } = useToast();
   const utils = trpc.useUtils();
   const status = trpc.cloudflare.status.useQuery();
+  const routes = trpc.cloudflare.routes.useQuery();
   const refresh = () => utils.cloudflare.status.invalidate();
   const cf = status.data;
 
@@ -1241,6 +1257,61 @@ function CloudflarePanel() {
           </button>
         )}
       </div>
+
+      {/* Guided, step-by-step setup with the exact Cloudflare fields. */}
+      <details className="cf-guide" style={{ marginBlockStart: '0.9rem', borderBlockStart: '1px solid var(--color-border)', paddingBlockStart: '0.8rem' }}>
+        <summary style={{ cursor: 'pointer', fontWeight: 600 }}>{t('settings.cfGuideTitle')}</summary>
+        <ol style={{ margin: '0.6rem 0 0', paddingInlineStart: '1.2rem', display: 'flex', flexDirection: 'column', gap: '0.6rem', lineHeight: 1.55, color: 'var(--color-ink)' }}>
+          <li>
+            {t('settings.cfStep1')}{' '}
+            <a href="https://one.dash.cloudflare.com/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)', whiteSpace: 'nowrap' }}>
+              Cloudflare Zero Trust <ExternalLink size={12} style={{ verticalAlign: 'middle' }} />
+            </a>{' '}
+            {t('settings.cfStep1b')}
+          </li>
+          <li>{t('settings.cfStep2')}</li>
+          <li>
+            {t('settings.cfStep3')}
+            <ul style={{ margin: '0.35rem 0 0', paddingInlineStart: '1.1rem', color: 'var(--color-ink-muted)' }}>
+              <li>{t('settings.cfStep3Sub')} <code>omos</code></li>
+              <li>{t('settings.cfStep3Domain')}</li>
+              <li>{t('settings.cfStep3Path')}</li>
+              <li>{t('settings.cfStep3Service')}</li>
+            </ul>
+          </li>
+          <li>{t('settings.cfStep4')}</li>
+        </ol>
+
+        {/* The exact rows to add — computed by the OS from your installed apps. */}
+        {(routes.data?.apps.length ?? 0) > 0 && (
+          <div style={{ marginBlockStart: '0.8rem' }}>
+            <div className="setting-row__title" style={{ marginBlockEnd: '0.3rem' }}>{t('settings.cfRoutesTitle')}</div>
+            <div style={{ overflowX: 'auto' }}>
+              <table className="cf-routes" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem', fontFamily: 'ui-monospace, monospace' }}>
+                <thead>
+                  <tr style={{ textAlign: 'start', color: 'var(--color-ink-muted)' }}>
+                    <th style={{ textAlign: 'start', padding: '0.25rem 0.6rem 0.25rem 0' }}>{t('settings.cfColApp')}</th>
+                    <th style={{ textAlign: 'start', padding: '0.25rem 0.6rem' }}>{t('settings.cfColPath')}</th>
+                    <th style={{ textAlign: 'start', padding: '0.25rem 0.6rem' }}>{t('settings.cfColType')}</th>
+                    <th style={{ textAlign: 'start', padding: '0.25rem 0' }}>{t('settings.cfColService')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {routes.data?.apps.map((r) => (
+                    <tr key={r.id} style={{ borderBlockStart: '1px solid var(--color-border)' }}>
+                      <td style={{ padding: '0.3rem 0.6rem 0.3rem 0', fontFamily: 'var(--font-sans)' }}>{r.name}</td>
+                      <td style={{ padding: '0.3rem 0.6rem' }}>{r.path}</td>
+                      <td style={{ padding: '0.3rem 0.6rem' }}>{r.type}{r.noTlsVerify ? ' *' : ''}</td>
+                      <td style={{ padding: '0.3rem 0' }}>{r.service}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="setting-row__hint" style={{ marginBlockStart: '0.4rem' }}>{t('settings.cfRoutesHint')}</div>
+          </div>
+        )}
+      </details>
     </section>
   );
 }

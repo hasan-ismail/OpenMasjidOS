@@ -124,11 +124,28 @@ export async function ensureCloudflared(): Promise<void> {
   }
 }
 
-/** The public base URL an app is reachable at (Fabric `site`), or '' if remote
- *  access is off. v1: path = the app id; OS-managed per-app paths are planned. */
-export function appPublicUrl(appId: string): string {
+/** The public host the tunnel serves, e.g. "omos.example.org". The admin enters
+ *  their root domain; we use the `omos` subdomain (the guided Cloudflare setup
+ *  tells them to create exactly that public hostname). Empty if no domain. */
+export function publicHost(): string {
   const cf = getSettings().cloudflare;
-  if (!cf.enabled || !cf.domain) return '';
-  const domain = cf.domain.replace(/^https?:\/\//, '').replace(/\/+$/, '');
-  return `https://${domain}/${appId}`;
+  const d = (cf.domain || '').replace(/^https?:\/\//, '').replace(/\/+$/, '').trim();
+  if (!d) return '';
+  return d.startsWith('omos.') ? d : `omos.${d}`;
+}
+
+/** Each app is served under a path (= its id). This is the Cloudflare public-
+ *  hostname Path and the base path the app must mount its routes under. */
+export function appBasePath(appId: string): string {
+  const cf = getSettings().cloudflare;
+  return cf.enabled && cf.domain ? `/${appId}` : '';
+}
+
+/** The public base URL an app is reachable at (Fabric `site`), or '' if remote
+ *  access is off — e.g. "https://omos.example.org/donations". */
+export function appPublicUrl(appId: string): string {
+  const host = publicHost();
+  const cf = getSettings().cloudflare;
+  if (!cf.enabled || !host) return '';
+  return `https://${host}${appBasePath(appId)}`;
 }

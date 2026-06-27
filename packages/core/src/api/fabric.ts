@@ -25,7 +25,7 @@ import { findFabricApp } from '../apps/manager';
 import { sendNotification } from '../notify/notify';
 import { getSettings } from '../settings/store';
 import { listAccountsPublic, getAccountFull } from '../store/stripe';
-import { appPublicUrl } from '../system/cloudflared';
+import { appPublicUrl, appBasePath } from '../system/cloudflared';
 import { log } from '../logger';
 
 // Lightweight per-IP fixed-window limiter for the secret-gated Fabric routes,
@@ -158,6 +158,9 @@ export function registerFabric(server: FastifyInstance): void {
       enabled,
       domain: enabled ? cf.domain : '',
       publicUrl: appPublicUrl(app.id),
+      // The path the app is served under (= its id). The app should mount its
+      // routes/assets under this base path so links resolve behind the tunnel.
+      basePath: appBasePath(app.id),
     };
   });
 
