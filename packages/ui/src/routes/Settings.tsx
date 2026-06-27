@@ -1095,8 +1095,24 @@ function StripePanel() {
   const utils = trpc.useUtils();
   const accounts = trpc.stripe.list.useQuery();
   const refresh = () => utils.stripe.list.invalidate();
-  // undefined = modal closed, null = adding new, object = editing that account.
-  const [editing, setEditing] = useState<StripeAccountPublic | null | undefined>(undefined);
+  const windows = useWindows();
+
+  // Open the add/edit form as a managed traffic-light window (like the rest of the OS).
+  function openForm(account: StripeAccountPublic | null) {
+    let id = -1;
+    id = windows.open({
+      title: account ? t('settings.stripeEditTitle') : t('settings.stripeAddTitle'),
+      icon: <CreditCard size={15} />,
+      dedupeKey: account ? `stripe-${account.id}` : 'stripe-new',
+      node: (
+        <StripeAccountForm
+          account={account}
+          onClose={() => windows.close(id)}
+          onSaved={() => { windows.close(id); refresh(); }}
+        />
+      ),
+    });
+  }
 
   const remove = trpc.stripe.remove.useMutation({
     onSuccess: () => { refresh(); toast(t('settings.stripeRemoved'), 'success'); },
@@ -1122,7 +1138,7 @@ function StripePanel() {
             </div>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button className="btn btn--sm" onClick={() => setEditing(a)}><Pencil size={14} /> {t('settings.stripeEdit')}</button>
+            <button className="btn btn--sm" onClick={() => openForm(a)}><Pencil size={14} /> {t('settings.stripeEdit')}</button>
             <button className="btn btn--sm" disabled={remove.isPending} onClick={() => remove.mutate({ id: a.id })}>
               <Trash2 size={14} /> {t('settings.backupRemove')}
             </button>
@@ -1130,22 +1146,14 @@ function StripePanel() {
         </div>
       ))}
 
-      <button className="btn btn--primary" style={{ marginBlockStart: '0.6rem' }} onClick={() => setEditing(null)}>
+      <button className="btn btn--primary" style={{ marginBlockStart: '0.6rem' }} onClick={() => openForm(null)}>
         <CreditCard size={15} /> {t('settings.stripeAdd')}
       </button>
-
-      {editing !== undefined && (
-        <StripeAccountModal
-          account={editing}
-          onClose={() => setEditing(undefined)}
-          onSaved={() => { setEditing(undefined); refresh(); }}
-        />
-      )}
     </section>
   );
 }
 
-function StripeAccountModal({ account, onClose, onSaved }: { account: StripeAccountPublic | null; onClose: () => void; onSaved: () => void }) {
+function StripeAccountForm({ account, onClose, onSaved }: { account: StripeAccountPublic | null; onClose: () => void; onSaved: () => void }) {
   const { t } = useTranslation();
   const isEdit = account !== null;
   const [label, setLabel] = useState(account?.label ?? '');
@@ -1171,7 +1179,7 @@ function StripeAccountModal({ account, onClose, onSaved }: { account: StripeAcco
   }
 
   return (
-    <Modal open onClose={() => !save.isPending && onClose()} title={isEdit ? t('settings.stripeEditTitle') : t('settings.stripeAddTitle')}>
+    <>
       <div className="field">
         <label className="label">{t('settings.stripeLabel')}</label>
         <input className="input glass-inset" value={label} onChange={(e) => setLabel(e.target.value)} placeholder={t('settings.stripeLabelPlaceholder')} />
@@ -1196,6 +1204,6 @@ function StripeAccountModal({ account, onClose, onSaved }: { account: StripeAcco
           {save.isPending ? t('settings.stripeSaving') : t('settings.stripeSave')}
         </button>
       </div>
-    </Modal>
+    </>
   );
 }
