@@ -54,10 +54,17 @@ fields are ignored. Each entry is a `CatalogApp` (`packages/core/src/apps/types.
 ```yaml
 - key: LATITUDE          # env var name; referenced as ${LATITUDE} in the compose
   label: Latitude        # shown in the install dialog
-  type: text             # text | select | number | password | boolean
+  type: text             # text | select | number | password | boolean | stripe-account
   options: [A, B, C]     # required only for type: select
   default: ""            # optional pre-filled value
 ```
+
+**`type: stripe-account`** is a platform-aware picker: the install dialog renders a **dropdown of the
+Stripe accounts the admin configured** in Settings → Payments and passes the chosen account's id as the
+value (blank → the only/first account). Use it for an app's "which Stripe account" setting so the admin
+never re-types keys in the install dialog; the app then fetches that account's keys over the Fabric
+(`GET /api/fabric/stripe?account=…`, with manifest `stripe: true`). Platform v0.32.2+; older platforms
+fall back to a plain text box.
 
 The platform collects **everything masjid-specific here** (location, calc method, madhab, timezone,
 masjid name). **No platform profile is ever injected** — the platform holds no masjid data.
