@@ -9,10 +9,50 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { router, protectedProcedure } from '../trpc';
-import { listAccountsPublic, upsertAccount, removeAccount } from '../../store/stripe';
+import { listAccountsPublic, listAccountsInternal, upsertAccount, removeAccount } from '../../store/stripe';
+
+// Cache the online/offline result briefly so opening Settings doesn't hammer
+// Stripe (or block on the network) on every render.
+const statusCache = new Map<string, { at: number; online: boolean }>();
+const STATUS_TTL_MS = 60_000;
+
+/** Is this secret key valid + Stripe reachable? GET /v1/balance → 200 means yes. */
+async function pingStripe(secretKey: string): Promise<boolean> {
+  if (!secretKey) return false;
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 6000);
+    const res = await fetch('https://api.stripe.com/v1/balance', {
+      headers: { authorization: `Bearer ${secretKey}` },
+      signal: ctrl.signal,
+    });
+    clearTimeout(t);
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
 
 export const stripeRouter = router({
   list: protectedProcedure.query(() => listAccountsPublic()),
+
+  /** Per-account online/offline (green/red dot): is the secret key valid and is
+   *  Stripe reachable? Cached ~60s. */
+  status: protectedProcedure.query(async () => {
+    const out: { id: string; online: boolean }[] = [];
+    for (const a of listAccountsInternal()) {
+      const cached = statusCache.get(a.id);
+      let online: boolean;
+      if (cached && Date.now() - cached.at < STATUS_TTL_MS) {
+        online = cached.online;
+      } else {
+        online = await pingStripe(a.secretKey);
+        statusCache.set(a.id, { at: Date.now(), online });
+      }
+      out.push({ id: a.id, online });
+    }
+    return out;
+  }),
 
   save: protectedProcedure
     .input(

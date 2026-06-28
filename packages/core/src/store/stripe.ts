@@ -66,6 +66,12 @@ export function listAccountsPublic(): StripeAccountPublic[] {
   return cache.accounts.map(toPublic);
 }
 
+/** Internal: full accounts (incl. secrets) for server-side checks only (e.g. the
+ *  online/offline status probe). Never expose this over the admin API. */
+export function listAccountsInternal(): StripeAccount[] {
+  return cache.accounts;
+}
+
 /** Full account incl. secrets — ONLY for the Fabric endpoint to hand an authed app. */
 export function getAccountFull(idOrLabel: string): StripeAccount | null {
   const k = idOrLabel.trim().toLowerCase();

@@ -30,6 +30,29 @@ const TIMEZONES: string[] = (() => {
   }
 })();
 
+/** A small red/green/grey status dot. `online` undefined = unknown (grey). */
+function StatusDot({ online }: { online: boolean | undefined }) {
+  const { t } = useTranslation();
+  const color = online === undefined ? 'var(--color-ink-muted)' : online ? '#22c55e' : '#ef4444';
+  const label = online === undefined ? t('settings.statusChecking') : online ? t('settings.statusOnline') : t('settings.statusOffline');
+  return (
+    <span
+      title={label}
+      aria-label={label}
+      role="img"
+      style={{
+        display: 'inline-block',
+        width: 9,
+        height: 9,
+        borderRadius: '50%',
+        background: color,
+        flexShrink: 0,
+        boxShadow: online ? '0 0 6px rgba(34,197,94,0.6)' : undefined,
+      }}
+    />
+  );
+}
+
 export function Settings() {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -1130,6 +1153,9 @@ function StripePanel() {
   const { toast } = useToast();
   const utils = trpc.useUtils();
   const accounts = trpc.stripe.list.useQuery();
+  // Per-account online/offline (green/red dot). Re-checks ~every 60s.
+  const stripeStatus = trpc.stripe.status.useQuery(undefined, { refetchInterval: 60_000 });
+  const onlineById = new Map((stripeStatus.data ?? []).map((s) => [s.id, s.online]));
   const refresh = () => utils.stripe.list.invalidate();
   const windows = useWindows();
 
@@ -1182,7 +1208,10 @@ function StripePanel() {
       {list.map((a) => (
         <div className="setting-row" key={a.id}>
           <div className="setting-row__text">
-            <div className="setting-row__title">{a.label}</div>
+            <div className="setting-row__title" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <StatusDot online={stripeStatus.isLoading ? undefined : onlineById.get(a.id)} />
+              {a.label}
+            </div>
             <div className="setting-row__hint" style={{ fontFamily: 'ui-monospace, monospace', wordBreak: 'break-all' }}>
               {a.publishableKey || '—'} · {a.hasSecret ? t('settings.stripeSecretSet') : t('settings.stripeSecretMissing')}
               {a.hasWebhook ? ` · ${t('settings.stripeWebhookSet')}` : ''}
@@ -1254,7 +1283,10 @@ function CloudflarePanel() {
 
       <div className="setting-row">
         <div className="setting-row__text">
-          <div className="setting-row__title">{t('settings.cfEnable')}</div>
+          <div className="setting-row__title" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <StatusDot online={cf.enabled ? cf.running : undefined} />
+            {t('settings.cfEnable')}
+          </div>
           <div className="setting-row__hint">
             {cf.running ? t('settings.cfRunning') : cf.hasToken ? t('settings.cfStopped') : t('settings.cfNoToken')}
           </div>
