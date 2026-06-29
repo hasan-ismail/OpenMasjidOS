@@ -158,7 +158,7 @@ passwd
 
 ## Install OpenMasjidOS
 
-Run run the one-liner at the top.
+Run the one-liner at the top.
 
 When installation completes, open: `http://<container-ip>`
 </details>
