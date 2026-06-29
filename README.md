@@ -32,7 +32,7 @@ Leave a star if you like the project! ⭐️
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/OpenMasjid-Solutions/OpenMasjidOS/master/install.sh || wget -qO- https://raw.githubusercontent.com/OpenMasjid-Solutions/OpenMasjidOS/master/install.sh)"
 ```
 
-(Works whether your system has `curl` or `wget` — no need to install one first; the installer sets up `curl` for you.) When it finishes, open **`http://openmasjidos.local`** (or **`http://<your-server-ip>`**) on the same network and create your admin account.
+(Works whether your system has `curl` or `wget` — no need to install one first; the installer sets up `curl` for you.) When it finishes, open **`http://<your-server-ip>`** on the same network and create your admin account.
 
 **Think of it as umbrelOS, but built for masjids** — it runs on your own hardware (a Raspberry Pi, a mini-PC, or a Proxmox server), entirely under your control. No subscriptions, no cloud, no data sharing.
 
@@ -123,7 +123,7 @@ sudo apt update && sudo apt upgrade -y && sudo apt install -y curl
 curl -fsSL https://raw.githubusercontent.com/OpenMasjid-Solutions/OpenMasjidOS/master/install.sh | bash
 ```
 
-Open `http://openmasjidos.local` (or the Pi's IP). For a stable address, add a DHCP reservation in your router.
+Open the Pi's IP. For a stable address, add a DHCP reservation in your router.
 </details>
 
 <details>
@@ -137,7 +137,8 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/community-scripts/Proxmo
 
 From the menu:
 
-- Select **debian-12-standard**
+- Select **debian-12-standard** (RECOMMENDED)
+- or any other template of choice
 
 When provisioning completes, **copy the generated root password** displayed by the script.
 
@@ -156,11 +157,7 @@ passwd
 
 ## Install OpenMasjidOS
 
-Run the installer:
-
-```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/OpenMasjid-Solutions/OpenMasjidOS/master/install.sh || wget -qO- https://raw.githubusercontent.com/OpenMasjid-Solutions/OpenMasjidOS/master/install.sh)"
-```
+Run run the one-liner at the top.
 
 When installation completes, open: `http://<container-ip>`
 </details>
@@ -179,7 +176,7 @@ sudo docker ps   # look for "openmasjid-core", status "Up ..."
 
 ## Day-to-day
 
-- **First run** — create an admin account (username + password, 8+ chars). That's the whole setup; you go straight to the dashboard. Prayer times/location are collected by each app, not the platform.
+- **First run** — create an admin account (username + password, 12+ chars). That's the whole setup; you go straight to the dashboard. Prayer times/location are collected by each app, not the platform.
 - **Manage** — run the same install command again for a menu: **Update** (latest version, apps/data untouched), **Repair** (re-apply config and restart), **Reconfigure network**, or **Uninstall**. Update/Repair only ever touch the core, never your apps.
 - **Update from the dashboard** — Settings → Advanced → Check for updates → Update now, with live progress. No terminal needed.
 - **Reset the admin password** (from the machine's terminal — no data lost):
