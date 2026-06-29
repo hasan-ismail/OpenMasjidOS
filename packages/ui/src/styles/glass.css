@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Copyright (C) 2026 OpenMasjid-Solutions */
 /*
  * glass.css — Sakīna Glass material + ambient utilities. Imported after
  * Tailwind so these classes win ties. Every value is token-driven (tokens.css).

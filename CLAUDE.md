@@ -576,5 +576,6 @@ We are in **pre-release / active development**. All changes during this phase ar
 - If a task seems to require building an actual end-user app, **stop** — that belongs in `OpenMasjidAPPS`. Scaffold the manifest contract instead and ask.
 - Never put masjid/prayer configuration into platform settings. If a feature seems to need it, it's an app concern.
 - Never copy umbrelOS source into this repo. Re-implement patterns from scratch (see §3).
+- **Licensing is a hard rule (see §3 + `CLA.md`).** This repo is AGPL-3.0 + CLA; *every line you write here is AGPL-3.0 and CLA-covered*. **Every new file must start with the SPDX header** in its comment syntax — `// SPDX-License-Identifier: AGPL-3.0-only` (ts/tsx/js/css), `# …` (yml/sh/Dockerfile), `<!-- … -->` (md/html) — followed by `Copyright (C) 2026 OpenMasjid-Solutions`. Never strip an existing header; never add code/assets/deps under an AGPL-incompatible license.
 - Ask before adding heavy dependencies; "lightweight" (Pi-friendly) is a core value.
 - Keep the README's curl one-liner accurate at all times.

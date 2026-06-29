@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Copyright (C) 2026 OpenMasjid-Solutions */
 /*
  * app.css — base + component styles. Layout utilities come from Tailwind;
  * everything themed/visual lives here so it stays token-driven and RTL-safe
