@@ -102,7 +102,8 @@ Each app runs as its own isolated Docker container, so **updating OpenMasjidOS n
 
 | | Minimum | Recommended |
 |---|---|---|
-| **RAM** | 1 GB | 2 GB |
+| **CPU** | 4 Cores | 8 Cores |
+| **RAM** | 4 GB | 8 GB |
 | **Storage** | 8 GB free | 32 GB |
 | **Architecture** | amd64 or arm64 | — |
 
